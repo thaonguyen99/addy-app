@@ -68,7 +68,7 @@ const CarouselSlide = memo(function CarouselSlide({
             item.sourceType === "quick_snap" ? "photo-camera" : "folder-open"
           }
           size={12}
-          color={BrandColors.gray900}
+          color={BrandColors.neutral}
         />
       </View>
       <View
@@ -78,7 +78,7 @@ const CarouselSlide = memo(function CarouselSlide({
         ]}
       >
         {selected ? (
-          <MaterialIcons name="check" size={16} color={BrandColors.white} />
+          <MaterialIcons name="check" size={16} color={BrandColors.neutral} />
         ) : null}
       </View>
     </Pressable>
@@ -193,10 +193,10 @@ const styles = StyleSheet.create({
     alignSelf: "center",
     borderRadius: 16,
     overflow: "hidden",
-    backgroundColor: BrandColors.gray800,
+    backgroundColor: BrandColors.secondary,
   },
   slide: {
-    backgroundColor: BrandColors.gray800,
+    backgroundColor: BrandColors.secondary,
     justifyContent: "center",
     overflow: "hidden",
   },
@@ -212,10 +212,10 @@ const styles = StyleSheet.create({
     borderRadius: 6,
   },
   badgeSnap: {
-    backgroundColor: BrandColors.secondaryYellow,
+    backgroundColor: BrandColors.primary,
   },
   badgeUpload: {
-    backgroundColor: BrandColors.blueberryMilk,
+    backgroundColor: BrandColors.secondary,
   },
   selectionControl: {
     position: "absolute",
@@ -231,8 +231,8 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   selectionControlSelected: {
-    backgroundColor: BrandColors.primaryPink,
-    borderColor: BrandColors.white,
+    backgroundColor: BrandColors.primary,
+    borderColor: BrandColors.neutral,
   },
   dotsRow: {
     flexDirection: "row",
@@ -248,7 +248,7 @@ const styles = StyleSheet.create({
   dotActive: {
     width: 8,
     height: 8,
-    backgroundColor: BrandColors.white,
+    backgroundColor: BrandColors.neutral,
   },
   dotInactive: {
     width: 6,

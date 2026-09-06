@@ -1,6 +1,5 @@
 import { PlacePickerSection } from "@/features/camera/components/place-picker-section";
 import { PhotoSelectionPlaceSearch } from "@/features/camera/components/photo-selection-place-search";
-import { CameraUi } from "@/features/camera/constants/layout";
 import { usePlaceSelectionScreen } from "@/features/camera/hooks/usePlaceSelectionScreen";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
@@ -37,7 +36,7 @@ export function PlaceSelectionScreen() {
 
   return (
     <SafeAreaView style={styles.safe} edges={["top"]}>
-      <View style={[styles.header, sharedInteractionStyles.hairlineBottomDark]}>
+      <View style={styles.header}>
         <View style={styles.headerTopRow}>
           <Pressable
             accessibilityRole="button"
@@ -52,7 +51,7 @@ export function PlaceSelectionScreen() {
             <MaterialIcons
               name="arrow-back"
               size={24}
-              color={BrandColors.white}
+              color={BrandColors.neutral}
             />
           </Pressable>
           <Text style={styles.screenTitle}>Where is this?</Text>
@@ -86,22 +85,26 @@ export function PlaceSelectionScreen() {
       </ScrollView>
 
       <View
-        style={[
-          styles.footer,
-          sharedInteractionStyles.hairlineTopDark,
-          { paddingBottom: Math.max(20, insets.bottom) },
-        ]}
+        style={[styles.footer, { paddingBottom: Math.max(20, insets.bottom) }]}
       >
         <Pressable
           onPress={confirmAndContinue}
           disabled={!canConfirm}
           style={({ pressed }) => [
             sharedInteractionStyles.primaryCta,
+            styles.confirmBtn,
             !canConfirm && styles.confirmBtnDisabled,
             pressed && canConfirm && sharedInteractionStyles.pressedSubtle,
           ]}
         >
-          <Text style={sharedInteractionStyles.primaryCtaText}>Continue</Text>
+          <Text
+            style={[
+              sharedInteractionStyles.primaryCtaText,
+              styles.confirmBtnText,
+            ]}
+          >
+            Continue
+          </Text>
         </Pressable>
       </View>
     </SafeAreaView>
@@ -111,14 +114,16 @@ export function PlaceSelectionScreen() {
 const styles = StyleSheet.create({
   safe: {
     flex: 1,
-    backgroundColor: CameraUi.screenBg,
+    backgroundColor: BrandColors.gray900,
   },
   header: {
     paddingHorizontal: cameraLayout.screenPaddingHorizontal,
     paddingTop: 4,
     paddingBottom: 12,
     gap: 12,
-    backgroundColor: CameraUi.screenBg,
+    backgroundColor: BrandColors.gray900,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: BrandColors.neutralBorder,
   },
   headerTopRow: {
     flexDirection: "row",
@@ -129,7 +134,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 17,
     fontWeight: "600",
-    color: BrandColors.white,
+    color: BrandColors.neutral,
     textAlign: "center",
   },
   backBtn: {
@@ -150,9 +155,17 @@ const styles = StyleSheet.create({
   footer: {
     paddingHorizontal: cameraLayout.screenPaddingHorizontal,
     paddingTop: 12,
-    backgroundColor: CameraUi.screenBg,
+    backgroundColor: BrandColors.gray900,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: BrandColors.neutralBorder,
+  },
+  confirmBtn: {
+    backgroundColor: BrandColors.primary,
+  },
+  confirmBtnText: {
+    color: BrandColors.neutral,
   },
   confirmBtnDisabled: {
-    backgroundColor: BrandColors.gray700,
+    backgroundColor: BrandColors.neutralBorder,
   },
 });

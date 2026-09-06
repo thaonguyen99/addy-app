@@ -122,7 +122,7 @@ export function MemoryDetailScreen({ id }: MemoryDetailScreenProps) {
 
       {isLoading ? (
         <View style={styles.center}>
-          <ActivityIndicator color={BrandColors.primaryPink} size="large" />
+          <ActivityIndicator color={BrandColors.primary} size="large" />
         </View>
       ) : isError || !data ? (
         <View style={styles.center}>
@@ -188,14 +188,14 @@ export function MemoryDetailScreen({ id }: MemoryDetailScreenProps) {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: BrandColors.gray50 },
+  safe: { flex: 1, backgroundColor: BrandColors.gray900 },
 
   topBar: {
     paddingHorizontal: 16,
     paddingVertical: 10,
-    backgroundColor: BrandColors.white,
+    backgroundColor: BrandColors.gray900,
     borderBottomWidth: 1,
-    borderBottomColor: BrandColors.stroke1,
+    borderBottomColor: BrandColors.neutralBorder,
   },
   backButton: {
     flexDirection: "row",
@@ -205,18 +205,22 @@ const styles = StyleSheet.create({
   },
   backArrow: {
     fontSize: 18,
-    color: BrandColors.primaryPink,
+    color: BrandColors.primary,
     fontWeight: "600",
   },
   backLabel: {
     fontSize: 16,
-    color: BrandColors.primaryPink,
+    color: BrandColors.primary,
     fontWeight: "600",
   },
 
   center: { flex: 1, alignItems: "center", justifyContent: "center", gap: 12 },
   errorEmoji: { fontSize: 40 },
-  errorText: { fontSize: 16, color: BrandColors.gray500, fontWeight: "500" },
+  errorText: {
+    fontSize: 16,
+    color: BrandColors.neutralMuted,
+    fontWeight: "500",
+  },
 
   scroll: { paddingBottom: 40 },
 
@@ -225,12 +229,12 @@ const styles = StyleSheet.create({
     height: HERO_HEIGHT,
     borderBottomLeftRadius: 24,
     borderBottomRightRadius: 24,
-    backgroundColor: BrandColors.gray200,
+    backgroundColor: BrandColors.neutralBorder,
   },
   heroPlaceholder: {
     width: "100%",
     height: HERO_HEIGHT,
-    backgroundColor: BrandColors.gray100,
+    backgroundColor: BrandColors.primaryMuted,
     borderBottomLeftRadius: 24,
     borderBottomRightRadius: 24,
     alignItems: "center",
@@ -250,11 +254,11 @@ const styles = StyleSheet.create({
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: BrandColors.gray300,
+    backgroundColor: BrandColors.neutralBorder,
   },
   dotActive: {
     width: 18,
-    backgroundColor: BrandColors.primaryPink,
+    backgroundColor: BrandColors.primary,
   },
 
   content: {
@@ -269,7 +273,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 10,
     alignSelf: "flex-start",
-    backgroundColor: BrandColors.white,
+    backgroundColor: BrandColors.elevated,
     paddingHorizontal: 12,
     paddingVertical: 7,
     borderRadius: 20,
@@ -283,19 +287,19 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: BrandColors.primaryPink,
+    backgroundColor: BrandColors.primary,
     alignItems: "center",
     justifyContent: "center",
   },
   avatarText: {
-    color: BrandColors.white,
+    color: BrandColors.neutral,
     fontSize: 13,
     fontWeight: "700",
   },
   username: {
     fontSize: 14,
     fontWeight: "600",
-    color: BrandColors.gray700,
+    color: BrandColors.neutral,
   },
 
   // Place
@@ -307,7 +311,7 @@ const styles = StyleSheet.create({
   pinkAccent: {
     width: 3,
     borderRadius: 2,
-    backgroundColor: BrandColors.primaryPink,
+    backgroundColor: BrandColors.primary,
     alignSelf: "stretch",
     minHeight: 40,
   },
@@ -318,12 +322,12 @@ const styles = StyleSheet.create({
   placeName: {
     fontSize: 22,
     fontWeight: "700",
-    color: BrandColors.gray900,
+    color: BrandColors.neutral,
     lineHeight: 28,
   },
   address: {
     fontSize: 13,
-    color: BrandColors.gray500,
+    color: BrandColors.neutralMuted,
     lineHeight: 19,
     flexWrap: "wrap",
   },
@@ -333,7 +337,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
-    backgroundColor: BrandColors.white,
+    backgroundColor: BrandColors.elevated,
     borderRadius: 14,
     padding: 14,
     shadowColor: "#000",
@@ -345,7 +349,7 @@ const styles = StyleSheet.create({
   moodLabel: {
     fontSize: 13,
     fontWeight: "600",
-    color: BrandColors.gray500,
+    color: BrandColors.neutralMuted,
     textTransform: "uppercase",
     letterSpacing: 0.8,
   },
@@ -353,7 +357,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
-    backgroundColor: BrandColors.softLilac,
+    backgroundColor: BrandColors.primaryMuted,
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 20,
@@ -362,14 +366,14 @@ const styles = StyleSheet.create({
   moodScoreLabel: {
     fontSize: 14,
     fontWeight: "600",
-    color: BrandColors.gray700,
+    color: BrandColors.neutral,
   },
 
   // Feeling
   feelingCard: {
     flexDirection: "row",
     gap: 12,
-    backgroundColor: BrandColors.white,
+    backgroundColor: BrandColors.elevated,
     borderRadius: 14,
     padding: 14,
     shadowColor: "#000",
@@ -381,14 +385,14 @@ const styles = StyleSheet.create({
   feelingAccent: {
     width: 3,
     borderRadius: 2,
-    backgroundColor: BrandColors.blueberryMilk,
+    backgroundColor: BrandColors.primary,
     alignSelf: "stretch",
   },
   feelingText: {
     flex: 1,
     fontSize: 15,
     fontStyle: "italic",
-    color: BrandColors.gray600,
+    color: BrandColors.neutralMuted,
     lineHeight: 22,
   },
 
@@ -401,6 +405,6 @@ const styles = StyleSheet.create({
   metaIcon: { fontSize: 14 },
   metaText: {
     fontSize: 13,
-    color: BrandColors.gray400,
+    color: BrandColors.neutralMuted,
   },
 });

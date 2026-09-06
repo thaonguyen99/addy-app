@@ -29,7 +29,7 @@ function PhotoSelectionEmptyHint() {
       <MaterialIcons
         name="add-photo-alternate"
         size={40}
-        color={BrandColors.gray500}
+        color={BrandColors.neutralMuted}
       />
       <Text style={emptyStyles.title}>No photos yet</Text>
       <Text style={emptyStyles.sub}>
@@ -77,7 +77,7 @@ export function PhotoSelectionScreen() {
           <MaterialIcons
             name="arrow-back"
             size={24}
-            color={BrandColors.white}
+            color={BrandColors.neutral}
           />
         </Pressable>
         <Text style={styles.screenTitle}>Add to pin</Text>
@@ -109,7 +109,7 @@ export function PhotoSelectionScreen() {
                 value={feeling}
                 onChangeText={setFeeling}
                 placeholder="A note about this moment…"
-                placeholderTextColor={BrandColors.gray500}
+                placeholderTextColor={BrandColors.neutralMuted}
                 multiline
                 maxLength={500}
                 style={styles.feelingInput}
@@ -157,12 +157,12 @@ const emptyStyles = StyleSheet.create({
   title: {
     fontSize: 17,
     fontWeight: "600",
-    color: BrandColors.gray50,
+    color: BrandColors.neutral,
     textAlign: "center",
   },
   sub: {
     fontSize: 14,
-    color: BrandColors.gray400,
+    color: BrandColors.neutralMuted,
     textAlign: "center",
     lineHeight: 20,
   },
@@ -187,7 +187,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 17,
     fontWeight: "600",
-    color: BrandColors.white,
+    color: BrandColors.neutral,
     textAlign: "center",
   },
   backBtn: {
@@ -210,23 +210,23 @@ const styles = StyleSheet.create({
   feelingLabel: {
     fontSize: 15,
     fontWeight: "600",
-    color: BrandColors.gray50,
+    color: BrandColors.neutral,
   },
   feelingHint: {
     fontSize: 13,
-    color: BrandColors.gray500,
+    color: BrandColors.neutralMuted,
     marginBottom: 4,
   },
   feelingInput: {
     minHeight: 88,
     borderWidth: 1,
-    borderColor: BrandColors.gray700,
+    borderColor: BrandColors.neutralBorder,
     borderRadius: cameraLayout.cornerRadiusMd,
-    backgroundColor: BrandColors.gray800,
+    backgroundColor: BrandColors.secondary,
     paddingHorizontal: 14,
     paddingVertical: 12,
     fontSize: 16,
-    color: BrandColors.gray50,
+    color: BrandColors.neutral,
     lineHeight: 22,
   },
   footer: {
@@ -235,6 +235,6 @@ const styles = StyleSheet.create({
     backgroundColor: CameraUi.screenBg,
   },
   confirmBtnDisabled: {
-    backgroundColor: BrandColors.gray700,
+    backgroundColor: BrandColors.neutralBorder,
   },
 });

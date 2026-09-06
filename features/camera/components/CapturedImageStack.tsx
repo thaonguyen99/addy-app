@@ -31,7 +31,7 @@ function CapturedImageStackInner({ photos }: CapturedImageStackProps) {
         <MaterialIcons
           name="photo-library"
           size={22}
-          color={BrandColors.gray400}
+          color={BrandColors.neutralMuted}
         />
       </View>
     );
@@ -63,7 +63,7 @@ function CapturedImageStackInner({ photos }: CapturedImageStackProps) {
         <MaterialIcons
           name="push-pin"
           size={22}
-          color={BrandColors.primaryPink}
+          color={BrandColors.primary}
         />
       </View>
     </View>
@@ -84,8 +84,8 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     overflow: "hidden",
     borderWidth: 2,
-    borderColor: BrandColors.gray900,
-    backgroundColor: BrandColors.gray800,
+    borderColor: BrandColors.secondary,
+    backgroundColor: BrandColors.secondary,
   },
   thumb: {
     width: "100%",
@@ -96,8 +96,8 @@ const styles = StyleSheet.create({
     height: CAPTURE_STACK_THUMB_SIZE,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: BrandColors.gray700,
-    backgroundColor: BrandColors.gray800,
+    borderColor: BrandColors.neutralBorder,
+    backgroundColor: BrandColors.secondary,
     alignItems: "center",
     justifyContent: "center",
   },

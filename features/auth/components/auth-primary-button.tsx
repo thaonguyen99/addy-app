@@ -36,7 +36,7 @@ export function AuthPrimaryButton({
       {...props}
     >
       {loading ? (
-        <ActivityIndicator color={BrandColors.white} />
+        <ActivityIndicator color={BrandColors.neutral} />
       ) : (
         <Text
           style={[
@@ -59,18 +59,18 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     minHeight: 48,
   },
-  primary: { backgroundColor: BrandColors.primaryPink },
+  primary: { backgroundColor: BrandColors.primary },
   secondary: {
-    backgroundColor: BrandColors.white,
+    backgroundColor: BrandColors.secondary,
     borderWidth: 1,
-    borderColor: BrandColors.stroke2,
+    borderColor: BrandColors.neutralBorder,
   },
   disabled: { opacity: 0.55 },
   pressed: { opacity: 0.88 },
   label: {
     fontSize: 16,
     fontWeight: "600",
-    color: BrandColors.white,
+    color: BrandColors.neutral,
   },
-  secondaryLabel: { color: BrandColors.gray800 },
+  secondaryLabel: { color: BrandColors.neutral },
 });

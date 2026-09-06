@@ -20,22 +20,22 @@ export const sharedInteractionStyles = StyleSheet.create({
   pressedStrong: { opacity: 0.7 },
   hairlineTop: {
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: BrandColors.stroke2,
+    borderTopColor: BrandColors.neutralBorder,
   },
   hairlineBottom: {
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: BrandColors.stroke2,
+    borderBottomColor: BrandColors.neutralBorder,
   },
   hairlineTopDark: {
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: BrandColors.gray800,
+    borderTopColor: BrandColors.neutralBorder,
   },
   hairlineBottomDark: {
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: BrandColors.gray800,
+    borderBottomColor: BrandColors.neutralBorder,
   },
   primaryCta: {
-    backgroundColor: BrandColors.primaryPink,
+    backgroundColor: BrandColors.primary,
     paddingVertical: 16,
     borderRadius: cameraLayout.cornerRadiusMd,
     alignItems: "center" as const,
@@ -44,17 +44,17 @@ export const sharedInteractionStyles = StyleSheet.create({
   primaryCtaText: {
     fontSize: 16,
     fontWeight: "700" as const,
-    color: BrandColors.white,
+    color: BrandColors.neutral,
     letterSpacing: 0.3,
   },
   screenTitle: {
     fontSize: 17,
     fontWeight: "600" as const,
-    color: BrandColors.gray900,
+    color: BrandColors.neutral,
   },
   captionMuted: {
     fontSize: 13,
-    color: BrandColors.gray500,
+    color: BrandColors.neutralMuted,
     lineHeight: 18,
   },
   flexFill: { flex: 1 },

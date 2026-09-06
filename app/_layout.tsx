@@ -1,4 +1,3 @@
-import "react-native-gesture-handler";
 import {
   BeVietnamPro_400Regular,
   BeVietnamPro_500Medium,
@@ -6,23 +5,38 @@ import {
   BeVietnamPro_700Bold,
   useFonts,
 } from "@expo-google-fonts/be-vietnam-pro";
-import {
-  DarkTheme,
-  DefaultTheme,
-  ThemeProvider,
-} from "@react-navigation/native";
+import { DarkTheme, ThemeProvider } from "@react-navigation/native";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
+import {
+  ActivityIndicator,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
+import "react-native-gesture-handler";
 import "react-native-reanimated";
 
-import { useColorScheme } from "@/hooks/use-color-scheme";
+import { BrandColors } from "@/constants/theme";
 import { useAuthStore } from "@/features/auth/store/auth-store";
 import { queryClient } from "@/lib/query/client";
-import { BrandColors } from "@/constants/theme";
+
+const navigationTheme = {
+  ...DarkTheme,
+  colors: {
+    ...DarkTheme.colors,
+    primary: BrandColors.primary,
+    background: BrandColors.gray900,
+    card: BrandColors.gray900,
+    text: BrandColors.neutral,
+    border: BrandColors.stroke2,
+    notification: BrandColors.primary,
+  },
+};
 
 SplashScreen.preventAutoHideAsync();
 
@@ -45,7 +59,6 @@ export function ErrorBoundary({
 }
 
 export default function RootLayout() {
-  const colorScheme = useColorScheme();
   const status = useAuthStore((s) => s.status);
   const hydrate = useAuthStore((s) => s.hydrate);
 
@@ -69,14 +82,14 @@ export default function RootLayout() {
   if (!fontsLoaded || status === "idle" || status === "hydrating") {
     return (
       <View style={styles.boot}>
-        <ActivityIndicator size="large" color={BrandColors.primaryPink} />
+        <ActivityIndicator size="large" color={BrandColors.primary} />
       </View>
     );
   }
 
   return (
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
+      <ThemeProvider value={navigationTheme}>
         <Stack screenOptions={{ headerShown: false }}>
           <Stack.Screen name="index" />
           <Stack.Screen name="(auth)" />
@@ -86,7 +99,7 @@ export default function RootLayout() {
             options={{ presentation: "modal", title: "Modal" }}
           />
         </Stack>
-        <StatusBar style="auto" />
+        <StatusBar style="light" />
       </ThemeProvider>
     </QueryClientProvider>
   );
@@ -97,16 +110,16 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: BrandColors.white,
+    backgroundColor: BrandColors.gray900,
     padding: 24,
     gap: 16,
   },
   errorMessage: {
     textAlign: "center",
-    color: "#B00020",
+    color: BrandColors.neutral,
   },
   errorRetry: {
-    color: BrandColors.primaryPink,
+    color: BrandColors.primary,
     fontWeight: "600",
   },
 });

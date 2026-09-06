@@ -76,7 +76,7 @@ function CameraActionBarInner({
           <MaterialIcons
             name="bolt"
             size={44}
-            color={BrandColors.primaryPink}
+            color={BrandColors.primary}
           />
         </Pressable>
       </View>
@@ -147,8 +147,8 @@ const styles = StyleSheet.create({
     height: SNAP_OUTER_DIAMETER,
     borderRadius: SNAP_OUTER_DIAMETER / 2,
     borderWidth: 4,
-    borderColor: BrandColors.secondaryYellow,
-    backgroundColor: BrandColors.secondaryYellow,
+    borderColor: BrandColors.white,
+    backgroundColor: BrandColors.white,
     alignItems: "center",
     justifyContent: "center",
     shadowColor: BrandColors.black,
@@ -168,7 +168,7 @@ const styles = StyleSheet.create({
     width: 46,
     height: 46,
     borderRadius: 23,
-    backgroundColor: BrandColors.primaryPink,
+    backgroundColor: BrandColors.primary,
     alignItems: "center",
     justifyContent: "center",
   },

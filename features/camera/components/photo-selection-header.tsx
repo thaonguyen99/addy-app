@@ -27,12 +27,12 @@ export const PhotoSelectionGalleryButton = memo(
         ]}
       >
         {picking ? (
-          <ActivityIndicator color={BrandColors.primaryPink} size="small" />
+          <ActivityIndicator color={BrandColors.primary} size="small" />
         ) : (
           <MaterialIcons
             name="add-photo-alternate"
             size={22}
-            color={BrandColors.gray100}
+            color={BrandColors.neutral}
           />
         )}
       </Pressable>
@@ -47,8 +47,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     borderRadius: 20,
-    backgroundColor: BrandColors.gray800,
+    backgroundColor: BrandColors.secondary,
     borderWidth: 1,
-    borderColor: BrandColors.gray700,
+    borderColor: BrandColors.neutralBorder,
   },
 });

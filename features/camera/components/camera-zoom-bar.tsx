@@ -75,7 +75,7 @@ function CameraZoomBarInner({
         <Ionicons
           name="remove"
           size={16}
-          color={atMin ? BrandColors.gray600 : BrandColors.white}
+          color={atMin ? BrandColors.neutralMuted : BrandColors.white}
         />
       </Pressable>
 
@@ -112,7 +112,7 @@ function CameraZoomBarInner({
         <Ionicons
           name="add"
           size={16}
-          color={atMax ? BrandColors.gray600 : BrandColors.white}
+          color={atMax ? BrandColors.neutralMuted : BrandColors.white}
         />
       </Pressable>
     </View>
@@ -137,9 +137,9 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: BrandColors.gray800,
+    backgroundColor: BrandColors.secondary,
     borderWidth: 1,
-    borderColor: BrandColors.gray700,
+    borderColor: BrandColors.neutralBorder,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -167,12 +167,12 @@ const styles = StyleSheet.create({
     height: 4,
     width: "100%",
     borderRadius: 2,
-    backgroundColor: BrandColors.gray700,
+    backgroundColor: BrandColors.neutralBorder,
     overflow: "hidden",
   },
   fill: {
     height: "100%",
     borderRadius: 2,
-    backgroundColor: BrandColors.primaryPink,
+    backgroundColor: BrandColors.primary,
   },
 });

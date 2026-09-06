@@ -174,9 +174,9 @@ const styles = StyleSheet.create({
     position: "relative",
     borderRadius: cameraLayout.cornerRadiusLg,
     overflow: "hidden",
-    backgroundColor: BrandColors.gray800,
+    backgroundColor: BrandColors.gray900,
     borderWidth: 1,
-    borderColor: BrandColors.gray700,
+    borderColor: BrandColors.neutralBorder,
   },
   gestureRoot: {
     flex: 1,

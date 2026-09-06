@@ -50,11 +50,11 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 15,
     fontWeight: "600",
-    color: BrandColors.gray50,
+    color: BrandColors.neutral,
   },
   hint: {
     fontSize: 13,
-    color: BrandColors.gray500,
+    color: BrandColors.neutralMuted,
     marginBottom: 4,
   },
   row: {
@@ -70,12 +70,12 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     borderRadius: cameraLayout.cornerRadiusMd,
     borderWidth: 1.5,
-    borderColor: BrandColors.gray700,
-    backgroundColor: BrandColors.gray800,
+    borderColor: BrandColors.neutralBorder,
+    backgroundColor: BrandColors.secondary,
   },
   optionSelected: {
-    borderColor: BrandColors.primaryPink,
-    backgroundColor: "rgba(242, 97, 156, 0.15)",
+    borderColor: BrandColors.primary,
+    backgroundColor: BrandColors.primaryMuted,
   },
   optionPressed: {
     opacity: 0.85,

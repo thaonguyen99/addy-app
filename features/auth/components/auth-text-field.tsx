@@ -31,7 +31,7 @@ export function AuthTextField({
       <Text style={styles.label}>{label}</Text>
       <View style={[styles.inputRow, error ? styles.inputError : null]}>
         <TextInput
-          placeholderTextColor={BrandColors.gray400}
+          placeholderTextColor={BrandColors.neutralMuted}
           style={[styles.input, style]}
           autoCapitalize="none"
           secureTextEntry={isPassword ? hidden : false}
@@ -46,7 +46,7 @@ export function AuthTextField({
             <Ionicons
               name={hidden ? "eye-outline" : "eye-off-outline"}
               size={20}
-              color={BrandColors.gray500}
+              color={BrandColors.neutralMuted}
             />
           </Pressable>
         )}
@@ -61,24 +61,24 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 14,
     fontWeight: "600",
-    color: BrandColors.gray700,
+    color: BrandColors.neutralMuted,
   },
   inputRow: {
     flexDirection: "row",
     alignItems: "center",
     borderWidth: 1,
-    borderColor: BrandColors.stroke2,
+    borderColor: BrandColors.neutralBorder,
     borderRadius: 12,
-    backgroundColor: BrandColors.placeHolder,
+    backgroundColor: BrandColors.secondary,
   },
   input: {
     flex: 1,
     paddingHorizontal: 14,
     paddingVertical: 12,
     fontSize: 16,
-    color: BrandColors.gray900,
+    color: BrandColors.neutral,
   },
   eyeButton: { paddingHorizontal: 12 },
-  inputError: { borderColor: BrandColors.primaryPink },
-  error: { fontSize: 13, color: BrandColors.primaryPink },
+  inputError: { borderColor: BrandColors.primary },
+  error: { fontSize: 13, color: BrandColors.primary },
 });

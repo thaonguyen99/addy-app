@@ -23,24 +23,25 @@ export default function HomeScreen() {
         </ThemedText>
 
         {isLoading ? (
-          <ActivityIndicator color={BrandColors.primaryPink} />
+          <ActivityIndicator color={BrandColors.primary} />
         ) : (
           <View style={styles.statsRow}>
             <View style={styles.statCard}>
-              <ThemedText type="subtitle">{stats?.totalMemories ?? 0}</ThemedText>
+              <ThemedText type="subtitle">
+                {stats?.totalMemories ?? 0}
+              </ThemedText>
               <ThemedText style={styles.statLabel}>Memories</ThemedText>
             </View>
             <View style={styles.statCard}>
-              <ThemedText type="subtitle">{stats?.placesVisited ?? 0}</ThemedText>
+              <ThemedText type="subtitle">
+                {stats?.placesVisited ?? 0}
+              </ThemedText>
               <ThemedText style={styles.statLabel}>Places</ThemedText>
             </View>
           </View>
         )}
 
-        <Pressable
-          style={styles.cta}
-          onPress={() => router.push("/camera")}
-        >
+        <Pressable style={styles.cta} onPress={() => router.push("/camera")}>
           <ThemedText style={styles.ctaText}>Open camera</ThemedText>
         </Pressable>
         <Pressable
@@ -63,34 +64,38 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: BrandColors.white },
+  safe: { flex: 1, backgroundColor: BrandColors.gray900 },
   content: { flex: 1, padding: 24, gap: 16 },
-  title: { color: BrandColors.gray900 },
-  sub: { color: BrandColors.gray600, fontSize: 16, lineHeight: 24 },
+  title: { color: BrandColors.neutral },
+  sub: { color: BrandColors.neutralMuted, fontSize: 16, lineHeight: 24 },
   statsRow: { flexDirection: "row", gap: 12 },
   statCard: {
     flex: 1,
-    backgroundColor: BrandColors.placeHolder,
+    backgroundColor: BrandColors.elevated,
     borderRadius: 14,
     padding: 16,
     gap: 4,
     borderWidth: 1,
-    borderColor: BrandColors.stroke2,
+    borderColor: BrandColors.neutralBorder,
   },
-  statLabel: { color: BrandColors.gray600, fontSize: 14 },
+  statLabel: { color: BrandColors.neutralMuted, fontSize: 14 },
   cta: {
-    backgroundColor: BrandColors.primaryPink,
+    backgroundColor: BrandColors.primary,
     borderRadius: 12,
     paddingVertical: 14,
     alignItems: "center",
   },
   ctaSecondary: {
-    backgroundColor: BrandColors.white,
+    backgroundColor: BrandColors.elevated,
     borderWidth: 1,
-    borderColor: BrandColors.stroke2,
+    borderColor: BrandColors.neutralBorder,
   },
-  ctaText: { color: BrandColors.white, fontWeight: "600", fontSize: 16 },
-  ctaTextSecondary: { color: BrandColors.gray800, fontWeight: "600", fontSize: 16 },
+  ctaText: { color: BrandColors.neutral, fontWeight: "600", fontSize: 16 },
+  ctaTextSecondary: {
+    color: BrandColors.neutral,
+    fontWeight: "600",
+    fontSize: 16,
+  },
   signOut: { marginTop: "auto", alignItems: "center", paddingVertical: 12 },
-  signOutText: { color: BrandColors.gray500, fontSize: 15 },
+  signOutText: { color: BrandColors.neutralMuted, fontSize: 15 },
 });

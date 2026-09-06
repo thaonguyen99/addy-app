@@ -38,7 +38,7 @@ export function CameraPermissionGatePanel(
           <MaterialIcons
             name="smartphone"
             size={56}
-            color={BrandColors.softLilac}
+            color={BrandColors.primary}
           />
           <Text style={styles.permissionTitle}>Camera on your phone</Text>
           <Text style={styles.permissionBody}>
@@ -54,7 +54,7 @@ export function CameraPermissionGatePanel(
   if (props.variant === "pending") {
     return (
       <View style={styles.fillDark}>
-        <ActivityIndicator size="large" color={BrandColors.primaryPink} />
+        <ActivityIndicator size="large" color={BrandColors.primary} />
         <Text style={styles.mutedLight}>Checking camera…</Text>
       </View>
     );
@@ -66,7 +66,7 @@ export function CameraPermissionGatePanel(
         <MaterialIcons
           name="photo-camera"
           size={56}
-          color={BrandColors.softLilac}
+          color={BrandColors.primary}
         />
         <Text style={styles.permissionTitle}>Camera access</Text>
         <Text style={styles.permissionBody}>
@@ -110,18 +110,18 @@ const styles = StyleSheet.create({
   permissionTitle: {
     fontSize: 22,
     fontWeight: "700",
-    color: BrandColors.white,
+    color: BrandColors.neutral,
     textAlign: "center",
   },
   permissionBody: {
     fontSize: 15,
-    color: BrandColors.gray300,
+    color: BrandColors.neutralMuted,
     textAlign: "center",
     lineHeight: 22,
   },
   mutedLight: {
     fontSize: 14,
-    color: BrandColors.gray500,
+    color: BrandColors.neutralMuted,
     textAlign: "center",
   },
   allowBtnSpacing: {

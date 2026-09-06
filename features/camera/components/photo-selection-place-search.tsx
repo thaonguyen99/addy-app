@@ -19,14 +19,14 @@ export const PhotoSelectionPlaceSearch = memo(function PhotoSelectionPlaceSearch
       <MaterialIcons
         name="search"
         size={20}
-        color={BrandColors.gray500}
+        color={BrandColors.neutralMuted}
         style={styles.icon}
       />
       <TextInput
         value={value}
         onChangeText={onChangeText}
         placeholder="Venue name (optional)"
-        placeholderTextColor={BrandColors.gray500}
+        placeholderTextColor={BrandColors.neutralMuted}
         style={styles.input}
         autoCorrect={false}
         returnKeyType="search"
@@ -40,9 +40,9 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     borderWidth: 1,
-    borderColor: BrandColors.gray700,
+    borderColor: BrandColors.neutralBorder,
     borderRadius: cameraLayout.cornerRadiusMd,
-    backgroundColor: BrandColors.gray800,
+    backgroundColor: BrandColors.secondary,
     paddingHorizontal: 12,
     minHeight: 44,
   },
@@ -52,7 +52,7 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     fontSize: 16,
-    color: BrandColors.gray50,
+    color: BrandColors.neutral,
     paddingVertical: 10,
   },
 });

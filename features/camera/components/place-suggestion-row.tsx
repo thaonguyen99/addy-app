@@ -39,7 +39,7 @@ export function PlaceSuggestionRow({
         <MaterialIcons
           name="check-circle"
           size={22}
-          color={BrandColors.primaryPink}
+          color={BrandColors.primary}
         />
       ) : (
         <View style={styles.checkPlaceholder} />
@@ -57,12 +57,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     borderRadius: cameraLayout.cornerRadiusMd,
     borderWidth: 1,
-    borderColor: BrandColors.gray700,
-    backgroundColor: BrandColors.gray800,
+    borderColor: BrandColors.neutralBorder,
+    backgroundColor: BrandColors.secondary,
   },
   rowSelected: {
-    borderColor: BrandColors.primaryPink,
-    backgroundColor: "rgba(242, 97, 156, 0.12)",
+    borderColor: BrandColors.primary,
+    backgroundColor: BrandColors.primaryMuted,
   },
   rowPressed: {
     opacity: 0.9,
@@ -74,11 +74,11 @@ const styles = StyleSheet.create({
   name: {
     fontSize: 15,
     fontWeight: "600",
-    color: BrandColors.gray50,
+    color: BrandColors.neutral,
   },
   address: {
     fontSize: 13,
-    color: BrandColors.gray400,
+    color: BrandColors.neutralMuted,
     lineHeight: 18,
   },
   checkPlaceholder: {

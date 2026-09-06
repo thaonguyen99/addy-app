@@ -60,6 +60,6 @@ const styles = StyleSheet.create({
     width: PHOTO_SIZE,
     height: PHOTO_SIZE,
     borderRadius: 1,
-    backgroundColor: BrandColors.gray200,
+    backgroundColor: BrandColors.neutralBorder,
   },
 });

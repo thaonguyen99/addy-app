@@ -113,14 +113,14 @@ export default function SignInScreen() {
 
 const styles = StyleSheet.create({
   dividerRow: { flexDirection: "row", alignItems: "center", gap: 12 },
-  divider: { flex: 1, height: 1, backgroundColor: BrandColors.stroke2 },
-  dividerText: { color: BrandColors.gray500, fontSize: 14 },
+  divider: { flex: 1, height: 1, backgroundColor: BrandColors.neutralBorder },
+  dividerText: { color: BrandColors.neutralMuted, fontSize: 14 },
   forgot: {
     alignSelf: "flex-end",
     color: BrandColors.link,
     fontSize: 14,
     fontWeight: "500",
   },
-  footerText: { textAlign: "center", color: BrandColors.gray600 },
+  footerText: { textAlign: "center", color: BrandColors.neutralMuted },
   link: { color: BrandColors.link, fontWeight: "600" },
 });

@@ -18,7 +18,12 @@ type AuthScreenProps = {
   footer?: ReactNode;
 };
 
-export function AuthScreen({ title, subtitle, children, footer }: AuthScreenProps) {
+export function AuthScreen({
+  title,
+  subtitle,
+  children,
+  footer,
+}: AuthScreenProps) {
   return (
     <SafeAreaView style={styles.safe} edges={["top", "bottom"]}>
       <KeyboardAvoidingView
@@ -46,7 +51,7 @@ export function AuthScreen({ title, subtitle, children, footer }: AuthScreenProp
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: BrandColors.white },
+  safe: { flex: 1, backgroundColor: BrandColors.gray900 },
   flex: { flex: 1 },
   scroll: {
     flexGrow: 1,
@@ -56,8 +61,8 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   header: { gap: 8, marginBottom: 8 },
-  title: { color: BrandColors.gray900 },
-  subtitle: { color: BrandColors.gray600, fontSize: 16, lineHeight: 24 },
+  title: { color: BrandColors.neutral },
+  subtitle: { color: BrandColors.neutralMuted, fontSize: 16, lineHeight: 24 },
   footer: {
     paddingHorizontal: 24,
     paddingBottom: 16,

@@ -68,7 +68,7 @@ export function CreatePinScreen() {
           <MaterialIcons
             name="place"
             size={22}
-            color={BrandColors.primaryPink}
+            color={BrandColors.primary}
           />
           <View style={styles.placeTextWrap}>
             <Text style={styles.placeName}>{selectedPlace.name}</Text>
@@ -109,18 +109,18 @@ export function CreatePinScreen() {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: BrandColors.white },
+  safe: { flex: 1, backgroundColor: BrandColors.gray900 },
   scroll: { padding: 24, gap: 14, paddingBottom: 40 },
-  title: { fontSize: 28, fontWeight: "700", color: BrandColors.gray900 },
-  subtitle: { fontSize: 15, color: BrandColors.gray600, lineHeight: 22 },
+  title: { fontSize: 28, fontWeight: "700", color: BrandColors.neutral },
+  subtitle: { fontSize: 15, color: BrandColors.neutralMuted, lineHeight: 22 },
   thumbWrap: { marginRight: 10, position: "relative" },
   thumb: { width: 88, height: 88, borderRadius: 12 },
   coverBadge: {
     position: "absolute",
     bottom: 6,
     left: 6,
-    backgroundColor: BrandColors.primaryPink,
-    color: BrandColors.white,
+    backgroundColor: BrandColors.primary,
+    color: BrandColors.neutral,
     fontSize: 11,
     fontWeight: "600",
     paddingHorizontal: 6,
@@ -135,8 +135,8 @@ const styles = StyleSheet.create({
     padding: 14,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: BrandColors.stroke2,
-    backgroundColor: BrandColors.placeHolder,
+    borderColor: BrandColors.neutralBorder,
+    backgroundColor: BrandColors.secondary,
   },
   placeTextWrap: {
     flex: 1,
@@ -145,11 +145,11 @@ const styles = StyleSheet.create({
   placeName: {
     fontSize: 16,
     fontWeight: "600",
-    color: BrandColors.gray900,
+    color: BrandColors.neutral,
   },
   placeAddress: {
     fontSize: 14,
-    color: BrandColors.gray600,
+    color: BrandColors.neutralMuted,
     lineHeight: 20,
   },
   changePlaceBtn: {
@@ -159,18 +159,18 @@ const styles = StyleSheet.create({
   changePlaceText: {
     fontSize: 14,
     fontWeight: "600",
-    color: BrandColors.primaryPink,
+    color: BrandColors.primary,
   },
   metaSection: {
     gap: 6,
     padding: 14,
     borderRadius: 12,
-    backgroundColor: BrandColors.gray50,
+    backgroundColor: BrandColors.primaryMuted,
   },
   metaLabel: {
     fontSize: 13,
     fontWeight: "600",
-    color: BrandColors.gray500,
+    color: BrandColors.neutralMuted,
     textTransform: "uppercase",
     letterSpacing: 0.4,
   },
@@ -179,15 +179,15 @@ const styles = StyleSheet.create({
   },
   feelingText: {
     fontSize: 15,
-    color: BrandColors.gray800,
+    color: BrandColors.neutral,
     lineHeight: 22,
   },
   cancel: {
     textAlign: "center",
-    color: BrandColors.gray600,
+    color: BrandColors.neutralMuted,
     fontSize: 15,
     marginTop: 4,
   },
   empty: { flex: 1, justifyContent: "center", padding: 24, gap: 16 },
-  emptyTitle: { fontSize: 18, fontWeight: "600", color: BrandColors.gray800 },
+  emptyTitle: { fontSize: 18, fontWeight: "600", color: BrandColors.neutral },
 });

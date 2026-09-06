@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { fetchPlaceSearch } from "@/lib/api/places";
 import { toApiClientError } from "@/lib/api/errors";
 import type { Coordinates } from "@/features/location/get-current-coordinates";
+import { HCM_COORDINATES } from "@/features/location/fallback-places";
 import type { PlaceSuggestion } from "@/types/api";
 
 const DEBOUNCE_MS = 350;
@@ -29,10 +30,11 @@ export function useDebouncedPlaceSearch(
       setLoading(true);
       setError(null);
       try {
+        const bias = coords ?? HCM_COORDINATES;
         const data = await fetchPlaceSearch(
           trimmed,
-          coords?.latitude,
-          coords?.longitude,
+          bias.latitude,
+          bias.longitude,
         );
         setResults(data);
       } catch (err) {

@@ -1,90 +1,78 @@
 /**
- * Below are the colors that are used in the app. The colors are defined in the light and dark mode.
- * There are many other ways to style your app. For example, [Nativewind](https://www.nativewind.dev/), [Tamagui](https://tamagui.dev/), [unistyles](https://reactnativeunistyles.vercel.app), etc.
+ * App color tokens. The product is dark-only: light and dark palettes match
+ * so ThemedText / useThemeColor cannot fall back to a white screen.
  */
 
 import { Platform } from "react-native";
 
 export const BrandColors = {
-  primaryPink: "#F2619C",
-  secondaryYellow: "#EDE986",
-  softLilac: "#E7BEF8",
-  blueberryMilk: "#93ABD9",
   white: "#FFFFFF",
   black: "#000000",
-  gray50: "#F9FAFB",
-  gray100: "#F3F4F6",
-  gray200: "#E5E7EB",
-  gray300: "#D1D5DB",
-  gray400: "#9CA3AF",
-  gray500: "#6B7280",
-  gray600: "#4B5563",
-  gray700: "#374151",
-  gray800: "#1F2937",
-  gray900: "#111827",
-  elevated: "#EEF2F6",
-  placeHolder: "#F8FAFC",
-  link: "#2970FF",
-  stroke1: "#EEF2F6",
-  stroke2: "#E3E8EF",
-  stroke3: "#CDD5DF",
+
+  // Green-tinted dark scale (derived from Garden Shadow), for backgrounds/surfaces/borders
+  gray50: "#F3F6F1", // near-white, green tint — light text on dark, or rare light surfaces
+  gray100: "#E0E7DC", // = sagePaper — primary light text/icon color
+  gray200: "#C3D2C7", // secondary text, subtle icons
+  gray300: "#8AA695", // disabled text, low-emphasis icons
+  gray400: "#5A7A6A", // disabled controls, placeholder icons
+  gray500: "#3D5F50", // mid-tone borders, dividers on elevated surfaces
+  gray600: "#2A473C", // elevated surface (cards, sheets, modals)
+  gray700: "#1F352C", // = gardenShadow — base app background
+  gray800: "#16241D", // deeper nested surfaces
+  gray900: "#0D1512", // base app background
+
+  elevated: "#2A473C", // card/sheet surface, one step up from background
+  placeHolder: "#243830", // input field background (between bg and elevated)
+
+  link: "#6EA8FE", // brightened blue for legible links on dark bg
+
+  stroke1: "rgba(224, 231, 220, 0.08)", // subtle divider
+  stroke2: "rgba(224, 231, 220, 0.16)", // default border
+  stroke3: "rgba(224, 231, 220, 0.32)", // emphasized border / focus ring base
+
+  /** Primary actions, selected states, key CTAs. */
+  primary: "#BB2649",
+  /** Dark surfaces and app backgrounds. */
+  secondary: "#1F352C",
+  /** Text, icons, and light-on-dark contrast. */
+  neutral: "#E0E7DC",
+  /** Selected fills on dark surfaces. */
+  primaryMuted: "rgba(187, 38, 73, 0.22)",
+  /** Captions and placeholders — solid sage, readable on secondary. */
+  neutralMuted: "#C3D2C7",
+  /** Visible edge on garden-shadow surfaces. */
+  neutralBorder: "#5A7A6A",
 };
 
 export type BrandColorName = keyof typeof BrandColors;
 
+const darkPalette = {
+  background: BrandColors.gray900,
+  text: BrandColors.neutral,
+  primary: BrandColors.primary,
+  white: BrandColors.white,
+  black: BrandColors.black,
+  gray50: BrandColors.gray50,
+  gray100: BrandColors.gray100,
+  gray200: BrandColors.gray200,
+  gray300: BrandColors.gray300,
+  gray400: BrandColors.gray400,
+  gray500: BrandColors.gray500,
+  gray600: BrandColors.gray600,
+  gray700: BrandColors.gray700,
+  gray800: BrandColors.gray800,
+  gray900: BrandColors.gray900,
+  elevated: BrandColors.elevated,
+  placeHolder: BrandColors.placeHolder,
+  link: BrandColors.link,
+  stroke1: BrandColors.stroke1,
+  stroke2: BrandColors.stroke2,
+  stroke3: BrandColors.stroke3,
+};
+
 export const Colors = {
-  light: {
-    background: "#FFFFFF",
-    text: "#111827",
-    primaryPink: "#F2619C",
-    secondaryYellow: "#EDE986",
-    softLilac: "#E7BEF8",
-    blueberryMilk: "#93ABD9",
-    white: "#FFFFFF",
-    black: "#000000",
-    gray50: "#F9FAFB",
-    gray100: "#F3F4F6",
-    gray200: "#E5E7EB",
-    gray300: "#D1D5DB",
-    gray400: "#9CA3AF",
-    gray500: "#6B7280",
-    gray600: "#4B5563",
-    gray700: "#374151",
-    gray800: "#1F2937",
-    gray900: "#111827",
-    elevated: "#EEF2F6",
-    placeHolder: "#F8FAFC",
-    link: "#2970FF",
-    stroke1: "#EEF2F6",
-    stroke2: "#E3E8EF",
-    stroke3: "#CDD5DF",
-  },
-  dark: {
-    background: "#FFFFFF",
-    text: "#111827",
-    primaryPink: "#F2619C",
-    secondaryYellow: "#EDE986",
-    softLilac: "#E7BEF8",
-    blueberryMilk: "#93ABD9",
-    white: "#FFFFFF",
-    black: "#000000",
-    gray50: "#F9FAFB",
-    gray100: "#F3F4F6",
-    gray200: "#E5E7EB",
-    gray300: "#D1D5DB",
-    gray400: "#9CA3AF",
-    gray500: "#6B7280",
-    gray600: "#4B5563",
-    gray700: "#374151",
-    gray800: "#1F2937",
-    gray900: "#111827",
-    elevated: "#EEF2F6",
-    placeHolder: "#F8FAFC",
-    link: "#2970FF",
-    stroke1: "#EEF2F6",
-    stroke2: "#E3E8EF",
-    stroke3: "#CDD5DF",
-  },
+  light: { ...darkPalette },
+  dark: { ...darkPalette },
 };
 
 export const Fonts = Platform.select({

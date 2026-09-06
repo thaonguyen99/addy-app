@@ -106,7 +106,7 @@ export function PlacePickerSection({
           <MaterialIcons
             name="place"
             size={18}
-            color={BrandColors.primaryPink}
+            color={BrandColors.primary}
           />
           <View style={styles.selectedTextWrap}>
             <Text style={styles.selectedName} numberOfLines={1}>
@@ -126,7 +126,7 @@ export function PlacePickerSection({
             <MaterialIcons
               name="my-location"
               size={18}
-              color={BrandColors.gray400}
+              color={BrandColors.neutralMuted}
             />
           </Pressable>
         ) : null}
@@ -194,13 +194,13 @@ const styles = StyleSheet.create({
     gap: 8,
     padding: 12,
     borderRadius: cameraLayout.cornerRadiusMd,
-    backgroundColor: BrandColors.gray800,
+    backgroundColor: BrandColors.secondary,
     borderWidth: 1,
-    borderColor: BrandColors.gray700,
+    borderColor: BrandColors.neutralBorder,
   },
   bannerText: {
     fontSize: 13,
-    color: BrandColors.gray400,
+    color: BrandColors.neutralMuted,
     lineHeight: 18,
   },
   settingsBtn: {
@@ -209,7 +209,7 @@ const styles = StyleSheet.create({
   settingsBtnText: {
     fontSize: 14,
     fontWeight: "600",
-    color: BrandColors.primaryPink,
+    color: BrandColors.primary,
   },
   selectedChip: {
     flexDirection: "row",
@@ -218,8 +218,8 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: cameraLayout.cornerRadiusMd,
     borderWidth: 1,
-    borderColor: BrandColors.primaryPink,
-    backgroundColor: "rgba(242, 97, 156, 0.12)",
+    borderColor: BrandColors.primary,
+    backgroundColor: BrandColors.primaryMuted,
   },
   selectedTextWrap: {
     flex: 1,
@@ -228,11 +228,11 @@ const styles = StyleSheet.create({
   selectedName: {
     fontSize: 14,
     fontWeight: "600",
-    color: BrandColors.gray50,
+    color: BrandColors.neutral,
   },
   selectedAddress: {
     fontSize: 12,
-    color: BrandColors.gray400,
+    color: BrandColors.neutralMuted,
   },
   listHeader: {
     flexDirection: "row",
@@ -242,7 +242,7 @@ const styles = StyleSheet.create({
   listLabel: {
     fontSize: 13,
     fontWeight: "600",
-    color: BrandColors.gray500,
+    color: BrandColors.neutralMuted,
     textTransform: "uppercase",
     letterSpacing: 0.5,
   },
@@ -255,7 +255,7 @@ const styles = StyleSheet.create({
   skeletonRow: {
     height: 56,
     borderRadius: cameraLayout.cornerRadiusMd,
-    backgroundColor: BrandColors.gray800,
+    backgroundColor: BrandColors.neutralBorder,
   },
   emptyWrap: {
     paddingVertical: 12,
@@ -263,12 +263,12 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 13,
-    color: BrandColors.gray500,
+    color: BrandColors.neutralMuted,
     textAlign: "center",
   },
   emptyHint: {
     fontSize: 12,
-    color: BrandColors.gray600,
+    color: BrandColors.neutralMuted,
     textAlign: "center",
     lineHeight: 18,
   },
@@ -278,6 +278,6 @@ const styles = StyleSheet.create({
   retryBtnText: {
     fontSize: 14,
     fontWeight: "600",
-    color: BrandColors.primaryPink,
+    color: BrandColors.primary,
   },
 });

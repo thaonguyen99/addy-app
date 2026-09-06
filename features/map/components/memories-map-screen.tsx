@@ -39,25 +39,17 @@ function boundsToMapBounds([west, south, east, north]: LngLatBounds): MapBounds 
   return { north, south, east, west, limit: 50 };
 }
 
-function SuccessToast({ visible }: { visible: boolean }) {
-  const translateY = useRef(new Animated.Value(-80)).current;
+function SuccessToast() {
+  const translateY = useRef(new Animated.Value(-120)).current;
 
   useEffect(() => {
-    if (visible) {
-      Animated.spring(translateY, {
-        toValue: 0,
-        useNativeDriver: true,
-        tension: 80,
-        friction: 10,
-      }).start();
-    } else {
-      Animated.timing(translateY, {
-        toValue: -80,
-        duration: 250,
-        useNativeDriver: true,
-      }).start();
-    }
-  }, [visible, translateY]);
+    Animated.spring(translateY, {
+      toValue: 0,
+      useNativeDriver: true,
+      tension: 80,
+      friction: 10,
+    }).start();
+  }, [translateY]);
 
   return (
     <Animated.View style={[styles.toast, { transform: [{ translateY }] }]}>
@@ -156,7 +148,7 @@ export function MemoriesMapScreen() {
       </Map>
 
       <SafeAreaView style={styles.overlay} edges={["top"]} pointerEvents="none">
-        <SuccessToast visible={showSuccessToast} />
+        {showSuccessToast ? <SuccessToast /> : null}
         <View style={styles.badge}>
           <Text style={styles.badgeText}>
             {isLoading ? "Loading pins…" : `${pins.length} memories`}
@@ -188,7 +180,7 @@ const styles = StyleSheet.create({
     elevation: 8,
   },
   toastText: {
-    color: BrandColors.white,
+    color: BrandColors.neutral,
     fontSize: 14,
     fontWeight: "600",
     letterSpacing: 0.2,
@@ -197,18 +189,18 @@ const styles = StyleSheet.create({
   badge: {
     margin: 16,
     alignSelf: "flex-start",
-    backgroundColor: "rgba(255,255,255,0.92)",
+    backgroundColor: "rgba(31, 53, 44, 0.92)",
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 10,
   },
-  badgeText: { fontSize: 14, fontWeight: "600", color: BrandColors.gray800 },
+  badgeText: { fontSize: 14, fontWeight: "600", color: BrandColors.neutral },
   webFallback: {
     flex: 1,
     padding: 24,
     justifyContent: "center",
     gap: 12,
   },
-  webTitle: { fontSize: 20, fontWeight: "700", color: BrandColors.gray900 },
-  webBody: { fontSize: 15, color: BrandColors.gray600, lineHeight: 22 },
+  webTitle: { fontSize: 20, fontWeight: "700", color: BrandColors.neutral },
+  webBody: { fontSize: 15, color: BrandColors.neutralMuted, lineHeight: 22 },
 });
