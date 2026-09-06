@@ -30,10 +30,13 @@ export function GoogleSignInButton() {
       if (error instanceof ApiClientError && error.code === "BAD_REQUEST") {
         return;
       }
+      console.error("[Google Sign-In]", error);
       const message =
         error instanceof ApiClientError
           ? error.message
-          : "Could not sign in with Google";
+          : error instanceof Error && error.message
+            ? error.message
+            : "Could not sign in with Google";
       Alert.alert("Google Sign-In", message);
     } finally {
       setLoading(false);

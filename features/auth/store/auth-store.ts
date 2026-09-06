@@ -63,29 +63,40 @@ export const useAuthStore = create<AuthState>((set, get) => {
 
     hydrate: async () => {
       set({ status: "hydrating" });
-      const [stored, pendingEmail] = await Promise.all([
-        loadStoredSession(),
-        getPendingEmail(),
-      ]);
+      try {
+        const [stored, pendingEmail] = await Promise.all([
+          loadStoredSession(),
+          getPendingEmail(),
+        ]);
 
-      if (stored.user && stored.tokens) {
+        if (stored.user && stored.tokens) {
+          set({
+            status: "authenticated",
+            user: stored.user,
+            accessToken: stored.tokens.accessToken,
+            refreshToken: stored.tokens.refreshToken,
+            pendingEmail: pendingEmail ?? null,
+          });
+          return;
+        }
+
         set({
-          status: "authenticated",
-          user: stored.user,
-          accessToken: stored.tokens.accessToken,
-          refreshToken: stored.tokens.refreshToken,
+          status: "unauthenticated",
+          user: null,
+          accessToken: null,
+          refreshToken: null,
           pendingEmail: pendingEmail ?? null,
         });
-        return;
+      } catch (error) {
+        console.error("[auth] hydrate failed", error);
+        set({
+          status: "unauthenticated",
+          user: null,
+          accessToken: null,
+          refreshToken: null,
+          pendingEmail: null,
+        });
       }
-
-      set({
-        status: "unauthenticated",
-        user: null,
-        accessToken: null,
-        refreshToken: null,
-        pendingEmail: pendingEmail ?? null,
-      });
     },
 
     setSession: async ({ user, tokens }) => {

@@ -5,10 +5,18 @@ const googleClientIds = (process.env.GOOGLE_OAUTH_CLIENT_IDS ?? "")
   .map((id) => id.trim())
   .filter(Boolean);
 
+// Expected order: iOS client ID, Web client ID (see .env.example)
 const iosClientId = googleClientIds[0] ?? "";
-const webClientId =
-  googleClientIds.find((id) => id.includes("apps.googleusercontent.com")) ??
-  iosClientId;
+const webClientId = googleClientIds[1] ?? "";
+
+/** Reversed iOS client ID — required URL scheme for Google Sign-In on iOS */
+function toIosUrlScheme(clientId) {
+  const suffix = ".apps.googleusercontent.com";
+  if (!clientId.endsWith(suffix)) return "";
+  return `com.googleusercontent.apps.${clientId.slice(0, -suffix.length)}`;
+}
+
+const iosUrlScheme = toIosUrlScheme(iosClientId);
 
 /** @type {import('expo/config').ExpoConfig} */
 module.exports = ({ config }) => ({
@@ -85,7 +93,13 @@ module.exports = ({ config }) => ({
         dark: { backgroundColor: "#000000" },
       },
     ],
-    "@react-native-google-signin/google-signin",
+    iosUrlScheme
+      ? [
+          "@react-native-google-signin/google-signin",
+          { iosUrlScheme },
+        ]
+      : "@react-native-google-signin/google-signin",
+    "@maplibre/maplibre-react-native",
   ],
   experiments: {
     typedRoutes: true,
@@ -95,6 +109,7 @@ module.exports = ({ config }) => ({
     apiUrl: process.env.API_URL ?? "http://localhost:5001",
     googleIosClientId: iosClientId,
     googleWebClientId: webClientId,
+    goongMapApiKey: process.env.GOONG_MAP_API_KEY ?? "",
     router: {},
     eas: {
       projectId: "eb53cb10-598d-456c-b2c3-15af9d2d3fee",

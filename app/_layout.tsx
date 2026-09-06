@@ -16,7 +16,7 @@ import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
-import { ActivityIndicator, StyleSheet, View } from "react-native";
+import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
 import "react-native-reanimated";
 
 import { useColorScheme } from "@/hooks/use-color-scheme";
@@ -25,6 +25,24 @@ import { queryClient } from "@/lib/query/client";
 import { BrandColors } from "@/constants/theme";
 
 SplashScreen.preventAutoHideAsync();
+
+export function ErrorBoundary({
+  error,
+  retry,
+}: {
+  error: Error;
+  retry: () => void;
+}) {
+  console.error("[app] render error caught by ErrorBoundary", error);
+  return (
+    <View style={styles.boot}>
+      <Text style={styles.errorMessage}>{error.message}</Text>
+      <Pressable onPress={retry}>
+        <Text style={styles.errorRetry}>Try again</Text>
+      </Pressable>
+    </View>
+  );
+}
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
@@ -80,5 +98,15 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: BrandColors.white,
+    padding: 24,
+    gap: 16,
+  },
+  errorMessage: {
+    textAlign: "center",
+    color: "#B00020",
+  },
+  errorRetry: {
+    color: BrandColors.primaryPink,
+    fontWeight: "600",
   },
 });
