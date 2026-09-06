@@ -67,13 +67,22 @@ apiClient.interceptors.response.use(
       _retry?: boolean;
     };
 
+    const url = original?.url ?? "";
+    const isPublicAuthRoute =
+      url.includes("/auth/refresh") ||
+      url.includes("/auth/login") ||
+      url.includes("/auth/register") ||
+      url.includes("/auth/google") ||
+      url.includes("/auth/verify-otp") ||
+      url.includes("/auth/resend-otp") ||
+      url.includes("/auth/forgot-password") ||
+      url.includes("/auth/reset-password");
+
     if (
       error.response?.status === 401 &&
       original &&
       !original._retry &&
-      !original.url?.includes("/auth/refresh") &&
-      !original.url?.includes("/auth/login") &&
-      !original.url?.includes("/auth/register")
+      !isPublicAuthRoute
     ) {
       original._retry = true;
       try {

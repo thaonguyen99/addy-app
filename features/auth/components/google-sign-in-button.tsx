@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Alert, Platform } from "react-native";
+import { router } from "expo-router";
 
 import { AuthPrimaryButton } from "@/features/auth/components/auth-primary-button";
 import { getGoogleIdToken } from "@/features/auth/google/google-sign-in";
@@ -26,8 +27,9 @@ export function GoogleSignInButton() {
       const idToken = await getGoogleIdToken();
       const session = await googleMutation.mutateAsync({ idToken });
       await setSession(session);
+      router.replace("/(tabs)");
     } catch (error) {
-      if (error instanceof ApiClientError && error.code === "BAD_REQUEST") {
+      if (error instanceof ApiClientError && error.code === "SIGN_IN_CANCELLED") {
         return;
       }
       console.error("[Google Sign-In]", error);
