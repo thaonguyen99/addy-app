@@ -18,6 +18,7 @@ type DeniedProps = Readonly<{
   variant: "denied";
   canAskAgain: boolean;
   onRequestAccess: () => void;
+  onOpenSettings: () => void;
 }>;
 
 /** Native camera + permissions are unreliable in browser preview; steer devs to device. */
@@ -87,9 +88,24 @@ export function CameraPermissionGatePanel(
             </Text>
           </Pressable>
         ) : (
-          <Text style={styles.mutedLight}>
-            Enable camera for Addy in your device settings.
-          </Text>
+          <>
+            <Text style={styles.mutedLight}>
+              Camera access is turned off. Enable it for Addy in your device
+              settings.
+            </Text>
+            <Pressable
+              onPress={props.onOpenSettings}
+              style={({ pressed }) => [
+                sharedInteractionStyles.primaryCta,
+                styles.allowBtnSpacing,
+                pressed && sharedInteractionStyles.pressedSubtle,
+              ]}
+            >
+              <Text style={sharedInteractionStyles.primaryCtaText}>
+                Open settings
+              </Text>
+            </Pressable>
+          </>
         )}
       </View>
     </SafeAreaView>

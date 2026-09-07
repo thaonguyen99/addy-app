@@ -9,7 +9,7 @@ const FLASH_CYCLE: readonly FlashMode[] = ['off', 'on', 'auto'];
 
 export function useAddyCamera() {
   const cameraRef = useRef<CameraView | null>(null);
-  const { gate, requestPermission } = useCameraPermissionGate();
+  const { gate, requestPermission, refreshPermission } = useCameraPermissionGate();
   const [isCameraReady, setIsCameraReady] = useState(false);
   const [isCapturing, setIsCapturing] = useState(false);
   const [flash, setFlash] = useState<FlashMode>('off');
@@ -72,6 +72,7 @@ export function useAddyCamera() {
     cameraRef,
     gate,
     requestPermission,
+    refreshPermission,
     onCameraReady,
     isCameraReady,
     capturePhoto,

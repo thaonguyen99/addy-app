@@ -10,8 +10,9 @@ import type { CameraPermissionGate } from '@/features/camera/permissions/types';
 export function useCameraPermissionGate(): {
   gate: CameraPermissionGate;
   requestPermission: () => Promise<PermissionResponse>;
+  refreshPermission: () => Promise<PermissionResponse>;
 } {
-  const [response, requestPermission] = useCameraPermissions();
+  const [response, requestPermission, getPermission] = useCameraPermissions();
 
   const gate = useMemo((): CameraPermissionGate => {
     if (response === null) {
@@ -25,5 +26,5 @@ export function useCameraPermissionGate(): {
     };
   }, [response]);
 
-  return { gate, requestPermission };
+  return { gate, requestPermission, refreshPermission: getPermission };
 }
