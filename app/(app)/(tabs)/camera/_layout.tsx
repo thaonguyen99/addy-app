@@ -11,20 +11,6 @@ export default function CameraStackLayout() {
       }}
     >
       <Stack.Screen name="index" />
-      <Stack.Screen
-        name="photo-selection"
-        options={{
-          presentation: "modal",
-          animation: "slide_from_bottom",
-        }}
-      />
-      <Stack.Screen
-        name="place-selection"
-        options={{
-          presentation: "modal",
-          animation: "slide_from_right",
-        }}
-      />
     </Stack>
   );
 }

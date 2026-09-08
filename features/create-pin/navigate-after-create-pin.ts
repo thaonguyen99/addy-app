@@ -3,9 +3,9 @@ import { router } from "expo-router";
 import { useMapFocusStore } from "@/features/map/store/map-focus-store";
 
 /**
- * After a pin is saved: stash map focus coords, then dismiss every modal/stack
- * screen until we land on the explore tab. dismissTo replaces the route if
- * explore is not already in history (e.g. coming from the create-pin modal).
+ * After a pin is saved: stash the map focus coords, close the whole create flow
+ * (create-pin + place-selection + photo-selection all live on the root (app)
+ * stack, so one dismissAll clears them), then land on the explore/map tab.
  */
 export function navigateAfterCreatePin(
   _memoryId: string,
@@ -15,5 +15,9 @@ export function navigateAfterCreatePin(
   useMapFocusStore.getState().setPendingFocus({ latitude, longitude });
   useMapFocusStore.getState().setShowSuccessToast(true);
 
-  router.dismissTo("/(app)/(tabs)/explore");
+  if (router.canDismiss()) {
+    router.dismissAll();
+  }
+
+  router.replace("/(app)/(tabs)/explore");
 }

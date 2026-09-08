@@ -35,7 +35,7 @@ export function CreatePinScreen() {
           </Text>
           <AuthPrimaryButton
             label="Go back"
-            onPress={() => safeBack("/camera/place-selection")}
+            onPress={() => safeBack("/place-selection")}
           />
         </View>
       </SafeAreaView>
@@ -77,7 +77,7 @@ export function CreatePinScreen() {
         </View>
 
         <Pressable
-          onPress={() => safeBack("/camera/place-selection")}
+          onPress={() => safeBack("/place-selection")}
           style={styles.changePlaceBtn}
         >
           <Text style={styles.changePlaceText}>Change place</Text>
@@ -100,7 +100,7 @@ export function CreatePinScreen() {
           loading={submitting}
           onPress={onSubmit}
         />
-        <Pressable onPress={() => safeBack("/camera/place-selection")}>
+        <Pressable onPress={() => safeBack("/place-selection")}>
           <Text style={styles.cancel}>Cancel</Text>
         </Pressable>
       </ScrollView>

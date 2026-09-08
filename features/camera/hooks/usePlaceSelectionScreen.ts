@@ -1,3 +1,4 @@
+import { useIsFocused } from "@react-navigation/native";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Alert } from "react-native";
 import { router } from "expo-router";
@@ -40,6 +41,7 @@ export function usePlaceSelectionScreen() {
   );
   const [hasExplicitSelection, setHasExplicitSelection] = useState(false);
   const [buildingPlace, setBuildingPlace] = useState(false);
+  const isFocused = useIsFocused();
 
   const apiSelectedPlaceRef = useRef<PlaceSuggestion | null>(null);
   const useGpsPlaceRef = useRef(false);
@@ -66,10 +68,13 @@ export function usePlaceSelectionScreen() {
   }, [refreshLocation]);
 
   useEffect(() => {
-    if (draftImages.length === 0) {
-      router.replace("/camera/photo-selection");
+    // Only bounce back when the user is actually looking at this screen with no
+    // draft (e.g. a deep link). Skip while blurred — after a successful save the
+    // handoff store is cleared as the whole flow is being dismissed.
+    if (isFocused && draftImages.length === 0) {
+      router.replace("/photo-selection");
     }
-  }, [draftImages.length]);
+  }, [draftImages.length, isFocused]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -167,7 +172,7 @@ export function usePlaceSelectionScreen() {
   ]);
 
   const goBack = useCallback(() => {
-    safeBack("/camera/photo-selection");
+    safeBack("/photo-selection");
   }, []);
 
   const canConfirm =

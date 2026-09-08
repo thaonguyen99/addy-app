@@ -47,7 +47,7 @@ export function usePhotoSelectionScreen() {
       feeling: feeling.trim(),
       selectedPlace: null,
     });
-    router.push('/camera/place-selection');
+    router.push('/place-selection');
   }, [selectedPhotos, moodScore, feeling, setHandoff]);
 
   const goBack = useCallback(() => {

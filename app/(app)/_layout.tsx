@@ -19,6 +19,14 @@ export default function AppLayout() {
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="(tabs)" />
         <Stack.Screen
+          name="photo-selection"
+          options={{ presentation: "modal", animation: "slide_from_bottom" }}
+        />
+        <Stack.Screen
+          name="place-selection"
+          options={{ presentation: "modal", animation: "slide_from_right" }}
+        />
+        <Stack.Screen
           name="create-pin"
           options={{ presentation: "modal", animation: "slide_from_bottom" }}
         />

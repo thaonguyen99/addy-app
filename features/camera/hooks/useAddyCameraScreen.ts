@@ -36,9 +36,9 @@ export function useAddyCameraScreen() {
   );
 
   const openPhotoSelection = useCallback(() => {
-    // Relative `./photo-selection` can resolve from the tabs segment and become an
-    // unmatched route; `/camera/photo-selection` matches `app/(tabs)/camera/photo-selection`.
-    router.push('/camera/photo-selection');
+    // photo-selection / place-selection / create-pin all live on the root (app)
+    // stack so one dismissAll() after save closes the whole flow at once.
+    router.push('/photo-selection');
   }, []);
 
   const captureAndStore = useCallback(async () => {
