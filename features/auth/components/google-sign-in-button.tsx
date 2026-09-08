@@ -4,7 +4,9 @@ import { router } from "expo-router";
 
 import { AuthPrimaryButton } from "@/features/auth/components/auth-primary-button";
 import { getGoogleIdToken } from "@/features/auth/google/google-sign-in";
+import { getAuthErrorMessage } from "@/features/auth/hooks/use-auth-form-error";
 import { useAuthStore } from "@/features/auth/store/auth-store";
+import { warmUpApi } from "@/lib/api/client";
 import { ApiClientError } from "@/lib/api/errors";
 import { useGoogleSignInMutation } from "@/lib/query/hooks";
 
@@ -22,6 +24,8 @@ export function GoogleSignInButton() {
       return;
     }
 
+    // Nudge the cold-starting API while the user is in the Google account picker.
+    warmUpApi();
     setLoading(true);
     try {
       const idToken = await getGoogleIdToken();
@@ -33,13 +37,10 @@ export function GoogleSignInButton() {
         return;
       }
       console.error("[Google Sign-In]", error);
-      const message =
-        error instanceof ApiClientError
-          ? error.message
-          : error instanceof Error && error.message
-            ? error.message
-            : "Could not sign in with Google";
-      Alert.alert("Google Sign-In", message);
+      Alert.alert(
+        "Google Sign-In",
+        getAuthErrorMessage(error, "Could not sign in with Google")
+      );
     } finally {
       setLoading(false);
     }
