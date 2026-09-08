@@ -2,6 +2,7 @@ export const queryKeys = {
   profile: ["users", "me"] as const,
   stats: ["users", "stats"] as const,
   memory: (id: string) => ["memories", "detail", id] as const,
+  memoriesFeed: ["memories", "feed"] as const,
   map: (boundsKey: string) => ["memories", "map", boundsKey] as const,
   placesNearby: (lat: number, lng: number) =>
     ["places", "nearby", lat.toFixed(5), lng.toFixed(5)] as const,

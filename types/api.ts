@@ -108,6 +108,28 @@ export type MemoryPin = {
   imageUrl: string;
 };
 
+/** One row in the map feed drawer — same shape as MemoryDetail today, kept
+ * separate so a lighter list payload can diverge without touching detail. */
+export type MemoryListItem = {
+  id: string;
+  images: MemoryImage[];
+  moodScore: number | null;
+  feeling: string | null;
+  capturedAt: string;
+  createdAt: string;
+  place: PlaceSummary;
+};
+
+export type MemoryListParams = {
+  cursor?: string;
+  limit?: number;
+};
+
+export type MemoryListResult = {
+  items: MemoryListItem[];
+  nextCursor?: string;
+};
+
 export type PlaceInput = {
   externalPlaceId: string;
   name: string;

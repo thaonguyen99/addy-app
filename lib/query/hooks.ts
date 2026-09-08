@@ -1,4 +1,9 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  useInfiniteQuery,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 
 import * as authApi from "@/lib/api/auth";
 import { uploadImage, uploadImages } from "@/lib/api/media";
@@ -51,8 +56,21 @@ export function useCreateMemoryMutation() {
     mutationFn: (input: CreateMemoryInput) => memoriesApi.createMemory(input),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["memories", "map"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.memoriesFeed });
       queryClient.invalidateQueries({ queryKey: queryKeys.stats });
     },
+  });
+}
+
+/** Every memory the user has created, newest first — feeds the map drawer. */
+export function useMemoriesFeedQuery(enabled = true) {
+  return useInfiniteQuery({
+    queryKey: queryKeys.memoriesFeed,
+    queryFn: ({ pageParam }) =>
+      memoriesApi.listMemories({ cursor: pageParam, limit: 20 }),
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (lastPage) => lastPage.nextCursor,
+    enabled,
   });
 }
 
