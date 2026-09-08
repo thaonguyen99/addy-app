@@ -1,6 +1,13 @@
 import { useFocusEffect } from "@react-navigation/native";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Animated, Platform, StyleSheet, Text, View } from "react-native";
+import {
+  Animated,
+  Platform,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 import {
   Camera,
   Map,
@@ -14,9 +21,13 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 
 import { GOONG_MAP_API_KEY } from "@/lib/env";
-import { useMemoriesMapQuery } from "@/lib/query/hooks";
+import { useMemoriesMapQuery, useStatsQuery } from "@/lib/query/hooks";
 import type { MapBounds } from "@/types/api";
 import { BrandColors } from "@/constants/theme";
+import {
+  MemoryFeedSheet,
+  type MemoryFeedSheetHandle,
+} from "@/features/feed/components/memory-feed-sheet";
 import { PolaroidMapMarker } from "@/features/map/components/polaroid-map-marker";
 import { useMapFocusStore } from "@/features/map/store/map-focus-store";
 
@@ -60,6 +71,7 @@ function SuccessToast() {
 
 export function MemoriesMapScreen() {
   const cameraRef = useRef<CameraRef>(null);
+  const feedSheetRef = useRef<MemoryFeedSheetHandle>(null);
   const pendingFocus = useMapFocusStore((s) => s.pendingFocus);
   const setPendingFocus = useMapFocusStore((s) => s.setPendingFocus);
   const showSuccessToast = useMapFocusStore((s) => s.showSuccessToast);
@@ -107,8 +119,15 @@ export function MemoriesMapScreen() {
     [],
   );
 
-  const { data, isLoading, isError } = useMemoriesMapQuery(debouncedBounds);
+  const { data, isError } = useMemoriesMapQuery(debouncedBounds);
   const pins = data?.pins ?? [];
+
+  const { data: stats, isLoading: isStatsLoading } = useStatsQuery();
+  const totalMemories = stats?.totalMemories;
+
+  const openFeed = useCallback(() => {
+    feedSheetRef.current?.present();
+  }, []);
 
   if (Platform.OS === "web") {
     return (
@@ -147,15 +166,36 @@ export function MemoriesMapScreen() {
         ))}
       </Map>
 
-      <SafeAreaView style={styles.overlay} edges={["top"]} pointerEvents="none">
+      <SafeAreaView
+        style={styles.overlay}
+        edges={["top"]}
+        pointerEvents="box-none"
+      >
         {showSuccessToast ? <SuccessToast /> : null}
-        <View style={styles.badge}>
+        <Pressable
+          onPress={openFeed}
+          style={({ pressed }) => [
+            styles.badge,
+            pressed && styles.badgePressed,
+          ]}
+          accessibilityRole="button"
+          accessibilityLabel="Show all your memories"
+        >
           <Text style={styles.badgeText}>
-            {isLoading ? "Loading pins…" : `${pins.length} memories`}
-            {isError ? " · could not load" : ""}
+            {totalMemories == null
+              ? isStatsLoading
+                ? "Loading…"
+                : `${pins.length} memories`
+              : totalMemories === 1
+                ? "1 memory"
+                : `${totalMemories} memories`}
+            {isError && totalMemories == null ? " · offline" : ""}
           </Text>
-        </View>
+          <Text style={styles.badgeChevron}>›</Text>
+        </Pressable>
       </SafeAreaView>
+
+      <MemoryFeedSheet ref={feedSheetRef} />
     </View>
   );
 }
@@ -189,12 +229,22 @@ const styles = StyleSheet.create({
   badge: {
     margin: 16,
     alignSelf: "flex-start",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
     backgroundColor: "rgba(31, 53, 44, 0.92)",
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 10,
   },
+  badgePressed: { opacity: 0.7 },
   badgeText: { fontSize: 14, fontWeight: "600", color: BrandColors.neutral },
+  badgeChevron: {
+    fontSize: 18,
+    lineHeight: 18,
+    fontWeight: "700",
+    color: BrandColors.neutralMuted,
+  },
   webFallback: {
     flex: 1,
     padding: 24,
