@@ -8,6 +8,7 @@ export function AddyCameraScreen() {
     cameraRef,
     gate,
     requestCameraAccess,
+    openAppSettings,
     onCameraReady,
     frameSize,
     capturedPhotos,
@@ -38,6 +39,7 @@ export function AddyCameraScreen() {
         variant="denied"
         canAskAgain={gate.canAskAgain}
         onRequestAccess={requestCameraAccess}
+        onOpenSettings={openAppSettings}
       />
     );
   }

@@ -4,9 +4,10 @@ import {
 } from '@/features/camera/constants/layout';
 import { useCameraSession } from '@/features/camera/context/camera-session-context';
 import { useAddyCamera } from '@/features/camera/hooks/useAddyCamera';
+import { useFocusEffect } from '@react-navigation/native';
 import { router } from 'expo-router';
 import { useCallback } from 'react';
-import { useWindowDimensions } from 'react-native';
+import { Linking, useWindowDimensions } from 'react-native';
 
 export function useAddyCameraScreen() {
   const { width: screenWidth } = useWindowDimensions();
@@ -15,6 +16,7 @@ export function useAddyCameraScreen() {
     cameraRef,
     gate,
     requestPermission,
+    refreshPermission,
     onCameraReady,
     capturePhoto,
     isCapturing,
@@ -46,14 +48,33 @@ export function useAddyCameraScreen() {
     }
   }, [capturePhoto, addCapturedPhotoFromUri]);
 
-  const requestCameraAccess = useCallback(() => {
-    void requestPermission();
+  // Keep the gate fresh when returning to the screen — e.g. after the user
+  // toggled the permission in the OS settings app.
+  useFocusEffect(
+    useCallback(() => {
+      void refreshPermission();
+    }, [refreshPermission])
+  );
+
+  const requestCameraAccess = useCallback(async () => {
+    const result = await requestPermission();
+    // On Android, once the permission is permanently denied the OS silently
+    // resolves the request without showing a dialog. Send the user to the
+    // system settings screen so they can still enable it.
+    if (!result.granted && !result.canAskAgain) {
+      await Linking.openSettings();
+    }
   }, [requestPermission]);
+
+  const openAppSettings = useCallback(() => {
+    void Linking.openSettings();
+  }, []);
 
   return {
     cameraRef,
     gate,
     requestCameraAccess,
+    openAppSettings,
     onCameraReady,
     frameSize,
     capturedPhotos,
