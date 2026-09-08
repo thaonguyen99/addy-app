@@ -28,10 +28,30 @@ export function configureApiClient(handlers: {
   onSignOut = handlers.onSignOut;
 }
 
+/**
+ * Generous timeout: the API runs on Render's free tier, which cold-starts in
+ * ~40–50s after idle. A shorter timeout makes the first request after a while
+ * (e.g. Google sign-in) fail even though the server is on its way up.
+ */
+const REQUEST_TIMEOUT_MS = 60_000;
+
 export const apiClient = axios.create({
   baseURL: `${API_BASE_URL}/api/v1`,
-  timeout: 30_000,
+  timeout: REQUEST_TIMEOUT_MS,
 });
+
+/**
+ * Fire-and-forget nudge to wake a cold Render instance. Call it as early as
+ * possible (e.g. when an auth screen mounts) so the server is warming while the
+ * user reads the screen / picks a Google account.
+ */
+export function warmUpApi(): void {
+  void axios
+    .get(`${API_BASE_URL}/health`, { timeout: REQUEST_TIMEOUT_MS })
+    .catch(() => {
+      // best-effort only
+    });
+}
 
 apiClient.interceptors.request.use((config: InternalAxiosRequestConfig) => {
   const token = getAccessToken();
@@ -52,7 +72,7 @@ async function refreshAccessToken(): Promise<AuthTokens> {
   const response = await axios.post(
     `${API_BASE_URL}/api/v1/auth/refresh`,
     { refreshToken },
-    { timeout: 15_000 }
+    { timeout: REQUEST_TIMEOUT_MS }
   );
 
   const tokens = parseApiResponse<AuthTokens>(response.data);

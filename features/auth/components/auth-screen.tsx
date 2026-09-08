@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { type ReactNode, useEffect } from "react";
 import {
   KeyboardAvoidingView,
   Platform,
@@ -10,6 +10,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { ThemedText } from "@/components/ui/themed-text";
 import { BrandColors } from "@/constants/theme";
+import { warmUpApi } from "@/lib/api/client";
 
 type AuthScreenProps = {
   title: string;
@@ -24,6 +25,12 @@ export function AuthScreen({
   children,
   footer,
 }: AuthScreenProps) {
+  // Wake the (free-tier, cold-starting) API now so it is ready by the time the
+  // user submits — otherwise the first request, often Google sign-in, times out.
+  useEffect(() => {
+    warmUpApi();
+  }, []);
+
   return (
     <SafeAreaView style={styles.safe} edges={["top", "bottom"]}>
       <KeyboardAvoidingView
