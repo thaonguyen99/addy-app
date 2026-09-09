@@ -61,23 +61,58 @@ apiClient.interceptors.request.use((config: InternalAxiosRequestConfig) => {
   return config;
 });
 
+/**
+ * The refresh token was actually rejected by the server (or is missing) — the
+ * session is dead and the caller should sign out. A network error / timeout is
+ * NOT this: it surfaces as the original error so the session is kept.
+ */
+export class RefreshRejectedError extends Error {
+  constructor() {
+    super("Session expired");
+    this.name = "RefreshRejectedError";
+  }
+}
+
 let refreshPromise: Promise<AuthTokens> | null = null;
 
-async function refreshAccessToken(): Promise<AuthTokens> {
+async function requestFreshTokens(): Promise<AuthTokens> {
   const refreshToken = getRefreshToken();
   if (!refreshToken) {
-    throw new Error("No refresh token");
+    throw new RefreshRejectedError();
   }
 
-  const response = await axios.post(
-    `${API_BASE_URL}/api/v1/auth/refresh`,
-    { refreshToken },
-    { timeout: REQUEST_TIMEOUT_MS }
-  );
+  const response = await axios
+    .post(
+      `${API_BASE_URL}/api/v1/auth/refresh`,
+      { refreshToken },
+      { timeout: REQUEST_TIMEOUT_MS }
+    )
+    .catch((error: AxiosError) => {
+      const status = error.response?.status;
+      if (status === 401 || status === 403) {
+        throw new RefreshRejectedError();
+      }
+      throw error; // transient (network / timeout / 5xx) — keep the session
+    });
 
   const tokens = parseApiResponse<AuthTokens>(response.data);
   await onTokensUpdated(tokens);
   return tokens;
+}
+
+/**
+ * Exchange the refresh token for a fresh pair. Deduped: concurrent callers (a
+ * burst of 401s, or the startup check racing the first query) share one request.
+ * Resolves with the new tokens (already persisted via `onTokensUpdated`), or
+ * rejects — with `RefreshRejectedError` when the session is genuinely dead.
+ */
+export function refreshSession(): Promise<AuthTokens> {
+  if (!refreshPromise) {
+    refreshPromise = requestFreshTokens().finally(() => {
+      refreshPromise = null;
+    });
+  }
+  return refreshPromise;
 }
 
 apiClient.interceptors.response.use(
@@ -106,16 +141,15 @@ apiClient.interceptors.response.use(
     ) {
       original._retry = true;
       try {
-        if (!refreshPromise) {
-          refreshPromise = refreshAccessToken().finally(() => {
-            refreshPromise = null;
-          });
-        }
-        const tokens = await refreshPromise;
+        const tokens = await refreshSession();
         original.headers.Authorization = `Bearer ${tokens.accessToken}`;
         return apiClient(original);
-      } catch {
-        await onSignOut();
+      } catch (refreshError) {
+        // Only give up the session if the server actually rejected the refresh
+        // token — a network blip / cold-start timeout keeps you signed in.
+        if (refreshError instanceof RefreshRejectedError) {
+          await onSignOut();
+        }
       }
     }
 
