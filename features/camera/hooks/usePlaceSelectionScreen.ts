@@ -5,13 +5,10 @@ import { router } from "expo-router";
 
 import { continueToCreatePinFlow } from "@/features/create-pin/continue-to-create-pin";
 import { useCreatePinHandoffStore } from "@/features/create-pin/store/create-pin-handoff-store";
-import { buildPlaceFromCoordinates } from "@/features/location/build-place-from-coordinates";
-import {
-  createHoChiMinhCityPlace,
-  HCM_MANUAL_PLACE_ID,
-} from "@/features/location/fallback-places";
+import { createHoChiMinhCityPlace } from "@/features/location/fallback-places";
 import { useCurrentLocation } from "@/features/location/hooks/use-current-location";
 import { useDebouncedPlaceSearch } from "@/features/location/hooks/use-debounced-place-search";
+import { useReverseGeocodedPlace } from "@/features/location/hooks/use-reverse-geocoded-place";
 import { safeBack } from "@/lib/navigation/safe-router";
 import type { PlaceSuggestion } from "@/types/api";
 
@@ -40,14 +37,15 @@ export function usePlaceSelectionScreen() {
     createHoChiMinhCityPlace(),
   );
   const [hasExplicitSelection, setHasExplicitSelection] = useState(false);
-  const [buildingPlace, setBuildingPlace] = useState(false);
   const isFocused = useIsFocused();
 
   const apiSelectedPlaceRef = useRef<PlaceSuggestion | null>(null);
-  const useGpsPlaceRef = useRef(false);
-  const manualPlaceIdRef = useRef<string>(HCM_MANUAL_PLACE_ID);
 
   const isSearchActive = venueName.trim().length >= MIN_SEARCH_LENGTH;
+
+  // Street-level place for wherever the user physically is — the default pick.
+  const { place: currentLocationPlace, loading: currentLocationLoading } =
+    useReverseGeocodedPlace(coords);
 
   const {
     results: searchResults,
@@ -83,63 +81,29 @@ export function usePlaceSelectionScreen() {
     return () => clearTimeout(timer);
   }, [venueName]);
 
+  // While not searching and nothing explicitly picked, keep the selected place
+  // in sync with the current-location result (falling back to the city). Typing
+  // a venue name relabels that place without changing its address/coords.
   useEffect(() => {
     if (isSearchActive) return;
     if (apiSelectedPlaceRef.current) return;
-    setSelectedPlace(createHoChiMinhCityPlace({ name: debouncedVenueName }));
+
+    const name = debouncedVenueName.trim();
+    const base =
+      currentLocationPlace ??
+      createHoChiMinhCityPlace({ name: debouncedVenueName });
+
+    setSelectedPlace(name ? { ...base, name } : base);
     setHasExplicitSelection(false);
-  }, [debouncedVenueName, isSearchActive]);
-
-  useEffect(() => {
-    if (!coords || apiSelectedPlaceRef.current || !useGpsPlaceRef.current) {
-      return;
-    }
-
-    let cancelled = false;
-    setBuildingPlace(true);
-
-    void (async () => {
-      try {
-        const place = await buildPlaceFromCoordinates(coords, {
-          name: debouncedVenueName,
-          placeId: manualPlaceIdRef.current,
-        });
-        if (!cancelled) {
-          manualPlaceIdRef.current = place.placeId;
-          setSelectedPlace(place);
-        }
-      } catch {
-        if (!cancelled) {
-          setSelectedPlace(createHoChiMinhCityPlace({ name: debouncedVenueName }));
-        }
-      } finally {
-        if (!cancelled) {
-          setBuildingPlace(false);
-        }
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [coords, debouncedVenueName]);
+  }, [debouncedVenueName, isSearchActive, currentLocationPlace]);
 
   const selectPlace = useCallback((place: PlaceSuggestion) => {
     setHasExplicitSelection(true);
-    if (isManualPlace(place)) {
-      apiSelectedPlaceRef.current = null;
-      useGpsPlaceRef.current = place.placeId !== HCM_MANUAL_PLACE_ID;
-      manualPlaceIdRef.current = place.placeId;
-    } else {
-      apiSelectedPlaceRef.current = place;
-      useGpsPlaceRef.current = false;
-      manualPlaceIdRef.current = HCM_MANUAL_PLACE_ID;
-    }
+    apiSelectedPlaceRef.current = isManualPlace(place) ? null : place;
     setSelectedPlace(place);
   }, []);
 
   const refreshLocationAndUseGps = useCallback(() => {
-    useGpsPlaceRef.current = true;
     apiSelectedPlaceRef.current = null;
     setHasExplicitSelection(false);
     setVenueNameState("");
@@ -177,14 +141,14 @@ export function usePlaceSelectionScreen() {
 
   const canConfirm =
     selectedPlace !== null &&
-    !buildingPlace &&
+    !currentLocationLoading &&
     (!isSearchActive || hasExplicitSelection);
 
   return {
     venueName,
     setVenueName,
     coords,
-    locationLoading: locationLoading || buildingPlace,
+    locationLoading: locationLoading || currentLocationLoading,
     permissionDenied,
     refreshLocation: refreshLocationAndUseGps,
     selectedPlace,
