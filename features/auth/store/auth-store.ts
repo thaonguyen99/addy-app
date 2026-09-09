@@ -1,6 +1,10 @@
 import { create } from "zustand";
 
-import { configureApiClient } from "@/lib/api/client";
+import {
+  configureApiClient,
+  RefreshRejectedError,
+  refreshSession,
+} from "@/lib/api/client";
 import {
   clearPendingEmail,
   clearSession,
@@ -53,6 +57,23 @@ function ensureApiConfigured(get: () => AuthState) {
 export const useAuthStore = create<AuthState>((set, get) => {
   ensureApiConfigured(get);
 
+  /**
+   * Confirm a session restored from storage is still good. Runs in the
+   * background after hydrate() has already let the user into the app, so a
+   * cold-starting API never blocks the splash. Only a genuine rejection from
+   * the server ends the session; a network error / timeout is left alone and
+   * retried later by the 401 interceptor.
+   */
+  async function verifyRestoredSession() {
+    try {
+      await refreshSession();
+    } catch (error) {
+      if (error instanceof RefreshRejectedError) {
+        await get().signOut();
+      }
+    }
+  }
+
   return {
     status: "idle",
     user: null,
@@ -70,6 +91,8 @@ export const useAuthStore = create<AuthState>((set, get) => {
         ]);
 
         if (stored.user && stored.tokens) {
+          // Trust storage so the app opens straight to the tabs, then verify
+          // (and rotate) the tokens in the background.
           set({
             status: "authenticated",
             user: stored.user,
@@ -77,6 +100,7 @@ export const useAuthStore = create<AuthState>((set, get) => {
             refreshToken: stored.tokens.refreshToken,
             pendingEmail: pendingEmail ?? null,
           });
+          void verifyRestoredSession();
           return;
         }
 
