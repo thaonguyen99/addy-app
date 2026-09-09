@@ -8,7 +8,7 @@ export default function AuthIndex() {
   const pendingOtpPurpose = useAuthStore((s) => s.pendingOtpPurpose);
 
   if (status === "authenticated") {
-    return <Redirect href="/(tabs)" />;
+    return <Redirect href="/(app)/(tabs)" />;
   }
 
   if (pendingEmail && pendingOtpPurpose === "register") {

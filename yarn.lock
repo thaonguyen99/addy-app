@@ -1215,7 +1215,7 @@
     chalk "^4.1.0"
     js-yaml "^4.1.0"
 
-"@gorhom/bottom-sheet@^5":
+"@gorhom/bottom-sheet@^5.2.14":
   version "5.2.14"
   resolved "https://registry.yarnpkg.com/@gorhom/bottom-sheet/-/bottom-sheet-5.2.14.tgz#2b74ad9293b0ad40518487c6dcd151cadd5b3de3"
   integrity sha512-uLQFlDjp9z+jrOFcMSEldPqL5JdaXL3vXOh+juhwoNvXgTsEorJLjHTugXu+YccAG/0KJnShzKCrb71MHBsvJg==

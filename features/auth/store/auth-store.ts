@@ -5,6 +5,7 @@ import {
   RefreshRejectedError,
   refreshSession,
 } from "@/lib/api/client";
+import { signOutGoogle } from "@/features/auth/google/google-sign-in";
 import {
   clearPendingEmail,
   clearSession,
@@ -91,6 +92,7 @@ export const useAuthStore = create<AuthState>((set, get) => {
         ]);
 
         if (stored.user && stored.tokens) {
+          console.log("[auth] restored stored session for", stored.user.email);
           // Trust storage so the app opens straight to the tabs, then verify
           // (and rotate) the tokens in the background.
           set({
@@ -104,6 +106,7 @@ export const useAuthStore = create<AuthState>((set, get) => {
           return;
         }
 
+        console.log("[auth] no stored session — showing sign-in");
         set({
           status: "unauthenticated",
           user: null,
@@ -124,8 +127,9 @@ export const useAuthStore = create<AuthState>((set, get) => {
     },
 
     setSession: async ({ user, tokens }) => {
-      await saveSession(user, tokens);
-      await clearPendingEmail();
+      // Flip to authenticated first so navigation happens even if the keychain
+      // write below hiccups — otherwise a storage error strands the user on
+      // the sign-in screen right after a successful login.
       set({
         status: "authenticated",
         user,
@@ -134,14 +138,24 @@ export const useAuthStore = create<AuthState>((set, get) => {
         pendingEmail: null,
         pendingOtpPurpose: null,
       });
+      try {
+        await saveSession(user, tokens);
+        await clearPendingEmail();
+      } catch (error) {
+        console.error("[auth] could not persist session", error);
+      }
     },
 
     updateTokens: async (tokens) => {
-      await saveTokens(tokens);
       set({
         accessToken: tokens.accessToken,
         refreshToken: tokens.refreshToken,
       });
+      try {
+        await saveTokens(tokens);
+      } catch (error) {
+        console.error("[auth] could not persist refreshed tokens", error);
+      }
     },
 
     setPendingVerification: async (email, purpose) => {
@@ -155,13 +169,17 @@ export const useAuthStore = create<AuthState>((set, get) => {
     },
 
     signOut: async () => {
-      await clearSession();
+      // Drop the in-memory session unconditionally, then best-effort clear
+      // everything else — a failure here must never leave a half-signed-out app.
       set({
         status: "unauthenticated",
         user: null,
         accessToken: null,
         refreshToken: null,
+        pendingEmail: null,
+        pendingOtpPurpose: null,
       });
+      await Promise.allSettled([clearSession(), signOutGoogle()]);
     },
   };
 });

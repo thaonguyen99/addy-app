@@ -46,12 +46,11 @@ export async function saveTokens(tokens: AuthTokens) {
   ]);
 }
 
+/** Wipe every auth key from secure storage. One failing delete never blocks the rest. */
 export async function clearSession() {
-  await Promise.all([
-    SecureStore.deleteItemAsync(KEYS.accessToken),
-    SecureStore.deleteItemAsync(KEYS.refreshToken),
-    SecureStore.deleteItemAsync(KEYS.user),
-  ]);
+  await Promise.allSettled(
+    Object.values(KEYS).map((key) => SecureStore.deleteItemAsync(key)),
+  );
 }
 
 export async function setPendingEmail(email: string) {

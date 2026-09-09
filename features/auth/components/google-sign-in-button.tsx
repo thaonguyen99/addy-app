@@ -31,7 +31,7 @@ export function GoogleSignInButton() {
       const idToken = await getGoogleIdToken();
       const session = await googleMutation.mutateAsync({ idToken });
       await setSession(session);
-      router.replace("/(tabs)");
+      router.replace("/(app)/(tabs)");
     } catch (error) {
       if (error instanceof ApiClientError && error.code === "SIGN_IN_CANCELLED") {
         return;

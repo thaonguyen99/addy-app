@@ -20,6 +20,41 @@ export function configureGoogleSignIn() {
   configured = true;
 }
 
+/** Best-effort: forget the native Google account so the next sign-in re-prompts. */
+export async function signOutGoogle(): Promise<void> {
+  if (Platform.OS === "web") return;
+  try {
+    await GoogleSignin.signOut();
+  } catch {
+    // ignore — nothing to sign out of, or the module isn't ready
+  }
+}
+
+/** Logs the audience/issuer of the ID token so a client-ID mismatch with the
+ * server's GOOGLE_OAUTH_CLIENT_IDS is visible in the Metro console. */
+function logIdTokenClaims(idToken: string): void {
+  try {
+    const [, payload] = idToken.split(".");
+    const json = atob(payload.replace(/-/g, "+").replace(/_/g, "/"));
+    const claims = JSON.parse(json) as {
+      aud?: string;
+      iss?: string;
+      exp?: number;
+      email?: string;
+    };
+    console.log("[Google Sign-In] id token claims", {
+      aud: claims.aud,
+      iss: claims.iss,
+      email: claims.email,
+      expiresInSec: claims.exp
+        ? Math.round(claims.exp - Date.now() / 1000)
+        : undefined,
+    });
+  } catch {
+    // non-fatal
+  }
+}
+
 export async function getGoogleIdToken(): Promise<string> {
   configureGoogleSignIn();
 
@@ -60,6 +95,7 @@ export async function getGoogleIdToken(): Promise<string> {
       );
     }
 
+    logIdTokenClaims(idToken);
     return idToken;
   } catch (error) {
     if (error instanceof ApiClientError) {
