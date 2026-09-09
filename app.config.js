@@ -29,6 +29,17 @@ module.exports = ({ config }) => ({
   scheme: "addyapp",
   userInterfaceStyle: "automatic",
   newArchEnabled: true,
+  // Over-the-air updates (EAS Update). On launch the app pulls the latest JS
+  // bundle for its channel and applies it on the next start.
+  updates: {
+    url: "https://u.expo.dev/eb53cb10-598d-456c-b2c3-15af9d2d3fee",
+  },
+  // A build only accepts OTA updates whose native fingerprint matches — so a
+  // JS-only change ships OTA, while anything touching native (new module,
+  // plugin, permission, SDK bump) changes the fingerprint and forces a rebuild.
+  runtimeVersion: {
+    policy: "fingerprint",
+  },
   ios: {
     supportsTablet: true,
     bundleIdentifier: "com.thaonguyen.addy",
