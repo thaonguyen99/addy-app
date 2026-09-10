@@ -9,39 +9,46 @@ export const BrandColors = {
   white: "#FFFFFF",
   black: "#000000",
 
-  // Green-tinted dark scale (derived from Garden Shadow), for backgrounds/surfaces/borders
-  gray50: "#F3F6F1", // near-white, green tint — light text on dark, or rare light surfaces
-  gray100: "#E0E7DC", // = sagePaper — primary light text/icon color
-  gray200: "#C3D2C7", // secondary text, subtle icons
-  gray300: "#8AA695", // disabled text, low-emphasis icons
-  gray400: "#5A7A6A", // disabled controls, placeholder icons
-  gray500: "#3D5F50", // mid-tone borders, dividers on elevated surfaces
-  gray600: "#2A473C", // elevated surface (cards, sheets, modals)
-  gray700: "#1F352C", // = gardenShadow — base app background
-  gray800: "#16241D", // deeper nested surfaces
-  gray900: "#0D1512", // base app background
+  // Warm plum-cocoa dark scale (derived from secondary #2b1c21), for backgrounds/surfaces/borders
+  gray50: "#F4ECE9", // near-white, faint mauve warmth — light text on dark, or rare light surfaces
+  gray100: "#E9DDD3", // = Sand Veil — primary light text/icon color
+  gray200: "#C6B2AE", // secondary text, subtle icons
+  gray300: "#9E8288", // disabled text, low-emphasis icons
+  gray400: "#6F565E", // disabled controls, placeholder icons
+  gray500: "#4C3841", // mid-tone borders, dividers on elevated surfaces
+  gray600: "#3A2831", // elevated surface (cards, sheets, modals)
+  gray700: "#2B1C21", // = secondary — dark surfaces
+  gray800: "#241820", // deeper nested surfaces
+  gray900: "#1C1218", // deepest app background
 
-  elevated: "#2A473C", // card/sheet surface, one step up from background
-  placeHolder: "#243830", // input field background (between bg and elevated)
+  elevated: "#3A2831", // card/sheet surface, one step up from background
+  placeHolder: "#33222A", // input field background (between bg and elevated)
 
-  link: "#6EA8FE", // brightened blue for legible links on dark bg
+  link: "#A9AAD8", // light periwinkle — legible link on warm dark bg
 
-  stroke1: "rgba(224, 231, 220, 0.08)", // subtle divider
-  stroke2: "rgba(224, 231, 220, 0.16)", // default border
-  stroke3: "rgba(224, 231, 220, 0.32)", // emphasized border / focus ring base
+  stroke1: "rgba(233, 221, 211, 0.08)", // subtle divider
+  stroke2: "rgba(233, 221, 211, 0.16)", // default border
+  stroke3: "rgba(233, 221, 211, 0.32)", // emphasized border / focus ring base
 
   /** Primary actions, selected states, key CTAs. */
-  primary: "#BB2649",
+  primary: "#6667AB",
   /** Dark surfaces and app backgrounds. */
-  secondary: "#1F352C",
+  secondary: "#2b1c21",
   /** Text, icons, and light-on-dark contrast. */
-  neutral: "#E0E7DC",
+  neutral: "#E9DDD3",
   /** Selected fills on dark surfaces. */
-  primaryMuted: "rgba(187, 38, 73, 0.22)",
-  /** Captions and placeholders — solid sage, readable on secondary. */
-  neutralMuted: "#C3D2C7",
-  /** Visible edge on garden-shadow surfaces. */
-  neutralBorder: "#5A7A6A",
+  primaryMuted: "rgba(102, 103, 171, 0.22)",
+  /** Captions and placeholders — warm sand, readable on secondary. */
+  neutralMuted: "#C6B2AE",
+  /** Visible edge on plum-cocoa surfaces. */
+  neutralBorder: "#6F565E",
+
+  /** Ink for text on light paper / polaroid surfaces. */
+  ink: "#2B1C21",
+  /** Secondary ink on light surfaces (place name, date). */
+  inkMuted: "#6A525A",
+  /** Light paper surface for polaroid frames. */
+  paper: "#F1E7DC",
 };
 
 export type BrandColorName = keyof typeof BrandColors;
@@ -68,6 +75,9 @@ const darkPalette = {
   stroke1: BrandColors.stroke1,
   stroke2: BrandColors.stroke2,
   stroke3: BrandColors.stroke3,
+  ink: BrandColors.ink,
+  inkMuted: BrandColors.inkMuted,
+  paper: BrandColors.paper,
 };
 
 export const Colors = {

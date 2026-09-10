@@ -32,6 +32,17 @@ export async function uploadImage(localUri: string): Promise<MediaUploadResult> 
   return parseApiResponse<MediaUploadResult>(response.data);
 }
 
+export async function uploadAvatar(localUri: string): Promise<MediaUploadResult> {
+  const form = new FormData();
+  appendLocalImage(form, "image", localUri);
+
+  const response = await apiClient.post("/media/avatar", form, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+
+  return parseApiResponse<MediaUploadResult>(response.data);
+}
+
 export async function uploadImages(
   localUris: readonly string[],
 ): Promise<MediaUploadResult[]> {

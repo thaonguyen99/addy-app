@@ -49,7 +49,7 @@ module.exports = ({ config }) => ({
   },
   android: {
     adaptiveIcon: {
-      backgroundColor: "#1F352C",
+      backgroundColor: "#2B1C21",
       foregroundImage: "./assets/images/android-icon-foreground.png",
       backgroundImage: "./assets/images/android-icon-background.png",
       monochromeImage: "./assets/images/android-icon-monochrome.png",
@@ -100,8 +100,8 @@ module.exports = ({ config }) => ({
         image: "./assets/images/splash-icon.png",
         imageWidth: 220,
         resizeMode: "contain",
-        backgroundColor: "#1F352C",
-        dark: { backgroundColor: "#1F352C" },
+        backgroundColor: "#2B1C21",
+        dark: { backgroundColor: "#2B1C21" },
       },
     ],
     iosUrlScheme

@@ -13,7 +13,6 @@ import {
 import { BrandColors } from "@/constants/theme";
 import { MemoryFeedCard } from "@/features/feed/components/memory-feed-card";
 import { useMemoryFeed } from "@/features/feed/hooks/use-memory-feed";
-import { useProfileQuery } from "@/lib/query/hooks";
 import type { MemoryListItem } from "@/types/api";
 
 type MemoryFeedListProps = {
@@ -32,10 +31,6 @@ export function MemoryFeedList({ active, onDismiss }: MemoryFeedListProps) {
     refetch,
     fetchNextPage,
   } = useMemoryFeed(active);
-  const { data: profile } = useProfileQuery(active);
-
-  const authorName =
-    profile?.displayName ?? profile?.email?.split("@")[0] ?? "You";
 
   const openMemory = useCallback(
     (id: string) => {
@@ -47,13 +42,9 @@ export function MemoryFeedList({ active, onDismiss }: MemoryFeedListProps) {
 
   const renderItem = useCallback(
     ({ item }: { item: MemoryListItem }) => (
-      <MemoryFeedCard
-        memory={item}
-        authorName={authorName}
-        onPress={openMemory}
-      />
+      <MemoryFeedCard memory={item} onPress={openMemory} />
     ),
-    [authorName, openMemory],
+    [openMemory],
   );
 
   if (isLoading) {
@@ -84,6 +75,7 @@ export function MemoryFeedList({ active, onDismiss }: MemoryFeedListProps) {
       style={styles.list}
       contentContainerStyle={styles.content}
       showsVerticalScrollIndicator={false}
+      removeClippedSubviews={false}
       onEndReachedThreshold={0.4}
       onEndReached={fetchNextPage}
       refreshControl={
@@ -114,7 +106,13 @@ export function MemoryFeedList({ active, onDismiss }: MemoryFeedListProps) {
 
 const styles = StyleSheet.create({
   list: { flex: 1 },
-  content: { paddingBottom: 32, flexGrow: 1 },
+  content: {
+    paddingHorizontal: 28,
+    paddingTop: 18,
+    paddingBottom: 40,
+    gap: 22,
+    flexGrow: 1,
+  },
   center: {
     flex: 1,
     alignItems: "center",

@@ -1,3 +1,4 @@
+import Ionicons from "@expo/vector-icons/Ionicons";
 import { router } from "expo-router";
 import { ActivityIndicator, Pressable, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -9,15 +10,32 @@ import { BrandColors } from "@/constants/theme";
 
 export default function HomeScreen() {
   const user = useAuthStore((s) => s.user);
-  const signOut = useAuthStore((s) => s.signOut);
   const { data: stats, isLoading } = useStatsQuery();
+
+  const name =
+    user?.displayName || user?.username || user?.email?.split("@")[0] || "";
 
   return (
     <SafeAreaView style={styles.safe} edges={["top"]}>
       <View style={styles.content}>
-        <ThemedText type="title" style={styles.title}>
-          Hi{user?.displayName ? `, ${user.displayName}` : ""}
-        </ThemedText>
+        <View style={styles.titleRow}>
+          <ThemedText type="title" style={styles.title}>
+            Hi{name ? `, ${name}` : ""}
+          </ThemedText>
+          <Pressable
+            onPress={() => router.push("/profile")}
+            hitSlop={12}
+            style={styles.settingsButton}
+            accessibilityRole="button"
+            accessibilityLabel="Open profile and settings"
+          >
+            <Ionicons
+              name="settings-outline"
+              size={24}
+              color={BrandColors.neutralMuted}
+            />
+          </Pressable>
+        </View>
         <ThemedText style={styles.sub}>
           Capture place-true memories and find them on your map.
         </ThemedText>
@@ -50,14 +68,6 @@ export default function HomeScreen() {
         >
           <ThemedText style={styles.ctaTextSecondary}>View map</ThemedText>
         </Pressable>
-        <Pressable
-          onPress={() => {
-            void signOut().then(() => router.replace("/sign-in"));
-          }}
-          style={styles.signOut}
-        >
-          <ThemedText style={styles.signOutText}>Sign out</ThemedText>
-        </Pressable>
       </View>
     </SafeAreaView>
   );
@@ -66,7 +76,14 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: BrandColors.gray900 },
   content: { flex: 1, padding: 24, gap: 16 },
-  title: { color: BrandColors.neutral },
+  titleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12,
+  },
+  title: { color: BrandColors.neutral, flex: 1 },
+  settingsButton: { padding: 4 },
   sub: { color: BrandColors.neutralMuted, fontSize: 16, lineHeight: 24 },
   statsRow: { flexDirection: "row", gap: 12 },
   statCard: {
@@ -96,6 +113,4 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     fontSize: 16,
   },
-  signOut: { marginTop: "auto", alignItems: "center", paddingVertical: 12 },
-  signOutText: { color: BrandColors.neutralMuted, fontSize: 15 },
 });

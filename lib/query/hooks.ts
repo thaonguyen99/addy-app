@@ -6,10 +6,11 @@ import {
 } from "@tanstack/react-query";
 
 import * as authApi from "@/lib/api/auth";
-import { uploadImage, uploadImages } from "@/lib/api/media";
+import { uploadAvatar, uploadImage, uploadImages } from "@/lib/api/media";
 import * as memoriesApi from "@/lib/api/memories";
 import { fetchNearbyPlaces } from "@/lib/api/places";
 import * as usersApi from "@/lib/api/users";
+import { useAuthStore } from "@/features/auth/store/auth-store";
 import type { Coordinates } from "@/features/location/get-current-coordinates";
 import { mapBoundsKey, queryKeys } from "@/lib/query/keys";
 import type { CreateMemoryInput, MapBounds } from "@/types/api";
@@ -97,6 +98,42 @@ export function useProfileQuery(enabled = true) {
     queryFn: usersApi.getProfile,
     enabled,
   });
+}
+
+export function useUpdateProfileMutation() {
+  const queryClient = useQueryClient();
+  const updateUser = useAuthStore((s) => s.updateUser);
+  return useMutation({
+    mutationFn: usersApi.updateProfile,
+    onSuccess: async (profile) => {
+      await updateUser({
+        username: profile.username,
+        displayName: profile.displayName,
+        bio: profile.bio,
+        avatarUrl: profile.avatarUrl,
+        hasPassword: profile.hasPassword,
+      });
+      queryClient.setQueryData(queryKeys.profile, profile);
+    },
+  });
+}
+
+export function useUploadAvatarMutation() {
+  return useMutation({ mutationFn: uploadAvatar });
+}
+
+export function useChangePasswordMutation() {
+  const updateTokens = useAuthStore((s) => s.updateTokens);
+  return useMutation({
+    mutationFn: usersApi.changePassword,
+    onSuccess: async ({ tokens }) => {
+      await updateTokens(tokens);
+    },
+  });
+}
+
+export function useCheckUsernameMutation() {
+  return useMutation({ mutationFn: usersApi.checkUsernameAvailable });
 }
 
 export function useStatsQuery(enabled = true) {

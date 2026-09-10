@@ -32,6 +32,22 @@ export function parseApiResponse<T>(payload: unknown): T {
   throw new ApiClientError("Unexpected API response", "INTERNAL_ERROR");
 }
 
+const NETWORK_MESSAGE =
+  "Can't reach the server. It may be waking up — wait a few seconds and try again.";
+
+/** User-facing message for a failed request: the server's message, a friendly note for network errors, else the fallback. */
+export function getApiErrorMessage(error: unknown, fallback: string): string {
+  if (error instanceof ApiClientError) {
+    if (error.code === "NETWORK_ERROR") return NETWORK_MESSAGE;
+    const msg = error.message.toLowerCase();
+    if (msg.includes("timeout") || msg.includes("network")) {
+      return NETWORK_MESSAGE;
+    }
+    return error.message;
+  }
+  return fallback;
+}
+
 export function toApiClientError(error: unknown): ApiClientError {
   if (error instanceof ApiClientError) {
     return error;

@@ -20,7 +20,11 @@ export type ApiResponse<T> = ApiSuccess<T> | ApiFailure;
 export type AuthUser = {
   id: string;
   email: string;
+  username: string | null;
   displayName: string | null;
+  bio: string | null;
+  avatarUrl: string | null;
+  hasPassword: boolean;
 };
 
 export type AuthTokens = {
@@ -165,6 +169,23 @@ export type MediaUploadMultipleResult = {
 
 export type UserProfile = AuthUser & {
   createdAt: string;
+};
+
+export type UpdateProfileInput = {
+  username?: string | null;
+  displayName?: string | null;
+  bio?: string | null;
+  avatarUrl?: string;
+  avatarPublicId?: string;
+};
+
+export type ChangePasswordInput = {
+  currentPassword: string;
+  newPassword: string;
+};
+
+export type UsernameAvailableResult = {
+  available: boolean;
 };
 
 export type UserStats = {

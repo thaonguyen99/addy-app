@@ -2,6 +2,7 @@ import { Image } from "expo-image";
 import { StyleSheet, View } from "react-native";
 
 import { BrandColors } from "@/constants/theme";
+import { POLAROID } from "@/features/feed/utils/polaroid";
 
 const pinImage = require("@/assets/images/pin.png");
 
@@ -45,15 +46,11 @@ const styles = StyleSheet.create({
   polaroid: {
     width: POLAROID_WIDTH,
     height: POLAROID_HEIGHT,
-    backgroundColor: BrandColors.white,
+    backgroundColor: POLAROID.frameColor,
     padding: POLAROID_PADDING,
     paddingBottom: POLAROID_BOTTOM,
     borderRadius: 2,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.2,
-    shadowRadius: 5,
-    elevation: 6,
+    ...POLAROID.shadow,
     transform: [{ rotate: "-3deg" }],
   },
   photo: {

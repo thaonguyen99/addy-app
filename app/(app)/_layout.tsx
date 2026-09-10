@@ -31,6 +31,7 @@ export default function AppLayout() {
           options={{ presentation: "modal", animation: "slide_from_bottom" }}
         />
         <Stack.Screen name="memory/[id]" />
+        <Stack.Screen name="profile" />
       </Stack>
     </CameraSessionProvider>
   );

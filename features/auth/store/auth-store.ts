@@ -32,6 +32,7 @@ type AuthState = {
   pendingOtpPurpose: OtpPurpose | null;
   hydrate: () => Promise<void>;
   setSession: (session: AuthSession) => Promise<void>;
+  updateUser: (partial: Partial<AuthUser>) => Promise<void>;
   updateTokens: (tokens: AuthTokens) => Promise<void>;
   setPendingVerification: (email: string, purpose: OtpPurpose) => Promise<void>;
   clearPendingVerification: () => Promise<void>;
@@ -143,6 +144,22 @@ export const useAuthStore = create<AuthState>((set, get) => {
         await clearPendingEmail();
       } catch (error) {
         console.error("[auth] could not persist session", error);
+      }
+    },
+
+    updateUser: async (partial) => {
+      const current = get().user;
+      if (!current) return;
+      const user = { ...current, ...partial };
+      set({ user });
+      const tokens = {
+        accessToken: get().accessToken ?? "",
+        refreshToken: get().refreshToken ?? "",
+      };
+      try {
+        await saveSession(user, tokens);
+      } catch (error) {
+        console.error("[auth] could not persist updated user", error);
       }
     },
 

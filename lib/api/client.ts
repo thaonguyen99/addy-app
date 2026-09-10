@@ -166,3 +166,8 @@ export async function apiPost<T>(url: string, body?: unknown) {
   const response = await apiClient.post(url, body);
   return parseApiResponse<T>(response.data);
 }
+
+export async function apiPatch<T>(url: string, body?: unknown) {
+  const response = await apiClient.patch(url, body);
+  return parseApiResponse<T>(response.data);
+}
