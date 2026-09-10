@@ -22,6 +22,7 @@ import { AuthPrimaryButton } from "@/features/auth/components/auth-primary-butto
 import { AuthTextField } from "@/features/auth/components/auth-text-field";
 import { useAuthStore } from "@/features/auth/store/auth-store";
 import { ChangePasswordSection } from "@/features/profile/components/change-password-section";
+import { NotificationSettingsSection } from "@/features/profile/components/notification-settings-section";
 import { useAvatarUpload } from "@/features/profile/hooks/use-avatar-upload";
 import {
   type ProfileForm,
@@ -44,7 +45,7 @@ type UsernameStatus =
   | "invalid";
 
 export function ProfileScreen() {
-  const { data: profile, isLoading } = useProfileQuery();
+  const { data: profile, isLoading, isError, refetch } = useProfileQuery();
   const updateProfile = useUpdateProfileMutation();
   const { mutateAsync: checkUsernameAvailable } = useCheckUsernameMutation();
   const { pickAndUpload, busy: avatarBusy } = useAvatarUpload();
@@ -145,6 +146,10 @@ export function ProfileScreen() {
     }
   });
 
+  const onSignOut = () => {
+    void signOut().then(() => router.replace("/sign-in"));
+  };
+
   return (
     <SafeAreaView style={styles.safe} edges={["top", "bottom"]}>
       <View style={styles.topBar}>
@@ -156,11 +161,21 @@ export function ProfileScreen() {
           <Ionicons name="chevron-back" size={22} color={BrandColors.primary} />
           <Text style={styles.backLabel}>Profile</Text>
         </Pressable>
+        <Pressable onPress={onSignOut} hitSlop={12}>
+          <Text style={styles.signOutLink}>Sign out</Text>
+        </Pressable>
       </View>
 
-      {isLoading || !profile ? (
+      {isLoading ? (
         <View style={styles.center}>
           <ActivityIndicator color={BrandColors.primary} size="large" />
+        </View>
+      ) : isError || !profile ? (
+        <View style={styles.center}>
+          <Text style={styles.muted}>Could not load your profile.</Text>
+          <Pressable style={styles.retry} onPress={() => refetch()}>
+            <Text style={styles.retryText}>Try again</Text>
+          </Pressable>
         </View>
       ) : (
         <KeyboardAvoidingView
@@ -267,14 +282,35 @@ export function ProfileScreen() {
               onPress={onSubmit}
             />
 
-            <ChangePasswordSection hasPassword={profile.hasPassword} />
+            <Pressable
+              style={styles.linkRow}
+              onPress={() => router.push("/(app)/friends")}
+            >
+              <Text style={styles.linkRowText}>Friends</Text>
+              <Ionicons
+                name="chevron-forward"
+                size={18}
+                color={BrandColors.neutralMuted}
+              />
+            </Pressable>
+
+            <NotificationSettingsSection />
 
             <Pressable
-              onPress={() => {
-                void signOut().then(() => router.replace("/sign-in"));
-              }}
-              style={styles.signOut}
+              style={styles.linkRow}
+              onPress={() => router.push("/(app)/blocked-accounts")}
             >
+              <Text style={styles.linkRowText}>Blocked accounts</Text>
+              <Ionicons
+                name="chevron-forward"
+                size={18}
+                color={BrandColors.neutralMuted}
+              />
+            </Pressable>
+
+            <ChangePasswordSection hasPassword={profile.hasPassword} />
+
+            <Pressable onPress={onSignOut} style={styles.signOut}>
               <Text style={styles.signOutText}>Sign out</Text>
             </Pressable>
           </ScrollView>
@@ -303,6 +339,9 @@ const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: BrandColors.gray900 },
   flex: { flex: 1 },
   topBar: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderBottomWidth: StyleSheet.hairlineWidth,
@@ -312,14 +351,36 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 4,
-    alignSelf: "flex-start",
   },
   backLabel: {
     fontSize: 17,
     color: BrandColors.neutral,
     fontWeight: "700",
   },
-  center: { flex: 1, alignItems: "center", justifyContent: "center" },
+  signOutLink: {
+    fontSize: 15,
+    color: BrandColors.neutralMuted,
+    fontWeight: "600",
+  },
+  center: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 12,
+    padding: 32,
+  },
+  muted: {
+    fontSize: 14,
+    color: BrandColors.neutralMuted,
+    textAlign: "center",
+  },
+  retry: {
+    paddingHorizontal: 18,
+    paddingVertical: 9,
+    borderRadius: 10,
+    backgroundColor: BrandColors.elevated,
+  },
+  retryText: { color: BrandColors.neutral, fontWeight: "600" },
   scroll: {
     paddingHorizontal: 24,
     paddingTop: 20,
@@ -382,6 +443,20 @@ const styles = StyleSheet.create({
     textAlignVertical: "top",
   },
   errorText: { fontSize: 13, color: BrandColors.primary },
+  linkRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingVertical: 16,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: BrandColors.stroke2,
+    marginTop: 8,
+  },
+  linkRowText: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: BrandColors.neutral,
+  },
   signOut: {
     alignItems: "center",
     paddingVertical: 14,

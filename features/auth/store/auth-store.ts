@@ -7,6 +7,11 @@ import {
 } from "@/lib/api/client";
 import { signOutGoogle } from "@/features/auth/google/google-sign-in";
 import {
+  getCurrentPushToken,
+  resetPushRegistrationCache,
+} from "@/features/notifications/push-registration";
+import { deleteDeviceToken } from "@/lib/api/notifications";
+import {
   clearPendingEmail,
   clearSession,
   getPendingEmail,
@@ -186,6 +191,19 @@ export const useAuthStore = create<AuthState>((set, get) => {
     },
 
     signOut: async () => {
+      // Unregister this device's push token while the session is still valid
+      // (best-effort, time-boxed so it never stalls sign-out).
+      try {
+        const token = await Promise.race([
+          getCurrentPushToken(),
+          new Promise<null>((resolve) => setTimeout(() => resolve(null), 2000)),
+        ]);
+        if (token) await deleteDeviceToken(token);
+      } catch {
+        // ignore — the backend also prunes dead tokens on send
+      }
+      resetPushRegistrationCache();
+
       // Drop the in-memory session unconditionally, then best-effort clear
       // everything else — a failure here must never leave a half-signed-out app.
       set({

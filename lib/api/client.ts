@@ -171,3 +171,31 @@ export async function apiPatch<T>(url: string, body?: unknown) {
   const response = await apiClient.patch(url, body);
   return parseApiResponse<T>(response.data);
 }
+
+export async function apiDelete<T>(url: string, body?: unknown) {
+  const response = await apiClient.delete(url, body ? { data: body } : undefined);
+  return parseApiResponse<T>(response.data);
+}
+
+/**
+ * GET a cursor-paginated list endpoint. The API returns the rows as `data` and
+ * the next cursor in `meta.cursor` (omitted at the end of the list).
+ */
+export async function apiGetPaginated<T>(
+  url: string,
+  params?: Record<string, unknown>,
+): Promise<{ items: T[]; nextCursor?: string }> {
+  const response = await apiClient.get(url, { params });
+  const body = response.data as {
+    success: boolean;
+    data: T[];
+    meta?: { cursor?: string };
+  };
+  if (!body.success) {
+    parseApiResponse<T[]>(body);
+  }
+  return {
+    items: body.data,
+    ...(body.meta?.cursor ? { nextCursor: body.meta.cursor } : {}),
+  };
+}

@@ -15,6 +15,8 @@ import type { Coordinates } from "@/features/location/get-current-coordinates";
 import { mapBoundsKey, queryKeys } from "@/lib/query/keys";
 import type { CreateMemoryInput, MapBounds } from "@/types/api";
 
+export * from "@/lib/query/hooks-social";
+
 export function useRegisterMutation() {
   return useMutation({ mutationFn: authApi.register });
 }

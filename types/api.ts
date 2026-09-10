@@ -94,14 +94,100 @@ export type ReverseGeocodeResult = {
   types: string[];
 };
 
+export type MemoryVisibility = "private" | "friends";
+
 export type MemoryDetail = {
   id: string;
   images: MemoryImage[];
   moodScore: number | null;
   feeling: string | null;
+  visibility: MemoryVisibility;
+  /** True when the signed-in user owns this memory. */
+  isOwner: boolean;
+  reactionCount: number;
+  hasReacted: boolean;
   capturedAt: string;
   createdAt: string;
   place: PlaceSummary;
+};
+
+/** Minimal public identity for another user (friend, requester, reactor). */
+export type PublicUser = {
+  id: string;
+  username: string | null;
+  displayName: string | null;
+  avatarUrl: string | null;
+};
+
+export type FriendRelationship =
+  | "none"
+  | "friend"
+  | "request_sent"
+  | "request_received";
+
+export type Friend = {
+  user: PublicUser;
+  friendsSince: string;
+};
+
+export type FriendRequestDirection = "incoming" | "outgoing";
+
+export type FriendRequest = {
+  id: string;
+  direction: FriendRequestDirection;
+  user: PublicUser;
+  status: "pending" | "accepted" | "declined" | "cancelled";
+  createdAt: string;
+};
+
+export type UserSearchResult = PublicUser & {
+  relationship: FriendRelationship;
+};
+
+export type InviteInfo = {
+  token: string;
+  /** Deep link (addyapp://add-friend?token=...) — encode this in the QR. */
+  url: string;
+  /** Landing page for people without the app. */
+  webUrl: string;
+};
+
+export type ResolvedInvite = {
+  user: PublicUser;
+  relationship: FriendRelationship;
+};
+
+export type BlockedUser = {
+  user: PublicUser;
+  blockedAt: string;
+};
+
+export type Reactor = {
+  user: PublicUser;
+  reactedAt: string;
+};
+
+export type ToggleReactionResult = {
+  reacted: boolean;
+  count: number;
+};
+
+export type FriendMemoryPin = MemoryPin & {
+  author: PublicUser;
+};
+
+export type NotificationPreferences = {
+  friendRequestReceived: boolean;
+  friendRequestAccepted: boolean;
+  reactionReceived: boolean;
+};
+
+export type DevicePlatform = "ios" | "android";
+
+/** Cursor-paginated list envelope used by the social endpoints. */
+export type Paginated<T> = {
+  items: T[];
+  nextCursor?: string;
 };
 
 export type MemoryPin = {
@@ -119,6 +205,10 @@ export type MemoryListItem = {
   images: MemoryImage[];
   moodScore: number | null;
   feeling: string | null;
+  visibility: MemoryVisibility;
+  isOwner: boolean;
+  reactionCount: number;
+  hasReacted: boolean;
   capturedAt: string;
   createdAt: string;
   place: PlaceSummary;
@@ -156,6 +246,11 @@ export type CreateMemoryInput = {
   moodScore?: number;
   feeling?: string;
   capturedAt?: string;
+  visibility?: MemoryVisibility;
+};
+
+export type UpdateMemoryInput = {
+  visibility: MemoryVisibility;
 };
 
 export type MediaUploadResult = {

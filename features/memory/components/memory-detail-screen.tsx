@@ -1,3 +1,5 @@
+import Ionicons from "@expo/vector-icons/Ionicons";
+import * as Haptics from "expo-haptics";
 import { Image } from "expo-image";
 import { useRef, useState } from "react";
 import {
@@ -14,9 +16,17 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { BrandColors } from "@/constants/theme";
+import { ToggleRow } from "@/components/ui/toggle-row";
 import { MOOD_SCORE_OPTIONS } from "@/features/camera/constants/mood-score";
+import { ReactorsSheet } from "@/features/reactions/components/reactors-sheet";
+import type { ReactorsSheetRef } from "@/features/reactions/components/reactors-sheet";
 import { safeBack } from "@/lib/navigation/safe-router";
-import { useMemoryQuery, useProfileQuery } from "@/lib/query/hooks";
+import {
+  useMemoryQuery,
+  useProfileQuery,
+  useToggleReactionMutation,
+  useUpdateMemoryMutation,
+} from "@/lib/query/hooks";
 import type { MemoryImage } from "@/types/api";
 
 const SCREEN_WIDTH = Dimensions.get("window").width;
@@ -85,8 +95,10 @@ function ImageCarousel({ images }: { images: MemoryImage[] }) {
 
 export function MemoryDetailScreen({ id }: MemoryDetailScreenProps) {
   const { data, isLoading, isError } = useMemoryQuery(id);
-  console.log("🚀 ~ MemoryDetailScreen ~ data:", data);
   const { data: profile } = useProfileQuery();
+  const updateMemory = useUpdateMemoryMutation(id);
+  const toggleReaction = useToggleReactionMutation(id);
+  const reactorsSheet = useRef<ReactorsSheetRef>(null);
 
   const moodOption =
     data?.moodScore != null
@@ -180,9 +192,77 @@ export function MemoryDetailScreen({ id }: MemoryDetailScreenProps) {
               <Text style={styles.metaIcon}>🗓</Text>
               <Text style={styles.metaText}>{formattedDate}</Text>
             </View>
+
+            {/* Reactions */}
+            <View style={styles.reactionRow}>
+              {!data.isOwner ? (
+                <Pressable
+                  onPress={() => {
+                    void Haptics.impactAsync(
+                      Haptics.ImpactFeedbackStyle.Light,
+                    );
+                    toggleReaction.mutate();
+                  }}
+                  hitSlop={10}
+                  style={styles.reactionButton}
+                  accessibilityRole="button"
+                  accessibilityLabel={
+                    data.hasReacted ? "Remove reaction" : "React to this memory"
+                  }
+                >
+                  <Ionicons
+                    name={data.hasReacted ? "heart" : "heart-outline"}
+                    size={24}
+                    color={
+                      data.hasReacted
+                        ? BrandColors.primary
+                        : BrandColors.neutralMuted
+                    }
+                  />
+                </Pressable>
+              ) : (
+                <Ionicons
+                  name="heart"
+                  size={22}
+                  color={BrandColors.neutralMuted}
+                />
+              )}
+              <Pressable
+                onPress={() => {
+                  if (data.reactionCount > 0) reactorsSheet.current?.present();
+                }}
+                hitSlop={8}
+              >
+                <Text style={styles.reactionCount}>
+                  {data.reactionCount === 0
+                    ? "No reactions yet"
+                    : `${data.reactionCount} ${
+                        data.reactionCount === 1 ? "reaction" : "reactions"
+                      }`}
+                </Text>
+              </Pressable>
+            </View>
+
+            {/* Owner: visibility control */}
+            {data.isOwner ? (
+              <View style={styles.visibilityCard}>
+                <ToggleRow
+                  label="Visible to friends"
+                  description="Friends can see this memory on their map."
+                  value={data.visibility === "friends"}
+                  disabled={updateMemory.isPending}
+                  onValueChange={(next) =>
+                    updateMemory.mutate({
+                      visibility: next ? "friends" : "private",
+                    })
+                  }
+                />
+              </View>
+            ) : null}
           </View>
         </ScrollView>
       )}
+      <ReactorsSheet ref={reactorsSheet} memoryId={id} />
     </SafeAreaView>
   );
 }
@@ -406,5 +486,31 @@ const styles = StyleSheet.create({
   metaText: {
     fontSize: 13,
     color: BrandColors.neutralMuted,
+  },
+  reactionRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    paddingTop: 4,
+  },
+  reactionButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: BrandColors.elevated,
+  },
+  reactionCount: {
+    fontSize: 14,
+    color: BrandColors.neutralMuted,
+    fontWeight: "600",
+  },
+  visibilityCard: {
+    paddingHorizontal: 14,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: BrandColors.neutralBorder,
+    backgroundColor: BrandColors.elevated,
   },
 });

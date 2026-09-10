@@ -111,6 +111,12 @@ module.exports = ({ config }) => ({
         ]
       : "@react-native-google-signin/google-signin",
     "@maplibre/maplibre-react-native",
+    [
+      "expo-notifications",
+      {
+        color: "#6667AB",
+      },
+    ],
   ],
   experiments: {
     typedRoutes: true,

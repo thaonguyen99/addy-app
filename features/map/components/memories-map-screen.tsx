@@ -21,7 +21,11 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 
 import { GOONG_MAP_API_KEY } from "@/lib/env";
-import { useMemoriesMapQuery, useStatsQuery } from "@/lib/query/hooks";
+import {
+  useFriendsMapQuery,
+  useMemoriesMapQuery,
+  useStatsQuery,
+} from "@/lib/query/hooks";
 import type { MapBounds } from "@/types/api";
 import { BrandColors } from "@/constants/theme";
 import {
@@ -119,8 +123,15 @@ export function MemoriesMapScreen() {
     [],
   );
 
+  const [showFriends, setShowFriends] = useState(false);
+
   const { data, isError } = useMemoriesMapQuery(debouncedBounds);
   const pins = data?.pins ?? [];
+
+  const { data: friendsData } = useFriendsMapQuery(
+    showFriends ? debouncedBounds : null,
+  );
+  const friendPins = showFriends ? (friendsData?.pins ?? []) : [];
 
   const { data: stats, isLoading: isStatsLoading } = useStatsQuery();
   const totalMemories = stats?.totalMemories;
@@ -154,6 +165,18 @@ export function MemoriesMapScreen() {
           ref={cameraRef}
           initialViewState={{ center: DEFAULT_CENTER, zoom: DEFAULT_ZOOM }}
         />
+        {friendPins.map((pin) => (
+          <Marker
+            key={`friend-${pin.id}`}
+            lngLat={[pin.longitude, pin.latitude]}
+            anchor="bottom"
+            onPress={() => router.push(`/memory/${pin.id}`)}
+          >
+            <View style={styles.friendMarker}>
+              <PolaroidMapMarker imageUrl={pin.imageUrl} />
+            </View>
+          </Marker>
+        ))}
         {pins.map((pin) => (
           <Marker
             key={pin.id}
@@ -172,6 +195,7 @@ export function MemoriesMapScreen() {
         pointerEvents="box-none"
       >
         {showSuccessToast ? <SuccessToast /> : null}
+        <View style={styles.topRow}>
         <Pressable
           onPress={openFeed}
           style={({ pressed }) => [
@@ -193,6 +217,23 @@ export function MemoriesMapScreen() {
           </Text>
           <Text style={styles.badgeChevron}>›</Text>
         </Pressable>
+        <Pressable
+          onPress={() => setShowFriends((v) => !v)}
+          style={[styles.friendsChip, showFriends && styles.friendsChipOn]}
+          accessibilityRole="switch"
+          accessibilityState={{ checked: showFriends }}
+          accessibilityLabel="Show friends' memories on the map"
+        >
+          <Text
+            style={[
+              styles.friendsChipText,
+              showFriends && styles.friendsChipTextOn,
+            ]}
+          >
+            Friends
+          </Text>
+        </Pressable>
+        </View>
       </SafeAreaView>
 
       <MemoryFeedSheet ref={feedSheetRef} />
@@ -226,8 +267,13 @@ const styles = StyleSheet.create({
     letterSpacing: 0.2,
   },
 
-  badge: {
+  topRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     margin: 16,
+  },
+  badge: {
     alignSelf: "flex-start",
     flexDirection: "row",
     alignItems: "center",
@@ -235,6 +281,24 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(43, 28, 33, 0.92)",
     paddingHorizontal: 12,
     paddingVertical: 8,
+    borderRadius: 10,
+  },
+  friendsChip: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 10,
+    backgroundColor: "rgba(43, 28, 33, 0.92)",
+  },
+  friendsChipOn: { backgroundColor: BrandColors.primary },
+  friendsChipText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: BrandColors.neutralMuted,
+  },
+  friendsChipTextOn: { color: BrandColors.white },
+  friendMarker: {
+    borderWidth: 2,
+    borderColor: BrandColors.primary,
     borderRadius: 10,
   },
   badgePressed: { opacity: 0.7 },

@@ -4,6 +4,7 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { BrandColors } from "@/constants/theme";
+import { ToggleRow } from "@/components/ui/toggle-row";
 import { AuthPrimaryButton } from "@/features/auth/components/auth-primary-button";
 import { MOOD_SCORE_OPTIONS } from "@/features/camera/constants/mood-score";
 import { useCreatePinSubmit } from "@/features/create-pin/hooks/use-create-pin-submit";
@@ -20,6 +21,8 @@ export function CreatePinScreen() {
   const selectedPlace = useCreatePinHandoffStore((s) => s.selectedPlace);
   const moodScore = useCreatePinHandoffStore((s) => s.moodScore);
   const feeling = useCreatePinHandoffStore((s) => s.feeling);
+  const visibility = useCreatePinHandoffStore((s) => s.visibility);
+  const setVisibility = useCreatePinHandoffStore((s) => s.setVisibility);
   const { submit, submitting } = useCreatePinSubmit(images);
 
   const onSubmit = async () => {
@@ -95,6 +98,17 @@ export function CreatePinScreen() {
           </View>
         ) : null}
 
+        <View style={styles.visibilityCard}>
+          <ToggleRow
+            label="Share with friends"
+            description="Friends can see this memory on their map. Off = only you."
+            value={visibility === "friends"}
+            onValueChange={(next) =>
+              setVisibility(next ? "friends" : "private")
+            }
+          />
+        </View>
+
         <AuthPrimaryButton
           label="Save memory"
           loading={submitting}
@@ -166,6 +180,13 @@ const styles = StyleSheet.create({
     padding: 14,
     borderRadius: 12,
     backgroundColor: BrandColors.primaryMuted,
+  },
+  visibilityCard: {
+    paddingHorizontal: 14,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: BrandColors.neutralBorder,
+    backgroundColor: BrandColors.secondary,
   },
   metaLabel: {
     fontSize: 13,

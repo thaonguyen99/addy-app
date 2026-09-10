@@ -24,7 +24,11 @@ import "react-native-reanimated";
 
 import { BrandColors } from "@/constants/theme";
 import { useAuthStore } from "@/features/auth/store/auth-store";
+import { configureNotificationHandler } from "@/features/notifications/push-registration";
+import { useNotificationRouter } from "@/features/notifications/use-notification-router";
 import { queryClient } from "@/lib/query/client";
+
+configureNotificationHandler();
 
 const navigationTheme = {
   ...DarkTheme,
@@ -74,6 +78,8 @@ export default function RootLayout() {
     hydrate();
   }, [hydrate]);
 
+  useNotificationRouter();
+
   useEffect(() => {
     if (fontsLoaded && status !== "idle" && status !== "hydrating") {
       SplashScreen.hideAsync();
@@ -97,6 +103,7 @@ export default function RootLayout() {
               <Stack.Screen name="index" />
               <Stack.Screen name="(auth)" />
               <Stack.Screen name="(app)" />
+              <Stack.Screen name="add-friend" />
               <Stack.Screen
                 name="modal"
                 options={{ presentation: "modal", title: "Modal" }}

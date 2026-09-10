@@ -22,19 +22,34 @@ export default function HomeScreen() {
           <ThemedText type="title" style={styles.title}>
             Hi{name ? `, ${name}` : ""}
           </ThemedText>
-          <Pressable
-            onPress={() => router.push("/profile")}
-            hitSlop={12}
-            style={styles.settingsButton}
-            accessibilityRole="button"
-            accessibilityLabel="Open profile and settings"
-          >
-            <Ionicons
-              name="settings-outline"
-              size={24}
-              color={BrandColors.neutralMuted}
-            />
-          </Pressable>
+          <View style={styles.headerActions}>
+            <Pressable
+              onPress={() => router.push("/(app)/friends")}
+              hitSlop={12}
+              style={styles.settingsButton}
+              accessibilityRole="button"
+              accessibilityLabel="Friends"
+            >
+              <Ionicons
+                name="people-outline"
+                size={24}
+                color={BrandColors.neutralMuted}
+              />
+            </Pressable>
+            <Pressable
+              onPress={() => router.push("/profile")}
+              hitSlop={12}
+              style={styles.settingsButton}
+              accessibilityRole="button"
+              accessibilityLabel="Open profile and settings"
+            >
+              <Ionicons
+                name="settings-outline"
+                size={24}
+                color={BrandColors.neutralMuted}
+              />
+            </Pressable>
+          </View>
         </View>
         <ThemedText style={styles.sub}>
           Capture place-true memories and find them on your map.
@@ -83,6 +98,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   title: { color: BrandColors.neutral, flex: 1 },
+  headerActions: { flexDirection: "row", alignItems: "center", gap: 8 },
   settingsButton: { padding: 4 },
   sub: { color: BrandColors.neutralMuted, fontSize: 16, lineHeight: 24 },
   statsRow: { flexDirection: "row", gap: 12 },
