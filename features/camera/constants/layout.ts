@@ -5,9 +5,6 @@ import { cameraLayout } from "@/features/camera/styles/shared-styles";
 export const CAMERA_SCREEN_HORIZONTAL_PADDING =
   cameraLayout.screenPaddingHorizontal;
 
-/** Max width/height of the square camera preview (caps size on large phones). */
-export const CAMERA_FRAME_MAX_SIZE = 380;
-
 /** Step for programmatic zoom (`CameraView` zoom is 0–1). */
 export const CAMERA_ZOOM_STEP = 0.08;
 

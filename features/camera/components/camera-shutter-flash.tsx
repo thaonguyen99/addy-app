@@ -7,6 +7,8 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 
+import { BrandColors } from "@/constants/theme";
+
 export type CameraShutterFlashRef = {
   play: () => void;
 };
@@ -47,6 +49,6 @@ export const CameraShutterFlash = forwardRef<CameraShutterFlashRef>(
 const styles = StyleSheet.create({
   flash: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: BrandColors.white,
   },
 });

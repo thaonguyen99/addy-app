@@ -194,11 +194,25 @@ export type Paginated<T> = {
 };
 
 export type MemoryPin = {
+  /** The most recently captured memory's id at this place. */
   id: string;
+  /** Groups pins by place: multiple memories at the same place collapse into one pin. */
+  placeId: string;
   latitude: number;
   longitude: number;
   capturedAt: string;
   imageUrl: string;
+  /** How many memories exist at this place. */
+  memoryCount: number;
+};
+
+/** A single memory shown in the "memories at this place" sheet. */
+export type PlaceMemory = {
+  id: string;
+  imageUrl: string;
+  feeling: string | null;
+  capturedAt: string;
+  author: PublicUser;
 };
 
 /** One row in the map feed drawer — same shape as MemoryDetail today, kept

@@ -10,7 +10,6 @@ export function AddyCameraScreen() {
     requestCameraAccess,
     openAppSettings,
     onCameraReady,
-    frameSize,
     capturedPhotos,
     isCapturing,
     openPhotoSelection,
@@ -47,7 +46,6 @@ export function AddyCameraScreen() {
   return (
     <AddyCameraView
       cameraRef={cameraRef}
-      frameSize={frameSize}
       capturedPhotos={capturedPhotos}
       isCapturing={isCapturing}
       onCameraReady={onCameraReady}

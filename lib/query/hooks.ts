@@ -94,6 +94,14 @@ export function useMemoriesMapQuery(bounds: MapBounds | null) {
   });
 }
 
+export function usePlaceMemoriesQuery(placeId: string | null) {
+  return useQuery({
+    queryKey: queryKeys.placeMemories(placeId ?? "idle"),
+    queryFn: () => memoriesApi.getPlaceMemories(placeId!),
+    enabled: Boolean(placeId),
+  });
+}
+
 export function useProfileQuery(enabled = true) {
   return useQuery({
     queryKey: queryKeys.profile,

@@ -1,7 +1,7 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import * as Haptics from "expo-haptics";
 import { Image } from "expo-image";
-import { useMemo, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import {
   ActivityIndicator,
   Dimensions,
@@ -19,11 +19,11 @@ import { TourTarget } from "@wrack/react-native-tour-guide";
 import { BrandColors } from "@/constants/theme";
 import { ToggleRow } from "@/components/ui/toggle-row";
 import { MoodSticker } from "@/features/feed/components/mood-sticker";
-import { POLAROID, rotationForId } from "@/features/feed/utils/polaroid";
-import { ScreenHeader } from "@/features/friends/components/screen-header";
+import { POLAROID } from "@/features/feed/utils/polaroid";
 import { ONBOARDING_MEMORY_DETAIL_TARGET_ID } from "@/features/onboarding/onboarding-tour";
 import { ReactorsSheet } from "@/features/reactions/components/reactors-sheet";
 import type { ReactorsSheetRef } from "@/features/reactions/components/reactors-sheet";
+import { safeBack } from "@/lib/navigation/safe-router";
 import {
   useMemoryQuery,
   useProfileQuery,
@@ -32,13 +32,8 @@ import {
 } from "@/lib/query/hooks";
 import type { MemoryImage } from "@/types/api";
 
-const pinImage = require("@/assets/images/pin.png");
-
 const SCREEN_WIDTH = Dimensions.get("window").width;
-const HERO_MARGIN = 20;
-const HERO_PHOTO_WIDTH = SCREEN_WIDTH - HERO_MARGIN * 2 - POLAROID.borderSide * 2;
-const HERO_PHOTO_HEIGHT = 320;
-const HERO_PIN_SIZE = 40;
+const HERO_HEIGHT = 340;
 
 type MemoryDetailScreenProps = {
   id: string;
@@ -55,7 +50,7 @@ function ImageCarousel({ images }: { images: MemoryImage[] }) {
   });
 
   const onScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
-    const idx = Math.round(e.nativeEvent.contentOffset.x / HERO_PHOTO_WIDTH);
+    const idx = Math.round(e.nativeEvent.contentOffset.x / SCREEN_WIDTH);
     setActiveIndex(idx);
   };
 
@@ -109,8 +104,6 @@ export function MemoryDetailScreen({ id }: MemoryDetailScreenProps) {
   const toggleReaction = useToggleReactionMutation(id);
   const reactorsSheet = useRef<ReactorsSheetRef>(null);
 
-  const heroRotation = useMemo(() => rotationForId(id), [id]);
-
   const displayName = data?.isOwner
     ? (profile?.name ?? profile?.email ?? "You")
     : (data?.author.name ?? data?.author.username ?? "Friend");
@@ -128,9 +121,7 @@ export function MemoryDetailScreen({ id }: MemoryDetailScreenProps) {
     : null;
 
   return (
-    <SafeAreaView style={styles.safe} edges={["top", "bottom"]}>
-      <ScreenHeader title="Memory" fallback="/(app)/(tabs)" />
-
+    <SafeAreaView style={styles.safe} edges={["bottom"]}>
       {isLoading ? (
         <View style={styles.center}>
           <ActivityIndicator color={BrandColors.primary} size="large" />
@@ -145,48 +136,40 @@ export function MemoryDetailScreen({ id }: MemoryDetailScreenProps) {
           contentContainerStyle={styles.scroll}
           showsVerticalScrollIndicator={false}
         >
-          {/* Hero — the memory as a pinned polaroid, same object as the map marker and feed card */}
+          {/* Hero photo with floating header controls on top */}
           <View style={styles.heroSection}>
-            <View
-              style={[
-                styles.heroTilt,
-                { transform: [{ rotate: heroRotation }] },
-              ]}
+            <ImageCarousel images={data.images} />
+
+            <SafeAreaView
+              style={styles.heroHeader}
+              edges={["top"]}
+              pointerEvents="box-none"
             >
-              <Image
-                source={pinImage}
-                style={styles.heroPin}
-                contentFit="contain"
-              />
-              <View style={styles.heroFrame}>
-                <ImageCarousel images={data.images} />
+              <Pressable
+                onPress={() => safeBack("/(app)/(tabs)")}
+                hitSlop={12}
+                style={styles.circleButton}
+                accessibilityRole="button"
+                accessibilityLabel="Back"
+              >
+                <Ionicons
+                  name="chevron-back"
+                  size={22}
+                  color={BrandColors.white}
+                />
+              </Pressable>
+              <View style={styles.circleButton}>
+                <Text style={styles.avatarText}>{initials}</Text>
               </View>
-              <View style={styles.heroSticker}>
-                <MoodSticker score={data.moodScore} />
-              </View>
+            </SafeAreaView>
+
+            <View style={styles.heroSticker}>
+              <MoodSticker score={data.moodScore} />
             </View>
           </View>
 
           <View style={styles.content}>
-            {/* Username row */}
-            <View style={styles.userRow}>
-              <View style={styles.avatar}>
-                <Text style={styles.avatarText}>{initials}</Text>
-              </View>
-              <Text style={styles.username}>{displayName}</Text>
-            </View>
-
-            {/* Place name + address — an upright paper tag */}
-            <TourTarget id={ONBOARDING_MEMORY_DETAIL_TARGET_ID}>
-              <View style={styles.placeTag}>
-                <Text style={styles.placeName}>{data.place.name}</Text>
-                <Text style={styles.address}>
-                  📍 {data.place.formattedAddress}
-                </Text>
-              </View>
-            </TourTarget>
-
-            {/* Feeling / note — an upright paper note, clipped in place */}
+            {/* Feeling / note — a paper note with a paperclip */}
             {data.feeling ? (
               <View style={styles.noteCard}>
                 <Text style={styles.paperclip}>📎</Text>
@@ -194,11 +177,16 @@ export function MemoryDetailScreen({ id }: MemoryDetailScreenProps) {
               </View>
             ) : null}
 
-            {/* Date */}
-            <View style={styles.metaRow}>
-              <Text style={styles.metaIcon}>🗓</Text>
-              <Text style={styles.metaText}>{formattedDate}</Text>
-            </View>
+            {/* Place name + address + date */}
+            <TourTarget id={ONBOARDING_MEMORY_DETAIL_TARGET_ID}>
+              <View style={styles.placeCard}>
+                <Text style={styles.placeName}>{data.place.name}</Text>
+                <Text style={styles.address}>
+                  📍 {data.place.formattedAddress}
+                </Text>
+                <Text style={styles.metaText}>🗓 {formattedDate}</Text>
+              </View>
+            </TourTarget>
 
             {/* Reactions */}
             <View style={styles.reactionRow}>
@@ -287,136 +275,87 @@ const styles = StyleSheet.create({
 
   scroll: { paddingBottom: 40 },
 
-  // Hero polaroid
+  // Hero
   heroSection: {
+    position: "relative",
+  },
+  heroHeader: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    paddingHorizontal: 16,
+    paddingTop: 8,
+  },
+  circleButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "rgba(43, 28, 33, 0.55)",
     alignItems: "center",
-    paddingTop: 16,
-    paddingHorizontal: HERO_MARGIN,
+    justifyContent: "center",
   },
-  heroTilt: {
-    alignItems: "center",
-  },
-  heroPin: {
-    width: HERO_PIN_SIZE,
-    height: HERO_PIN_SIZE,
-    marginBottom: -10,
-    zIndex: 2,
-  },
-  heroFrame: {
-    backgroundColor: POLAROID.frameColor,
-    borderRadius: POLAROID.radius,
-    paddingTop: POLAROID.borderTop,
-    paddingLeft: POLAROID.borderSide,
-    paddingRight: POLAROID.borderSide,
-    paddingBottom: POLAROID.borderBottom,
-    ...POLAROID.shadow,
+  avatarText: {
+    color: BrandColors.white,
+    fontSize: 14,
+    fontWeight: "700",
   },
   heroScroll: {
-    height: HERO_PHOTO_HEIGHT,
+    height: HERO_HEIGHT,
   },
   heroPhoto: {
-    width: HERO_PHOTO_WIDTH,
-    height: HERO_PHOTO_HEIGHT,
-    borderRadius: 1,
+    width: SCREEN_WIDTH,
+    height: HERO_HEIGHT,
+    borderBottomLeftRadius: 24,
+    borderBottomRightRadius: 24,
     backgroundColor: BrandColors.gray200,
   },
   heroPlaceholder: {
-    width: HERO_PHOTO_WIDTH,
-    height: HERO_PHOTO_HEIGHT,
+    width: SCREEN_WIDTH,
+    height: HERO_HEIGHT,
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: BrandColors.primaryMuted,
-    borderRadius: 1,
+    borderBottomLeftRadius: 24,
+    borderBottomRightRadius: 24,
   },
   heroPlaceholderText: { fontSize: 48 },
   heroSticker: {
     position: "absolute",
-    top: HERO_PIN_SIZE - 18,
-    right: -6,
+    bottom: 12,
+    right: 16,
   },
 
   dotsRow: {
+    position: "absolute",
+    bottom: 10,
+    left: 0,
+    right: 0,
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
     gap: 6,
-    paddingTop: 10,
   },
   dot: {
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: BrandColors.neutralBorder,
+    backgroundColor: "rgba(255,255,255,0.5)",
   },
   dotActive: {
     width: 18,
-    backgroundColor: BrandColors.primary,
+    backgroundColor: BrandColors.white,
   },
 
   content: {
     paddingHorizontal: 20,
-    paddingTop: 24,
+    paddingTop: 20,
     gap: 18,
   },
 
-  // Username
-  userRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-    alignSelf: "flex-start",
-    backgroundColor: BrandColors.elevated,
-    paddingHorizontal: 12,
-    paddingVertical: 7,
-    borderRadius: 20,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.06,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  avatar: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: BrandColors.primary,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  avatarText: {
-    color: BrandColors.neutral,
-    fontSize: 13,
-    fontWeight: "700",
-  },
-  username: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: BrandColors.neutral,
-  },
-
-  // Place — upright paper tag
-  placeTag: {
-    backgroundColor: BrandColors.paper,
-    borderRadius: 10,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    gap: 4,
-    ...POLAROID.shadow,
-  },
-  placeName: {
-    fontSize: 20,
-    fontWeight: "700",
-    color: BrandColors.ink,
-    lineHeight: 26,
-  },
-  address: {
-    fontSize: 13,
-    color: BrandColors.inkMuted,
-    lineHeight: 19,
-    flexWrap: "wrap",
-  },
-
-  // Feeling — upright paper note with a paperclip
+  // Feeling — paper note with a paperclip
   noteCard: {
     backgroundColor: BrandColors.paper,
     borderRadius: 6,
@@ -439,22 +378,35 @@ const styles = StyleSheet.create({
     color: BrandColors.ink,
   },
 
-  // Meta
-  metaRow: {
-    flexDirection: "row",
-    alignItems: "center",
+  // Place + date
+  placeCard: {
+    backgroundColor: BrandColors.elevated,
+    borderRadius: 14,
+    padding: 16,
     gap: 6,
   },
-  metaIcon: { fontSize: 14 },
+  placeName: {
+    fontSize: 20,
+    fontWeight: "700",
+    color: BrandColors.neutral,
+    lineHeight: 26,
+  },
+  address: {
+    fontSize: 13,
+    color: BrandColors.neutralMuted,
+    lineHeight: 19,
+    flexWrap: "wrap",
+  },
   metaText: {
     fontSize: 13,
     color: BrandColors.neutralMuted,
+    marginTop: 4,
   },
+
   reactionRow: {
     flexDirection: "row",
     alignItems: "center",
     gap: 10,
-    paddingTop: 4,
   },
   reactionButton: {
     width: 36,

@@ -27,7 +27,7 @@ const FAB_SIZE = 44;
 const hostShadowStyle: ViewStyle =
   Platform.OS === "ios"
     ? {
-        shadowColor: "#000",
+        shadowColor: BrandColors.black,
         shadowOffset: { width: 0, height: 3 },
         shadowOpacity: 0.28,
         shadowRadius: 6,
@@ -123,20 +123,20 @@ const styles = StyleSheet.create({
     borderRadius: FAB_SIZE / 2,
     overflow: "hidden",
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: "rgba(255, 255, 255, 0.38)",
+    borderColor: BrandColors.stroke3,
   },
   /** Milky frost on top of blur for a clearer “glass” read. */
   glassFrost: {
-    backgroundColor: "rgba(255, 255, 255, 0.14)",
+    backgroundColor: BrandColors.stroke2,
   },
   /** Soft inner edge (specular hint). */
   glassRim: {
     borderRadius: FAB_SIZE / 2,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: "rgba(255, 255, 255, 0.22)",
+    borderColor: BrandColors.stroke3,
   },
   webGlass: {
-    backgroundColor: "rgba(28, 28, 32, 0.38)",
+    backgroundColor: "rgba(43, 28, 33, 0.38)",
   },
   inner: {
     flex: 1,

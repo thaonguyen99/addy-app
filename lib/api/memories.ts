@@ -1,4 +1,4 @@
-import { apiClient, apiGetPaginated, apiPatch } from "@/lib/api/client";
+import { apiClient, apiGet, apiGetPaginated, apiPatch } from "@/lib/api/client";
 import { parseApiResponse } from "@/lib/api/errors";
 import type {
   CreateMemoryInput,
@@ -11,6 +11,7 @@ import type {
   MemoryListResult,
   MemoryPin,
   Paginated,
+  PlaceMemory,
   Reactor,
   ToggleReactionResult,
   UpdateMemoryInput,
@@ -84,6 +85,11 @@ export async function getFriendsMapPins(
     { ...bounds },
   );
   return { pins: items, ...(nextCursor ? { cursor: nextCursor } : {}) };
+}
+
+/** Every memory at a place visible to the viewer — for the "memories here" sheet. */
+export async function getPlaceMemories(placeId: string) {
+  return apiGet<PlaceMemory[]>(`/memories/place/${placeId}`);
 }
 
 export async function updateMemory(id: string, input: UpdateMemoryInput) {

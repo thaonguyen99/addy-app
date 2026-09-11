@@ -5,13 +5,14 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import {
   CAMERA_SCREEN_HORIZONTAL_PADDING,
+  SNAP_INNER_DIAMETER,
   SNAP_OUTER_DIAMETER,
 } from "@/features/camera/constants/layout";
 import { sharedInteractionStyles } from "@/features/camera/styles/shared-styles";
 import type { AddyMemoryImage } from "@/types/addy-memory";
 
 import { BrandColors } from "@/constants/theme";
-import { Ionicons, MaterialIcons } from "@expo/vector-icons";
+import { Ionicons } from "@expo/vector-icons";
 import { CapturedImageStack } from "./CapturedImageStack";
 
 export type CameraActionBarProps = Readonly<{
@@ -35,13 +36,7 @@ function CameraActionBarInner({
   const bottomPad = Math.max(insets.bottom, 14);
 
   return (
-    <View
-      style={[
-        styles.bar,
-        sharedInteractionStyles.hairlineTopDark,
-        { paddingBottom: bottomPad },
-      ]}
-    >
+    <View style={[styles.bar, { paddingBottom: bottomPad }]}>
       <View style={styles.col}>
         <Pressable
           accessibilityRole="button"
@@ -73,11 +68,7 @@ function CameraActionBarInner({
             captureDisabled && styles.snapDisabled,
           ]}
         >
-          <MaterialIcons
-            name="bolt"
-            size={44}
-            color={BrandColors.primary}
-          />
+          <View style={styles.snapInner} />
         </Pressable>
       </View>
 
@@ -113,7 +104,7 @@ export const CameraActionBar = memo(CameraActionBarInner);
 
 const styles = StyleSheet.create({
   bar: {
-    backgroundColor: "rgba(0, 0, 0, 0.3)",
+    backgroundColor: "rgba(43, 28, 33, 0.55)",
     paddingHorizontal: CAMERA_SCREEN_HORIZONTAL_PADDING,
     paddingTop: 18,
     flexDirection: "row",
@@ -156,6 +147,12 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     shadowOffset: { width: 0, height: 4 },
     elevation: 6,
+  },
+  snapInner: {
+    width: SNAP_INNER_DIAMETER,
+    height: SNAP_INNER_DIAMETER,
+    borderRadius: SNAP_INNER_DIAMETER / 2,
+    backgroundColor: BrandColors.primary,
   },
   snapPressed: {
     transform: [{ scale: 0.96 }],

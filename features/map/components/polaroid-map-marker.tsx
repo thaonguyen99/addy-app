@@ -1,5 +1,5 @@
 import { Image } from "expo-image";
-import { StyleSheet, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 
 import { BrandColors } from "@/constants/theme";
 import { POLAROID } from "@/features/feed/utils/polaroid";
@@ -8,12 +8,25 @@ const pinImage = require("@/assets/images/pin.png");
 
 type PolaroidMapMarkerProps = {
   imageUrl: string;
+  /** When more than one memory shares this place, shows a "+N" corner badge. */
+  count?: number;
+  /** Tints the pin icon to distinguish a friend's memory from your own. */
+  isFriend?: boolean;
 };
 
-export function PolaroidMapMarker({ imageUrl }: PolaroidMapMarkerProps) {
+export function PolaroidMapMarker({
+  imageUrl,
+  count,
+  isFriend,
+}: PolaroidMapMarkerProps) {
   return (
     <View style={styles.wrapper}>
-      <Image source={pinImage} style={styles.pinIcon} contentFit="contain" />
+      <Image
+        source={pinImage}
+        style={styles.pinIcon}
+        contentFit="contain"
+        tintColor={isFriend ? BrandColors.primary : undefined}
+      />
       <View style={styles.polaroid}>
         <Image
           source={{ uri: imageUrl }}
@@ -21,6 +34,11 @@ export function PolaroidMapMarker({ imageUrl }: PolaroidMapMarkerProps) {
           contentFit="cover"
         />
       </View>
+      {count != null && count > 1 ? (
+        <View style={styles.countBadge}>
+          <Text style={styles.countBadgeText}>+{count}</Text>
+        </View>
+      ) : null}
     </View>
   );
 }
@@ -58,5 +76,25 @@ const styles = StyleSheet.create({
     height: PHOTO_SIZE,
     borderRadius: 1,
     backgroundColor: BrandColors.neutralBorder,
+  },
+  countBadge: {
+    position: "absolute",
+    top: PIN_SIZE - 10,
+    right: -6,
+    minWidth: 22,
+    height: 22,
+    borderRadius: 11,
+    paddingHorizontal: 5,
+    backgroundColor: BrandColors.primary,
+    borderWidth: 1.5,
+    borderColor: BrandColors.white,
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 3,
+  },
+  countBadgeText: {
+    color: BrandColors.white,
+    fontSize: 11,
+    fontWeight: "700",
   },
 });

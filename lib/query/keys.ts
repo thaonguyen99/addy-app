@@ -6,6 +6,8 @@ export const queryKeys = {
   map: (boundsKey: string) => ["memories", "map", boundsKey] as const,
   friendsMap: (boundsKey: string) =>
     ["memories", "friends-map", boundsKey] as const,
+  placeMemories: (placeId: string) =>
+    ["memories", "place", placeId] as const,
   memoryReactions: (id: string) => ["memories", "reactions", id] as const,
   placesNearby: (lat: number, lng: number) =>
     ["places", "nearby", lat.toFixed(5), lng.toFixed(5)] as const,

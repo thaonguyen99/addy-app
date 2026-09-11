@@ -5,15 +5,9 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 import { BrandColors } from "@/constants/theme";
 import { formatRelativeTime } from "@/features/feed/utils/format-relative-time";
 import { MoodSticker } from "@/features/feed/components/mood-sticker";
+import { pickCover } from "@/features/feed/utils/pick-cover";
 import { POLAROID, rotationForId } from "@/features/feed/utils/polaroid";
-import type { MemoryImage, MemoryListItem } from "@/types/api";
-
-function pickCover(images: MemoryImage[]): MemoryImage | null {
-  if (images.length === 0) return null;
-  const cover = images.find((img) => img.type === "cover");
-  if (cover) return cover;
-  return [...images].sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0))[0];
-}
+import type { MemoryListItem } from "@/types/api";
 
 type MemoryFeedCardProps = {
   memory: MemoryListItem;

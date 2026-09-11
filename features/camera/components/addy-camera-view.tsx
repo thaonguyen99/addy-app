@@ -2,10 +2,6 @@ import type { CameraType, CameraView, FlashMode } from "expo-camera";
 import { CameraView as ExpoCameraView } from "expo-camera";
 import type { RefObject } from "react";
 import { memo, useCallback, useEffect, useMemo, useRef } from "react";
-import {
-  CameraShutterFlash,
-  type CameraShutterFlashRef,
-} from "./camera-shutter-flash";
 import { StyleSheet, View } from "react-native";
 import {
   Gesture,
@@ -14,19 +10,20 @@ import {
 } from "react-native-gesture-handler";
 import { runOnJS } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
+import {
+  CameraShutterFlash,
+  type CameraShutterFlashRef,
+} from "./camera-shutter-flash";
 
 import { CameraUi } from "@/features/camera/constants/layout";
-import { cameraLayout } from "@/features/camera/styles/shared-styles";
 import type { AddyMemoryImage } from "@/types/addy-memory";
 
-import { BrandColors } from "@/constants/theme";
 import { CameraActionBar } from "./CameraActionBar";
 import { CameraFlashFab } from "./camera-flash-fab";
 import { CameraZoomBar } from "./camera-zoom-bar";
 
 export type AddyCameraViewProps = Readonly<{
   cameraRef: RefObject<CameraView | null>;
-  frameSize: number;
   capturedPhotos: readonly AddyMemoryImage[];
   isCapturing: boolean;
   onCameraReady: () => void;
@@ -44,7 +41,6 @@ export type AddyCameraViewProps = Readonly<{
 
 function AddyCameraViewInner({
   cameraRef,
-  frameSize,
   capturedPhotos,
   isCapturing,
   onCameraReady,
@@ -99,89 +95,71 @@ function AddyCameraViewInner({
   }, [onCapture]);
 
   return (
-    <SafeAreaView style={styles.safe} edges={["top"]}>
-      <View style={styles.body}>
-        <View style={styles.cameraArea}>
-          <View style={[styles.previewColumn, { width: frameSize }]}>
-            <View
-              style={[
-                styles.squareFrame,
-                { width: frameSize, height: (frameSize * 5) / 4 },
-              ]}
-            >
-              <GestureHandlerRootView style={styles.gestureRoot}>
-                <ExpoCameraView
-                  ref={cameraRef}
-                  style={StyleSheet.absoluteFill}
-                  facing={facing}
-                  mode="picture"
-                  ratio="1:1"
-                  animateShutter
-                  flash={flash}
-                  zoom={zoom}
-                  onCameraReady={onCameraReady}
-                />
-                <GestureDetector gesture={pinchGesture}>
-                  <View style={styles.pinchOverlay} collapsable={false} />
-                </GestureDetector>
-                <CameraFlashFab flash={flash} onPress={onCycleFlash} />
-                <CameraShutterFlash ref={shutterFlashRef} />
-              </GestureHandlerRootView>
-            </View>
-            <CameraZoomBar
-              zoom={zoom}
-              onZoomOut={onZoomOut}
-              onZoomIn={onZoomIn}
-              onZoomSet={onZoomSet}
-            />
-          </View>
+    <View style={styles.root}>
+      <GestureHandlerRootView style={StyleSheet.absoluteFill}>
+        <ExpoCameraView
+          ref={cameraRef}
+          style={StyleSheet.absoluteFill}
+          facing={facing}
+          mode="picture"
+          animateShutter
+          flash={flash}
+          zoom={zoom}
+          onCameraReady={onCameraReady}
+        />
+        <GestureDetector gesture={pinchGesture}>
+          <View style={StyleSheet.absoluteFillObject} collapsable={false} />
+        </GestureDetector>
+        <CameraShutterFlash ref={shutterFlashRef} />
+      </GestureHandlerRootView>
+
+      <SafeAreaView
+        style={styles.overlay}
+        edges={["top", "bottom"]}
+        pointerEvents="box-none"
+      >
+        <View style={styles.topRow} pointerEvents="box-none">
+          <CameraFlashFab flash={flash} onPress={onCycleFlash} />
         </View>
 
-        <CameraActionBar
-          capturedPhotos={capturedPhotos}
-          onGalleryPress={onOpenSelection}
-          cameraFacing={facing}
-          onFlipCameraPress={onFlipCamera}
-          onCapturePress={handleCapturePress}
-          captureDisabled={isCapturing}
-        />
-      </View>
-    </SafeAreaView>
+        <View style={styles.bottomStack} pointerEvents="box-none">
+          <CameraZoomBar
+            zoom={zoom}
+            onZoomOut={onZoomOut}
+            onZoomIn={onZoomIn}
+            onZoomSet={onZoomSet}
+          />
+          <CameraActionBar
+            capturedPhotos={capturedPhotos}
+            onGalleryPress={onOpenSelection}
+            cameraFacing={facing}
+            onFlipCameraPress={onFlipCamera}
+            onCapturePress={handleCapturePress}
+            captureDisabled={isCapturing}
+          />
+        </View>
+      </SafeAreaView>
+    </View>
   );
 }
 
 export const AddyCameraView = memo(AddyCameraViewInner);
 
 const styles = StyleSheet.create({
-  safe: {
+  root: {
     flex: 1,
     backgroundColor: CameraUi.screenBg,
   },
-  body: {
-    flex: 1,
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
     justifyContent: "space-between",
   },
-  cameraArea: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingTop: 12,
+  topRow: {
+    paddingHorizontal: 16,
+    paddingTop: 8,
+    alignItems: "flex-start",
   },
-  previewColumn: {
-    alignItems: "stretch",
-  },
-  squareFrame: {
-    position: "relative",
-    borderRadius: cameraLayout.cornerRadiusLg,
-    overflow: "hidden",
-    backgroundColor: BrandColors.gray900,
-    borderWidth: 1,
-    borderColor: BrandColors.neutralBorder,
-  },
-  gestureRoot: {
-    flex: 1,
-  },
-  pinchOverlay: {
-    ...StyleSheet.absoluteFillObject,
+  bottomStack: {
+    paddingBottom: 8,
   },
 });

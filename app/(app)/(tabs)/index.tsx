@@ -1,25 +1,51 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { router } from "expo-router";
-import { ActivityIndicator, Pressable, StyleSheet, View } from "react-native";
+import {
+  ActivityIndicator,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  useWindowDimensions,
+  View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { TourTarget } from "@wrack/react-native-tour-guide";
 
 import { ThemedText } from "@/components/ui/themed-text";
 import { useAuthStore } from "@/features/auth/store/auth-store";
+import { useMemoryFeed } from "@/features/feed/hooks/use-memory-feed";
+import { MemoryThumbnail } from "@/features/feed/components/memory-thumbnail";
 import { ONBOARDING_ADD_FRIEND_TARGET_ID } from "@/features/onboarding/onboarding-tour";
 import { useStatsQuery } from "@/lib/query/hooks";
 import { BrandColors } from "@/constants/theme";
 
+const GRID_COLUMNS = 3;
+const GRID_GAP = 10;
+const GRID_PREVIEW_COUNT = 9;
+
 export default function HomeScreen() {
   const user = useAuthStore((s) => s.user);
   const { data: stats, isLoading } = useStatsQuery();
+  const { items: memories } = useMemoryFeed(true);
+  const { width: screenWidth } = useWindowDimensions();
 
   const name =
     user?.name || user?.username || user?.email?.split("@")[0] || "";
 
+  const gridPadding = 24;
+  const tileSize =
+    (screenWidth - gridPadding * 2 - GRID_GAP * (GRID_COLUMNS - 1)) /
+    GRID_COLUMNS;
+  const previewMemories = memories.slice(0, GRID_PREVIEW_COUNT);
+
   return (
     <SafeAreaView style={styles.safe} edges={["top"]}>
-      <View style={styles.content}>
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
         <View style={styles.titleRow}>
           <ThemedText type="title" style={styles.title}>
             Hi{name ? `, ${name}` : ""}
@@ -87,14 +113,38 @@ export default function HomeScreen() {
         >
           <ThemedText style={styles.ctaTextSecondary}>View map</ThemedText>
         </Pressable>
-      </View>
+
+        {previewMemories.length > 0 ? (
+          <View style={styles.gridSection}>
+            <View style={styles.gridHeaderRow}>
+              <ThemedText type="subtitle" style={styles.gridHeading}>
+                Your memories
+              </ThemedText>
+              <Pressable onPress={() => router.push("/(app)/memories")}>
+                <Text style={styles.viewAll}>View all</Text>
+              </Pressable>
+            </View>
+            <View style={[styles.grid, { gap: GRID_GAP }]}>
+              {previewMemories.map((memory) => (
+                <MemoryThumbnail
+                  key={memory.id}
+                  memory={memory}
+                  size={tileSize}
+                  onPress={(id) => router.push(`/memory/${id}`)}
+                />
+              ))}
+            </View>
+          </View>
+        ) : null}
+      </ScrollView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: BrandColors.gray900 },
-  content: { flex: 1, padding: 24, gap: 16 },
+  scroll: { flex: 1 },
+  content: { padding: 24, paddingBottom: 40, gap: 16 },
   titleRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -133,4 +183,13 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     fontSize: 16,
   },
+  gridSection: { gap: 12, marginTop: 4 },
+  gridHeaderRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  gridHeading: { color: BrandColors.neutral },
+  viewAll: { color: BrandColors.primary, fontWeight: "600", fontSize: 14 },
+  grid: { flexDirection: "row", flexWrap: "wrap" },
 });
