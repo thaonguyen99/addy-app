@@ -1,11 +1,14 @@
 import { useState } from "react";
 import { Alert } from "react-native";
+import { useTourGuide } from "@wrack/react-native-tour-guide";
 
 import { useCameraSession } from "@/features/camera/context/camera-session-context";
 import { navigateAfterCreatePin } from "@/features/create-pin/navigate-after-create-pin";
 import { useCreatePinHandoffStore } from "@/features/create-pin/store/create-pin-handoff-store";
 import { removeDraftImages } from "@/features/drafts/draft-image-storage";
 import { placeSuggestionToPlaceInput } from "@/features/location/place-input";
+import { handleOnboardingPinSaved } from "@/features/onboarding/navigate-after-onboarding-pin";
+import { useOnboardingCaptureStore } from "@/features/onboarding/store/onboarding-capture-store";
 import { toApiClientError } from "@/lib/api/errors";
 import {
   useCreateMemoryMutation,
@@ -23,6 +26,7 @@ export function useCreatePinSubmit(images: readonly AddyMemoryImage[]) {
   const selectedPlace = useCreatePinHandoffStore((s) => s.selectedPlace);
   const visibility = useCreatePinHandoffStore((s) => s.visibility);
   const { clearSession, reloadDrafts } = useCameraSession();
+  const { resumeTour } = useTourGuide();
 
   const submit = async () => {
     if (images.length === 0) {
@@ -60,11 +64,15 @@ export function useCreatePinSubmit(images: readonly AddyMemoryImage[]) {
       await removeDraftImages(images.map((img) => img.id));
       clearSession();
       await reloadDrafts();
-      navigateAfterCreatePin(
-        memory.id,
-        memory.place.latitude,
-        memory.place.longitude,
-      );
+      if (useOnboardingCaptureStore.getState().active) {
+        handleOnboardingPinSaved(memory, { resumeTour });
+      } else {
+        navigateAfterCreatePin(
+          memory.id,
+          memory.place.latitude,
+          memory.place.longitude,
+        );
+      }
       clearHandoff();
       return memory;
     } catch (error) {

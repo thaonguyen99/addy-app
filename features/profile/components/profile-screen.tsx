@@ -6,6 +6,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import {
   ActivityIndicator,
+  Alert,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -32,6 +33,7 @@ import {
 import { getApiErrorMessage } from "@/lib/api/errors";
 import {
   useCheckUsernameMutation,
+  useDeleteAccountMutation,
   useProfileQuery,
   useUpdateProfileMutation,
 } from "@/lib/query/hooks";
@@ -50,6 +52,7 @@ export function ProfileScreen() {
   const { mutateAsync: checkUsernameAvailable } = useCheckUsernameMutation();
   const { pickAndUpload, busy: avatarBusy } = useAvatarUpload();
   const signOut = useAuthStore((s) => s.signOut);
+  const deleteAccount = useDeleteAccountMutation();
 
   const [saveError, setSaveError] = useState<string | null>(null);
   const [usernameStatus, setUsernameStatus] = useState<UsernameStatus>("idle");
@@ -148,6 +151,32 @@ export function ProfileScreen() {
 
   const onSignOut = () => {
     void signOut().then(() => router.replace("/sign-in"));
+  };
+
+  const onDeleteAccount = () => {
+    Alert.alert(
+      "Delete account?",
+      "This permanently deletes your account, memories, photos, and friend connections. This cannot be undone.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete account",
+          style: "destructive",
+          onPress: () => {
+            void deleteAccount
+              .mutateAsync()
+              .then(() => signOut())
+              .then(() => router.replace("/sign-in"))
+              .catch((error) => {
+                Alert.alert(
+                  "Delete account",
+                  getApiErrorMessage(error, "Could not delete your account."),
+                );
+              });
+          },
+        },
+      ],
+    );
   };
 
   return (
@@ -308,7 +337,34 @@ export function ProfileScreen() {
               />
             </Pressable>
 
+            <Pressable
+              style={styles.linkRow}
+              onPress={() => router.push("/(app)/privacy-policy")}
+            >
+              <Text style={styles.linkRowText}>Privacy Policy</Text>
+              <Ionicons
+                name="chevron-forward"
+                size={18}
+                color={BrandColors.neutralMuted}
+              />
+            </Pressable>
+
             <ChangePasswordSection hasPassword={profile.hasPassword} />
+
+            <Pressable
+              style={styles.linkRow}
+              onPress={onDeleteAccount}
+              disabled={deleteAccount.isPending}
+            >
+              <Text style={[styles.linkRowText, styles.deleteAccountText]}>
+                Delete account
+              </Text>
+              <Ionicons
+                name="chevron-forward"
+                size={18}
+                color={BrandColors.neutralMuted}
+              />
+            </Pressable>
 
             <Pressable onPress={onSignOut} style={styles.signOut}>
               <Text style={styles.signOutText}>Sign out</Text>
@@ -456,6 +512,9 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
     color: BrandColors.neutral,
+  },
+  deleteAccountText: {
+    color: BrandColors.primary,
   },
   signOut: {
     alignItems: "center",

@@ -1,4 +1,4 @@
-import { apiGet, apiPatch, apiPost } from "@/lib/api/client";
+import { apiDelete, apiGet, apiPatch, apiPost } from "@/lib/api/client";
 import type {
   AuthTokens,
   ChangePasswordInput,
@@ -18,6 +18,14 @@ export async function getStats() {
 
 export async function updateProfile(input: UpdateProfileInput) {
   return apiPatch<UserProfile>("/users/me", input);
+}
+
+export async function completeOnboarding() {
+  return apiPost<UserProfile>("/users/me/complete-onboarding");
+}
+
+export async function deleteAccount() {
+  return apiDelete<{ message: string }>("/users/me");
 }
 
 export async function changePassword(input: ChangePasswordInput) {

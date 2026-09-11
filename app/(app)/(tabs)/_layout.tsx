@@ -1,9 +1,11 @@
 import { Tabs } from "expo-router";
 import React from "react";
+import { TourTarget } from "@wrack/react-native-tour-guide";
 
 import { HapticTab } from "@/components/haptic-tab";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { BrandColors } from "@/constants/theme";
+import { ONBOARDING_ADD_MEMORY_STEP_ID } from "@/features/onboarding/onboarding-tour";
 
 export default function TabLayout() {
   return (
@@ -34,6 +36,14 @@ export default function TabLayout() {
           title: "Camera",
           tabBarIcon: ({ color }) => (
             <IconSymbol size={28} name="camera.fill" color={color} />
+          ),
+          tabBarButton: (props) => (
+            <TourTarget
+              id={ONBOARDING_ADD_MEMORY_STEP_ID}
+              style={{ flex: 1, borderRadius: 16 }}
+            >
+              <HapticTab {...props} />
+            </TourTarget>
           ),
         }}
       />

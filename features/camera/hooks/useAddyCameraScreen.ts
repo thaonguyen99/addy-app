@@ -4,7 +4,9 @@ import {
 } from '@/features/camera/constants/layout';
 import { useCameraSession } from '@/features/camera/context/camera-session-context';
 import { useAddyCamera } from '@/features/camera/hooks/useAddyCamera';
+import { ONBOARDING_TOUR_ID } from '@/features/onboarding/onboarding-tour';
 import { useFocusEffect } from '@react-navigation/native';
+import { useTourGuide } from '@wrack/react-native-tour-guide';
 import { router } from 'expo-router';
 import { useCallback } from 'react';
 import { Linking, useWindowDimensions } from 'react-native';
@@ -33,6 +35,19 @@ export function useAddyCameraScreen() {
   const frameSize = Math.min(
     screenWidth - CAMERA_SCREEN_HORIZONTAL_PADDING * 2,
     CAMERA_FRAME_MAX_SIZE
+  );
+
+  const { pauseTour, activeTourId } = useTourGuide();
+
+  // Hide the onboarding spotlight while the user goes through the capture
+  // flow (photo-selection, place-selection, create-pin) — it resumes and
+  // advances once a pin is actually saved (see navigate-after-onboarding-pin).
+  useFocusEffect(
+    useCallback(() => {
+      if (activeTourId === ONBOARDING_TOUR_ID) {
+        pauseTour();
+      }
+    }, [activeTourId, pauseTour])
   );
 
   const openPhotoSelection = useCallback(() => {

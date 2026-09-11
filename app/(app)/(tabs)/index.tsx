@@ -2,9 +2,11 @@ import Ionicons from "@expo/vector-icons/Ionicons";
 import { router } from "expo-router";
 import { ActivityIndicator, Pressable, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { TourTarget } from "@wrack/react-native-tour-guide";
 
 import { ThemedText } from "@/components/ui/themed-text";
 import { useAuthStore } from "@/features/auth/store/auth-store";
+import { ONBOARDING_ADD_FRIEND_TARGET_ID } from "@/features/onboarding/onboarding-tour";
 import { useStatsQuery } from "@/lib/query/hooks";
 import { BrandColors } from "@/constants/theme";
 
@@ -23,19 +25,21 @@ export default function HomeScreen() {
             Hi{name ? `, ${name}` : ""}
           </ThemedText>
           <View style={styles.headerActions}>
-            <Pressable
-              onPress={() => router.push("/(app)/friends")}
-              hitSlop={12}
-              style={styles.settingsButton}
-              accessibilityRole="button"
-              accessibilityLabel="Friends"
-            >
-              <Ionicons
-                name="people-outline"
-                size={24}
-                color={BrandColors.neutralMuted}
-              />
-            </Pressable>
+            <TourTarget id={ONBOARDING_ADD_FRIEND_TARGET_ID}>
+              <Pressable
+                onPress={() => router.push("/(app)/friends")}
+                hitSlop={12}
+                style={styles.settingsButton}
+                accessibilityRole="button"
+                accessibilityLabel="Friends"
+              >
+                <Ionicons
+                  name="people-outline"
+                  size={24}
+                  color={BrandColors.neutralMuted}
+                />
+              </Pressable>
+            </TourTarget>
             <Pressable
               onPress={() => router.push("/profile")}
               hitSlop={12}

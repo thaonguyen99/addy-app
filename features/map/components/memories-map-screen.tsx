@@ -19,6 +19,7 @@ import {
 import type { NativeSyntheticEvent } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
+import { TourTarget, useTourGuide } from "@wrack/react-native-tour-guide";
 
 import { GOONG_MAP_API_KEY } from "@/lib/env";
 import {
@@ -34,6 +35,19 @@ import {
 } from "@/features/feed/components/memory-feed-sheet";
 import { PolaroidMapMarker } from "@/features/map/components/polaroid-map-marker";
 import { useMapFocusStore } from "@/features/map/store/map-focus-store";
+import {
+  ONBOARDING_ADD_MEMORY_STEP_ID,
+  ONBOARDING_MAP_PIN_STEP_ID,
+  ONBOARDING_MAP_PIN_TARGET_ID,
+  ONBOARDING_TOUR_ID,
+} from "@/features/onboarding/onboarding-tour";
+
+// The polaroid marker's visual footprint (features/map/components/polaroid-map-marker.tsx):
+// PIN_SIZE(28) + POLAROID_HEIGHT(71) - 6px overlap, extending UPWARD from the
+// marker's anchor="bottom" point.
+const MARKER_VISUAL_WIDTH = 66;
+const MARKER_VISUAL_HEIGHT = 93;
+const HIGHLIGHT_PADDING = 12;
 
 const GOONG_STYLE_URL = `https://tiles.goong.io/assets/goong_map_web.json?api_key=${GOONG_MAP_API_KEY}`;
 
@@ -75,11 +89,20 @@ function SuccessToast() {
 
 export function MemoriesMapScreen() {
   const cameraRef = useRef<CameraRef>(null);
+  const mapContainerRef = useRef<View>(null);
   const feedSheetRef = useRef<MemoryFeedSheetHandle>(null);
   const pendingFocus = useMapFocusStore((s) => s.pendingFocus);
   const setPendingFocus = useMapFocusStore((s) => s.setPendingFocus);
   const showSuccessToast = useMapFocusStore((s) => s.showSuccessToast);
   const setShowSuccessToast = useMapFocusStore((s) => s.setShowSuccessToast);
+
+  const { activeTourId, currentStep, activeSteps, nextStep } = useTourGuide();
+  const [pinHighlight, setPinHighlight] = useState({
+    width: MARKER_VISUAL_WIDTH + HIGHLIGHT_PADDING * 2,
+    height: MARKER_VISUAL_HEIGHT + HIGHLIGHT_PADDING * 2,
+    left: 0,
+    top: 0,
+  });
 
   const [debouncedBounds, setDebouncedBounds] = useState<MapBounds | null>(
     DEFAULT_BOUNDS,
@@ -91,18 +114,40 @@ export function MemoriesMapScreen() {
   useFocusEffect(
     useCallback(() => {
       if (!pendingFocus) return;
+      const { latitude, longitude } = pendingFocus;
 
       const timer = setTimeout(() => {
         cameraRef.current?.flyTo({
-          center: [pendingFocus.longitude, pendingFocus.latitude],
+          center: [longitude, latitude],
           zoom: 15,
           duration: 600,
         });
         setPendingFocus(null);
+
+        // flyTo has no completion callback — wait out its duration (plus a
+        // buffer) before measuring where the pin actually landed on screen.
+        const settleTimer = setTimeout(() => {
+          const isOnboardingAddMemoryStep =
+            activeTourId === ONBOARDING_TOUR_ID &&
+            activeSteps[currentStep]?.id === ONBOARDING_ADD_MEMORY_STEP_ID;
+          if (!isOnboardingAddMemoryStep) return;
+
+          mapContainerRef.current?.measure((_x, _y, width, height) => {
+            setPinHighlight({
+              width: MARKER_VISUAL_WIDTH + HIGHLIGHT_PADDING * 2,
+              height: MARKER_VISUAL_HEIGHT + HIGHLIGHT_PADDING * 2,
+              left: width / 2 - (MARKER_VISUAL_WIDTH + HIGHLIGHT_PADDING * 2) / 2,
+              top: height / 2 - MARKER_VISUAL_HEIGHT - HIGHLIGHT_PADDING * 2,
+            });
+            nextStep();
+          });
+        }, 650);
+
+        return () => clearTimeout(settleTimer);
       }, 350);
 
       return () => clearTimeout(timer);
-    }, [pendingFocus, setPendingFocus]),
+    }, [pendingFocus, setPendingFocus, activeTourId, currentStep, activeSteps, nextStep]),
   );
 
   // Auto-dismiss the success toast
@@ -155,7 +200,7 @@ export function MemoriesMapScreen() {
   }
 
   return (
-    <View style={styles.flex}>
+    <View style={styles.flex} ref={mapContainerRef}>
       <Map
         style={styles.map}
         mapStyle={GOONG_STYLE_URL}
@@ -182,12 +227,29 @@ export function MemoriesMapScreen() {
             key={pin.id}
             lngLat={[pin.longitude, pin.latitude]}
             anchor="bottom"
-            onPress={() => router.push(`/memory/${pin.id}`)}
+            onPress={() => {
+              router.push(`/memory/${pin.id}`);
+              if (
+                activeTourId === ONBOARDING_TOUR_ID &&
+                activeSteps[currentStep]?.id === ONBOARDING_MAP_PIN_STEP_ID
+              ) {
+                nextStep();
+              }
+            }}
           >
             <PolaroidMapMarker imageUrl={pin.imageUrl} />
           </Marker>
         ))}
       </Map>
+
+      {/* Invisible target for the onboarding tour's "map + pin" step — see
+          the pendingFocus effect above for how its position is computed. */}
+      <TourTarget id={ONBOARDING_MAP_PIN_TARGET_ID}>
+        <View
+          pointerEvents="none"
+          style={[styles.pinHighlightTarget, pinHighlight]}
+        />
+      </TourTarget>
 
       <SafeAreaView
         style={styles.overlay}
@@ -244,6 +306,7 @@ export function MemoriesMapScreen() {
 const styles = StyleSheet.create({
   flex: { flex: 1 },
   map: { flex: 1 },
+  pinHighlightTarget: { position: "absolute" },
   safe: { flex: 1, backgroundColor: BrandColors.gray900 },
   overlay: { position: "absolute", top: 0, left: 0, right: 0 },
 

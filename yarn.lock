@@ -2296,6 +2296,11 @@
     "@urql/core" "^5.1.2"
     wonka "^6.3.2"
 
+"@wrack/react-native-tour-guide@^2.0.0":
+  version "2.0.0"
+  resolved "https://registry.yarnpkg.com/@wrack/react-native-tour-guide/-/react-native-tour-guide-2.0.0.tgz#2842704efb50e7350f6ab7f92a0c431b933204df"
+  integrity sha512-47G5M+DWx4hqb39VtuwrsFTXpdLi7XQyG1ILP3b+/O+1N9ZEJivSLtu9y+jc3tD8NeDXLQK8CjB/ayNRrCbFUQ==
+
 "@xmldom/xmldom@^0.8.8":
   version "0.8.13"
   resolved "https://registry.yarnpkg.com/@xmldom/xmldom/-/xmldom-0.8.13.tgz#00d1dd940b218dff2e49309d410d8bb212159225"

@@ -4,10 +4,13 @@ import { useEffect } from "react";
 import { CameraSessionProvider } from "@/features/camera/context/camera-session-context";
 import { useAuthStore } from "@/features/auth/store/auth-store";
 import { takePendingInviteToken } from "@/features/friends/pending-invite";
+import { useOnboardingTour } from "@/features/onboarding/onboarding-tour";
 import { registerForPush } from "@/features/notifications/push-registration";
 
 export default function AppLayout() {
   const status = useAuthStore((s) => s.status);
+
+  useOnboardingTour();
 
   useEffect(() => {
     if (status !== "authenticated") return;
@@ -46,6 +49,7 @@ export default function AppLayout() {
         />
         <Stack.Screen name="memory/[id]" />
         <Stack.Screen name="profile" />
+        <Stack.Screen name="privacy-policy" />
         <Stack.Screen name="friends/index" />
         <Stack.Screen name="friends/search" />
         <Stack.Screen name="friends/invite" />

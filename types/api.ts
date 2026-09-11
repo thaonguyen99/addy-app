@@ -25,6 +25,7 @@ export type AuthUser = {
   bio: string | null;
   avatarUrl: string | null;
   hasPassword: boolean;
+  onboardingCompletedAt: string | null;
 };
 
 export type AuthTokens = {

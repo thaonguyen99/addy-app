@@ -120,6 +120,22 @@ export function useUpdateProfileMutation() {
   });
 }
 
+export function useCompleteOnboardingMutation() {
+  const queryClient = useQueryClient();
+  const updateUser = useAuthStore((s) => s.updateUser);
+  return useMutation({
+    mutationFn: usersApi.completeOnboarding,
+    onSuccess: async (profile) => {
+      await updateUser({ onboardingCompletedAt: profile.onboardingCompletedAt });
+      queryClient.setQueryData(queryKeys.profile, profile);
+    },
+  });
+}
+
+export function useDeleteAccountMutation() {
+  return useMutation({ mutationFn: usersApi.deleteAccount });
+}
+
 export function useUploadAvatarMutation() {
   return useMutation({ mutationFn: uploadAvatar });
 }

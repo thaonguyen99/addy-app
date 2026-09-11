@@ -14,10 +14,12 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { TourTarget } from "@wrack/react-native-tour-guide";
 
 import { BrandColors } from "@/constants/theme";
 import { ToggleRow } from "@/components/ui/toggle-row";
 import { MOOD_SCORE_OPTIONS } from "@/features/camera/constants/mood-score";
+import { ONBOARDING_MEMORY_DETAIL_TARGET_ID } from "@/features/onboarding/onboarding-tour";
 import { ReactorsSheet } from "@/features/reactions/components/reactors-sheet";
 import type { ReactorsSheetRef } from "@/features/reactions/components/reactors-sheet";
 import { safeBack } from "@/lib/navigation/safe-router";
@@ -158,15 +160,17 @@ export function MemoryDetailScreen({ id }: MemoryDetailScreenProps) {
             </View>
 
             {/* Place name + address */}
-            <View style={styles.placeSection}>
-              <View style={styles.pinkAccent} />
-              <View style={styles.placeInfo}>
-                <Text style={styles.placeName}>{data.place.name}</Text>
-                <Text style={styles.address}>
-                  📍 {data.place.formattedAddress}
-                </Text>
+            <TourTarget id={ONBOARDING_MEMORY_DETAIL_TARGET_ID}>
+              <View style={styles.placeSection}>
+                <View style={styles.pinkAccent} />
+                <View style={styles.placeInfo}>
+                  <Text style={styles.placeName}>{data.place.name}</Text>
+                  <Text style={styles.address}>
+                    📍 {data.place.formattedAddress}
+                  </Text>
+                </View>
               </View>
-            </View>
+            </TourTarget>
 
             {/* Mood score */}
             {moodOption ? (

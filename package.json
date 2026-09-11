@@ -22,6 +22,7 @@
     "@react-navigation/elements": "^2.6.3",
     "@react-navigation/native": "^7.1.8",
     "@tanstack/react-query": "^5.100.14",
+    "@wrack/react-native-tour-guide": "^2.0.0",
     "axios": "^1.16.1",
     "expo": "~54.0.33",
     "expo-blur": "~15.0.8",
