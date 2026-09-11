@@ -29,15 +29,10 @@ import {
 } from "@/lib/query/hooks";
 import type { MapBounds } from "@/types/api";
 import { BrandColors } from "@/constants/theme";
-import {
-  MemoryFeedSheet,
-  type MemoryFeedSheetHandle,
-} from "@/features/feed/components/memory-feed-sheet";
 import { PolaroidMapMarker } from "@/features/map/components/polaroid-map-marker";
 import { useMapFocusStore } from "@/features/map/store/map-focus-store";
 import {
   ONBOARDING_ADD_MEMORY_STEP_ID,
-  ONBOARDING_MAP_PIN_STEP_ID,
   ONBOARDING_MAP_PIN_TARGET_ID,
   ONBOARDING_TOUR_ID,
 } from "@/features/onboarding/onboarding-tour";
@@ -90,7 +85,6 @@ function SuccessToast() {
 export function MemoriesMapScreen() {
   const cameraRef = useRef<CameraRef>(null);
   const mapContainerRef = useRef<View>(null);
-  const feedSheetRef = useRef<MemoryFeedSheetHandle>(null);
   const pendingFocus = useMapFocusStore((s) => s.pendingFocus);
   const setPendingFocus = useMapFocusStore((s) => s.setPendingFocus);
   const showSuccessToast = useMapFocusStore((s) => s.showSuccessToast);
@@ -173,16 +167,17 @@ export function MemoriesMapScreen() {
   const { data, isError } = useMemoriesMapQuery(debouncedBounds);
   const pins = data?.pins ?? [];
 
-  const { data: friendsData } = useFriendsMapQuery(
-    showFriends ? debouncedBounds : null,
-  );
+  const { data: friendsData, isLoading: isFriendsMapLoading } =
+    useFriendsMapQuery(showFriends ? debouncedBounds : null);
   const friendPins = showFriends ? (friendsData?.pins ?? []) : [];
+  const showFriendsEmptyHint =
+    showFriends && !isFriendsMapLoading && friendPins.length === 0;
 
   const { data: stats, isLoading: isStatsLoading } = useStatsQuery();
   const totalMemories = stats?.totalMemories;
 
   const openFeed = useCallback(() => {
-    feedSheetRef.current?.present();
+    router.push("/(app)/memories");
   }, []);
 
   if (Platform.OS === "web") {
@@ -227,15 +222,7 @@ export function MemoriesMapScreen() {
             key={pin.id}
             lngLat={[pin.longitude, pin.latitude]}
             anchor="bottom"
-            onPress={() => {
-              router.push(`/memory/${pin.id}`);
-              if (
-                activeTourId === ONBOARDING_TOUR_ID &&
-                activeSteps[currentStep]?.id === ONBOARDING_MAP_PIN_STEP_ID
-              ) {
-                nextStep();
-              }
-            }}
+            onPress={() => router.push(`/memory/${pin.id}`)}
           >
             <PolaroidMapMarker imageUrl={pin.imageUrl} />
           </Marker>
@@ -296,9 +283,14 @@ export function MemoriesMapScreen() {
           </Text>
         </Pressable>
         </View>
+        {showFriendsEmptyHint ? (
+          <View style={styles.friendsHintRow}>
+            <Text style={styles.friendsHintText}>
+              No friends' memories here yet
+            </Text>
+          </View>
+        ) : null}
       </SafeAreaView>
-
-      <MemoryFeedSheet ref={feedSheetRef} />
     </View>
   );
 }
@@ -359,6 +351,19 @@ const styles = StyleSheet.create({
     color: BrandColors.neutralMuted,
   },
   friendsChipTextOn: { color: BrandColors.white },
+  friendsHintRow: {
+    alignItems: "center",
+    marginTop: -8,
+  },
+  friendsHintText: {
+    backgroundColor: "rgba(43, 28, 33, 0.92)",
+    color: BrandColors.neutralMuted,
+    fontSize: 13,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 10,
+    overflow: "hidden",
+  },
   friendMarker: {
     borderWidth: 2,
     borderColor: BrandColors.primary,

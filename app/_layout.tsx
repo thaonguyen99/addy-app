@@ -5,6 +5,7 @@ import {
   BeVietnamPro_700Bold,
   useFonts,
 } from "@expo-google-fonts/be-vietnam-pro";
+import { PatrickHand_400Regular } from "@expo-google-fonts/patrick-hand";
 import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 import { DarkTheme, ThemeProvider } from "@react-navigation/native";
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -76,6 +77,7 @@ export default function RootLayout() {
     "BeVietnam-Medium": BeVietnamPro_500Medium,
     "BeVietnam-SemiBold": BeVietnamPro_600SemiBold,
     "BeVietnam-Bold": BeVietnamPro_700Bold,
+    "PatrickHand-Regular": PatrickHand_400Regular,
   });
 
   useEffect(() => {

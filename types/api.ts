@@ -110,6 +110,8 @@ export type MemoryDetail = {
   capturedAt: string;
   createdAt: string;
   place: PlaceSummary;
+  /** Who this memory belongs to — the real owner when viewing a friend's memory. */
+  author: PublicUser;
 };
 
 /** Minimal public identity for another user (friend, requester, reactor). */

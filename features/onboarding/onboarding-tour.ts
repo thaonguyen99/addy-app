@@ -1,7 +1,10 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import {
+  useTourPersistence,
+  type TourStep,
+} from "@wrack/react-native-tour-guide";
 import { router } from "expo-router";
 import { useEffect, useMemo, useRef } from "react";
-import { useTourPersistence, type TourStep } from "@wrack/react-native-tour-guide";
 
 import { useAuthStore } from "@/features/auth/store/auth-store";
 import { needsOnboarding } from "@/features/onboarding/needs-onboarding";
@@ -22,7 +25,8 @@ export const ONBOARDING_ADD_FRIEND_STEP_ID = "onboarding-add-friend";
 // invisible highlight view for the map pin, and the memory-detail/add-friend
 // elements on screens the step id doesn't otherwise name).
 export const ONBOARDING_MAP_PIN_TARGET_ID = "onboarding-map-pin-target";
-export const ONBOARDING_MEMORY_DETAIL_TARGET_ID = "onboarding-memory-detail-target";
+export const ONBOARDING_MEMORY_DETAIL_TARGET_ID =
+  "onboarding-memory-detail-target";
 export const ONBOARDING_ADD_FRIEND_TARGET_ID = "onboarding-add-friend-target";
 
 /**
@@ -52,7 +56,17 @@ export function useOnboardingTour() {
         // navigate-after-onboarding-pin.ts + memories-map-screen.tsx), not
         // via a Next tap — hide it so it can't skip ahead of a real pin.
         hideNextButton: true,
-        interactive: true,
+        // A custom tabBarButton wrapped in TourTarget isn't a reliable
+        // interactive touch-passthrough target (react-navigation's own
+        // button-slot layout gets in the way of the overlay's press-bands),
+        // so navigate from onSpotlightPress instead — a plain Pressable the
+        // overlay renders over the spotlight itself, unrelated to whether
+        // the real tab button underneath ever receives the touch. This also
+        // doesn't call nextStep(), so it can't skip ahead to step 2 early.
+        onSpotlightPress: () => {
+          console.log("onSpotlightPress");
+          router.push("/(app)/(tabs)/camera");
+        },
       },
       {
         id: ONBOARDING_MAP_PIN_STEP_ID,
@@ -61,8 +75,16 @@ export function useOnboardingTour() {
         description: "Tap your new pin to see the memory you just created.",
         hidePrevButton: true,
         hideNextButton: true,
-        interactive: true,
         autoAdvance: 0,
+        // Same reasoning as step 1: don't rely on a real tap reaching the
+        // MapLibre marker underneath the overlay. onSpotlightPress renders
+        // its own reliable Pressable over the highlighted area instead.
+        onSpotlightPress: () => {
+          const memoryId =
+            useOnboardingCaptureStore.getState().lastCreatedMemoryId;
+          if (memoryId) router.push(`/memory/${memoryId}`);
+          nextStep();
+        },
       },
       {
         id: ONBOARDING_MEMORY_DETAIL_STEP_ID,
@@ -97,7 +119,6 @@ export function useOnboardingTour() {
     useOnboardingCaptureStore.getState().setActive(true);
     void startTour(steps, {
       ...onboardingTourTheme,
-      overlayMode: "inline",
       tourId: ONBOARDING_TOUR_ID,
       doneButtonText: "Got it",
       onTourEnd: () => {

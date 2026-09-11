@@ -3,8 +3,8 @@ import { memo, useMemo } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import { BrandColors } from "@/constants/theme";
-import { MOOD_SCORE_OPTIONS } from "@/features/camera/constants/mood-score";
 import { formatRelativeTime } from "@/features/feed/utils/format-relative-time";
+import { MoodSticker } from "@/features/feed/components/mood-sticker";
 import { POLAROID, rotationForId } from "@/features/feed/utils/polaroid";
 import type { MemoryImage, MemoryListItem } from "@/types/api";
 
@@ -23,10 +23,6 @@ type MemoryFeedCardProps = {
 function MemoryFeedCardBase({ memory, onPress }: MemoryFeedCardProps) {
   const cover = useMemo(() => pickCover(memory.images), [memory.images]);
   const rotation = useMemo(() => rotationForId(memory.id), [memory.id]);
-  const mood =
-    memory.moodScore != null
-      ? MOOD_SCORE_OPTIONS.find((o) => o.score === memory.moodScore)
-      : null;
   const timeAgo = formatRelativeTime(memory.capturedAt);
 
   return (
@@ -37,18 +33,23 @@ function MemoryFeedCardBase({ memory, onPress }: MemoryFeedCardProps) {
         accessibilityRole="button"
         accessibilityLabel={`Open memory at ${memory.place.name}`}
       >
-        {cover ? (
-          <Image
-            source={{ uri: cover.url }}
-            style={styles.photo}
-            contentFit="cover"
-            transition={150}
-          />
-        ) : (
-          <View style={[styles.photo, styles.photoFallback]}>
-            <Text style={styles.photoFallbackText}>📷</Text>
+        <View style={styles.photoWrapper}>
+          {cover ? (
+            <Image
+              source={{ uri: cover.url }}
+              style={styles.photo}
+              contentFit="cover"
+              transition={150}
+            />
+          ) : (
+            <View style={[styles.photo, styles.photoFallback]}>
+              <Text style={styles.photoFallbackText}>📷</Text>
+            </View>
+          )}
+          <View style={styles.sticker}>
+            <MoodSticker score={memory.moodScore} />
           </View>
-        )}
+        </View>
 
         <View style={styles.caption}>
           {memory.feeling ? (
@@ -59,9 +60,8 @@ function MemoryFeedCardBase({ memory, onPress }: MemoryFeedCardProps) {
           <Text style={styles.place} numberOfLines={1}>
             {memory.place.name}
           </Text>
-          {mood || timeAgo ? (
+          {timeAgo ? (
             <Text style={styles.meta} numberOfLines={1}>
-              {mood ? `${mood.emoji} ` : ""}
               {timeAgo}
             </Text>
           ) : null}
@@ -87,6 +87,9 @@ const styles = StyleSheet.create({
     paddingBottom: POLAROID.borderBottom,
     ...POLAROID.shadow,
   },
+  photoWrapper: {
+    position: "relative",
+  },
   photo: {
     width: "100%",
     aspectRatio: 1,
@@ -95,6 +98,11 @@ const styles = StyleSheet.create({
   },
   photoFallback: { alignItems: "center", justifyContent: "center" },
   photoFallbackText: { fontSize: 40 },
+  sticker: {
+    position: "absolute",
+    top: -8,
+    right: -8,
+  },
   caption: {
     paddingTop: 10,
     gap: 3,

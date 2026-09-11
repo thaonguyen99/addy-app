@@ -3,6 +3,10 @@ import { create } from "zustand";
 type OnboardingCaptureState = {
   active: boolean;
   setActive: (active: boolean) => void;
+  /** The pin saved during onboarding — read by the tour's "map + pin" step
+   *  to know which memory to open when the highlighted pin is tapped. */
+  lastCreatedMemoryId: string | null;
+  setLastCreatedMemoryId: (id: string | null) => void;
 };
 
 /**
@@ -16,5 +20,7 @@ export const useOnboardingCaptureStore = create<OnboardingCaptureState>(
   (set) => ({
     active: false,
     setActive: (active) => set({ active }),
+    lastCreatedMemoryId: null,
+    setLastCreatedMemoryId: (id) => set({ lastCreatedMemoryId: id }),
   }),
 );

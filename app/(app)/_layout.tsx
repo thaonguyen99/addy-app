@@ -47,6 +47,10 @@ export default function AppLayout() {
           name="create-pin"
           options={{ presentation: "modal", animation: "slide_from_bottom" }}
         />
+        <Stack.Screen
+          name="memories"
+          options={{ presentation: "modal", animation: "slide_from_bottom" }}
+        />
         <Stack.Screen name="memory/[id]" />
         <Stack.Screen name="profile" />
         <Stack.Screen name="privacy-policy" />

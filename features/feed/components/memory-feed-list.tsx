@@ -1,8 +1,8 @@
-import { BottomSheetFlatList } from "@gorhom/bottom-sheet";
 import { router } from "expo-router";
 import { useCallback } from "react";
 import {
   ActivityIndicator,
+  FlatList,
   Pressable,
   RefreshControl,
   StyleSheet,
@@ -15,13 +15,7 @@ import { MemoryFeedCard } from "@/features/feed/components/memory-feed-card";
 import { useMemoryFeed } from "@/features/feed/hooks/use-memory-feed";
 import type { MemoryListItem } from "@/types/api";
 
-type MemoryFeedListProps = {
-  /** True while the drawer is open — gates fetching and refetch. */
-  active: boolean;
-  onDismiss: () => void;
-};
-
-export function MemoryFeedList({ active, onDismiss }: MemoryFeedListProps) {
+export function MemoryFeedList() {
   const {
     items,
     isLoading,
@@ -30,15 +24,11 @@ export function MemoryFeedList({ active, onDismiss }: MemoryFeedListProps) {
     isFetchingNextPage,
     refetch,
     fetchNextPage,
-  } = useMemoryFeed(active);
+  } = useMemoryFeed(true);
 
-  const openMemory = useCallback(
-    (id: string) => {
-      onDismiss();
-      router.push(`/memory/${id}`);
-    },
-    [onDismiss],
-  );
+  const openMemory = useCallback((id: string) => {
+    router.push(`/memory/${id}`);
+  }, []);
 
   const renderItem = useCallback(
     ({ item }: { item: MemoryListItem }) => (
@@ -68,7 +58,7 @@ export function MemoryFeedList({ active, onDismiss }: MemoryFeedListProps) {
   }
 
   return (
-    <BottomSheetFlatList
+    <FlatList
       data={items}
       keyExtractor={(item) => item.id}
       renderItem={renderItem}

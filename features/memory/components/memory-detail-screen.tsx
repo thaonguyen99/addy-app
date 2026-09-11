@@ -1,7 +1,7 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import * as Haptics from "expo-haptics";
 import { Image } from "expo-image";
-import { useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Dimensions,
@@ -18,11 +18,12 @@ import { TourTarget } from "@wrack/react-native-tour-guide";
 
 import { BrandColors } from "@/constants/theme";
 import { ToggleRow } from "@/components/ui/toggle-row";
-import { MOOD_SCORE_OPTIONS } from "@/features/camera/constants/mood-score";
+import { MoodSticker } from "@/features/feed/components/mood-sticker";
+import { POLAROID, rotationForId } from "@/features/feed/utils/polaroid";
+import { ScreenHeader } from "@/features/friends/components/screen-header";
 import { ONBOARDING_MEMORY_DETAIL_TARGET_ID } from "@/features/onboarding/onboarding-tour";
 import { ReactorsSheet } from "@/features/reactions/components/reactors-sheet";
 import type { ReactorsSheetRef } from "@/features/reactions/components/reactors-sheet";
-import { safeBack } from "@/lib/navigation/safe-router";
 import {
   useMemoryQuery,
   useProfileQuery,
@@ -31,8 +32,13 @@ import {
 } from "@/lib/query/hooks";
 import type { MemoryImage } from "@/types/api";
 
+const pinImage = require("@/assets/images/pin.png");
+
 const SCREEN_WIDTH = Dimensions.get("window").width;
-const HERO_HEIGHT = 300;
+const HERO_MARGIN = 20;
+const HERO_PHOTO_WIDTH = SCREEN_WIDTH - HERO_MARGIN * 2 - POLAROID.borderSide * 2;
+const HERO_PHOTO_HEIGHT = 320;
+const HERO_PIN_SIZE = 40;
 
 type MemoryDetailScreenProps = {
   id: string;
@@ -49,7 +55,7 @@ function ImageCarousel({ images }: { images: MemoryImage[] }) {
   });
 
   const onScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
-    const idx = Math.round(e.nativeEvent.contentOffset.x / SCREEN_WIDTH);
+    const idx = Math.round(e.nativeEvent.contentOffset.x / HERO_PHOTO_WIDTH);
     setActiveIndex(idx);
   };
 
@@ -70,12 +76,13 @@ function ImageCarousel({ images }: { images: MemoryImage[] }) {
         showsHorizontalScrollIndicator={false}
         onMomentumScrollEnd={onScroll}
         scrollEventThrottle={16}
+        style={styles.heroScroll}
       >
         {sorted.map((img) => (
           <Image
             key={img.publicId}
             source={{ uri: img.url }}
-            style={styles.hero}
+            style={styles.heroPhoto}
             contentFit="cover"
           />
         ))}
@@ -102,12 +109,11 @@ export function MemoryDetailScreen({ id }: MemoryDetailScreenProps) {
   const toggleReaction = useToggleReactionMutation(id);
   const reactorsSheet = useRef<ReactorsSheetRef>(null);
 
-  const moodOption =
-    data?.moodScore != null
-      ? MOOD_SCORE_OPTIONS.find((o) => o.score === data.moodScore)
-      : null;
+  const heroRotation = useMemo(() => rotationForId(id), [id]);
 
-  const displayName = profile?.name ?? profile?.email ?? "You";
+  const displayName = data?.isOwner
+    ? (profile?.name ?? profile?.email ?? "You")
+    : (data?.author.name ?? data?.author.username ?? "Friend");
   const initials = displayName.charAt(0).toUpperCase();
 
   const formattedDate = data
@@ -123,16 +129,7 @@ export function MemoryDetailScreen({ id }: MemoryDetailScreenProps) {
 
   return (
     <SafeAreaView style={styles.safe} edges={["top", "bottom"]}>
-      <View style={styles.topBar}>
-        <Pressable
-          onPress={() => safeBack("/(app)/(tabs)")}
-          hitSlop={12}
-          style={styles.backButton}
-        >
-          <Text style={styles.backArrow}>←</Text>
-          <Text style={styles.backLabel}>Back</Text>
-        </Pressable>
-      </View>
+      <ScreenHeader title="Memory" fallback="/(app)/(tabs)" />
 
       {isLoading ? (
         <View style={styles.center}>
@@ -148,7 +145,27 @@ export function MemoryDetailScreen({ id }: MemoryDetailScreenProps) {
           contentContainerStyle={styles.scroll}
           showsVerticalScrollIndicator={false}
         >
-          <ImageCarousel images={data.images} />
+          {/* Hero — the memory as a pinned polaroid, same object as the map marker and feed card */}
+          <View style={styles.heroSection}>
+            <View
+              style={[
+                styles.heroTilt,
+                { transform: [{ rotate: heroRotation }] },
+              ]}
+            >
+              <Image
+                source={pinImage}
+                style={styles.heroPin}
+                contentFit="contain"
+              />
+              <View style={styles.heroFrame}>
+                <ImageCarousel images={data.images} />
+              </View>
+              <View style={styles.heroSticker}>
+                <MoodSticker score={data.moodScore} />
+              </View>
+            </View>
+          </View>
 
           <View style={styles.content}>
             {/* Username row */}
@@ -159,35 +176,21 @@ export function MemoryDetailScreen({ id }: MemoryDetailScreenProps) {
               <Text style={styles.username}>{displayName}</Text>
             </View>
 
-            {/* Place name + address */}
+            {/* Place name + address — an upright paper tag */}
             <TourTarget id={ONBOARDING_MEMORY_DETAIL_TARGET_ID}>
-              <View style={styles.placeSection}>
-                <View style={styles.pinkAccent} />
-                <View style={styles.placeInfo}>
-                  <Text style={styles.placeName}>{data.place.name}</Text>
-                  <Text style={styles.address}>
-                    📍 {data.place.formattedAddress}
-                  </Text>
-                </View>
+              <View style={styles.placeTag}>
+                <Text style={styles.placeName}>{data.place.name}</Text>
+                <Text style={styles.address}>
+                  📍 {data.place.formattedAddress}
+                </Text>
               </View>
             </TourTarget>
 
-            {/* Mood score */}
-            {moodOption ? (
-              <View style={styles.moodCard}>
-                <Text style={styles.moodLabel}>Mood</Text>
-                <View style={styles.moodPill}>
-                  <Text style={styles.moodEmoji}>{moodOption.emoji}</Text>
-                  <Text style={styles.moodScoreLabel}>{moodOption.label}</Text>
-                </View>
-              </View>
-            ) : null}
-
-            {/* Feeling / note */}
+            {/* Feeling / note — an upright paper note, clipped in place */}
             {data.feeling ? (
-              <View style={styles.feelingCard}>
-                <View style={styles.feelingAccent} />
-                <Text style={styles.feelingText}>"{data.feeling}"</Text>
+              <View style={styles.noteCard}>
+                <Text style={styles.paperclip}>📎</Text>
+                <Text style={styles.noteText}>"{data.feeling}"</Text>
               </View>
             ) : null}
 
@@ -274,30 +277,6 @@ export function MemoryDetailScreen({ id }: MemoryDetailScreenProps) {
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: BrandColors.gray900 },
 
-  topBar: {
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    backgroundColor: BrandColors.gray900,
-    borderBottomWidth: 1,
-    borderBottomColor: BrandColors.neutralBorder,
-  },
-  backButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    alignSelf: "flex-start",
-  },
-  backArrow: {
-    fontSize: 18,
-    color: BrandColors.primary,
-    fontWeight: "600",
-  },
-  backLabel: {
-    fontSize: 16,
-    color: BrandColors.primary,
-    fontWeight: "600",
-  },
-
   center: { flex: 1, alignItems: "center", justifyContent: "center", gap: 12 },
   errorEmoji: { fontSize: 40 },
   errorText: {
@@ -308,23 +287,53 @@ const styles = StyleSheet.create({
 
   scroll: { paddingBottom: 40 },
 
-  hero: {
-    width: SCREEN_WIDTH,
-    height: HERO_HEIGHT,
-    borderBottomLeftRadius: 24,
-    borderBottomRightRadius: 24,
-    backgroundColor: BrandColors.neutralBorder,
+  // Hero polaroid
+  heroSection: {
+    alignItems: "center",
+    paddingTop: 16,
+    paddingHorizontal: HERO_MARGIN,
+  },
+  heroTilt: {
+    alignItems: "center",
+  },
+  heroPin: {
+    width: HERO_PIN_SIZE,
+    height: HERO_PIN_SIZE,
+    marginBottom: -10,
+    zIndex: 2,
+  },
+  heroFrame: {
+    backgroundColor: POLAROID.frameColor,
+    borderRadius: POLAROID.radius,
+    paddingTop: POLAROID.borderTop,
+    paddingLeft: POLAROID.borderSide,
+    paddingRight: POLAROID.borderSide,
+    paddingBottom: POLAROID.borderBottom,
+    ...POLAROID.shadow,
+  },
+  heroScroll: {
+    height: HERO_PHOTO_HEIGHT,
+  },
+  heroPhoto: {
+    width: HERO_PHOTO_WIDTH,
+    height: HERO_PHOTO_HEIGHT,
+    borderRadius: 1,
+    backgroundColor: BrandColors.gray200,
   },
   heroPlaceholder: {
-    width: "100%",
-    height: HERO_HEIGHT,
-    backgroundColor: BrandColors.primaryMuted,
-    borderBottomLeftRadius: 24,
-    borderBottomRightRadius: 24,
+    width: HERO_PHOTO_WIDTH,
+    height: HERO_PHOTO_HEIGHT,
     alignItems: "center",
     justifyContent: "center",
+    backgroundColor: BrandColors.primaryMuted,
+    borderRadius: 1,
   },
   heroPlaceholderText: { fontSize: 48 },
+  heroSticker: {
+    position: "absolute",
+    top: HERO_PIN_SIZE - 18,
+    right: -6,
+  },
 
   dotsRow: {
     flexDirection: "row",
@@ -332,7 +341,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 6,
     paddingTop: 10,
-    paddingBottom: 2,
   },
   dot: {
     width: 6,
@@ -347,7 +355,7 @@ const styles = StyleSheet.create({
 
   content: {
     paddingHorizontal: 20,
-    paddingTop: 20,
+    paddingTop: 24,
     gap: 18,
   },
 
@@ -386,98 +394,49 @@ const styles = StyleSheet.create({
     color: BrandColors.neutral,
   },
 
-  // Place
-  placeSection: {
-    flexDirection: "row",
-    gap: 12,
-    alignItems: "flex-start",
-  },
-  pinkAccent: {
-    width: 3,
-    borderRadius: 2,
-    backgroundColor: BrandColors.primary,
-    alignSelf: "stretch",
-    minHeight: 40,
-  },
-  placeInfo: {
-    flex: 1,
+  // Place — upright paper tag
+  placeTag: {
+    backgroundColor: BrandColors.paper,
+    borderRadius: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
     gap: 4,
+    ...POLAROID.shadow,
   },
   placeName: {
-    fontSize: 22,
+    fontSize: 20,
     fontWeight: "700",
-    color: BrandColors.neutral,
-    lineHeight: 28,
+    color: BrandColors.ink,
+    lineHeight: 26,
   },
   address: {
     fontSize: 13,
-    color: BrandColors.neutralMuted,
+    color: BrandColors.inkMuted,
     lineHeight: 19,
     flexWrap: "wrap",
   },
 
-  // Mood
-  moodCard: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-    backgroundColor: BrandColors.elevated,
-    borderRadius: 14,
-    padding: 14,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.06,
-    shadowRadius: 4,
-    elevation: 2,
+  // Feeling — upright paper note with a paperclip
+  noteCard: {
+    backgroundColor: BrandColors.paper,
+    borderRadius: 6,
+    paddingHorizontal: 16,
+    paddingTop: 18,
+    paddingBottom: 14,
+    ...POLAROID.shadow,
   },
-  moodLabel: {
-    fontSize: 13,
-    fontWeight: "600",
-    color: BrandColors.neutralMuted,
-    textTransform: "uppercase",
-    letterSpacing: 0.8,
+  paperclip: {
+    position: "absolute",
+    top: -14,
+    left: 16,
+    fontSize: 26,
+    transform: [{ rotate: "-12deg" }],
   },
-  moodPill: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    backgroundColor: BrandColors.primaryMuted,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
-  },
-  moodEmoji: { fontSize: 18 },
-  moodScoreLabel: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: BrandColors.neutral,
-  },
-
-  // Feeling
-  feelingCard: {
-    flexDirection: "row",
-    gap: 12,
-    backgroundColor: BrandColors.elevated,
-    borderRadius: 14,
-    padding: 14,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.06,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  feelingAccent: {
-    width: 3,
-    borderRadius: 2,
-    backgroundColor: BrandColors.primary,
-    alignSelf: "stretch",
-  },
-  feelingText: {
-    flex: 1,
-    fontSize: 15,
-    fontStyle: "italic",
-    color: BrandColors.neutralMuted,
-    lineHeight: 22,
+  noteText: {
+    fontFamily: "PatrickHand-Regular",
+    fontSize: 19,
+    lineHeight: 24,
+    color: BrandColors.ink,
   },
 
   // Meta

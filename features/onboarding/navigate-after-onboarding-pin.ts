@@ -18,6 +18,7 @@ export function handleOnboardingPinSaved(
   tour: OnboardingTourHandle,
 ) {
   useOnboardingCaptureStore.getState().setActive(false);
+  useOnboardingCaptureStore.getState().setLastCreatedMemoryId(memory.id);
   tour.resumeTour();
   navigateAfterCreatePin(
     memory.id,
