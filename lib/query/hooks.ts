@@ -110,7 +110,7 @@ export function useUpdateProfileMutation() {
     onSuccess: async (profile) => {
       await updateUser({
         username: profile.username,
-        displayName: profile.displayName,
+        name: profile.name,
         bio: profile.bio,
         avatarUrl: profile.avatarUrl,
         hasPassword: profile.hasPassword,

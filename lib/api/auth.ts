@@ -9,7 +9,7 @@ import type {
 export type RegisterInput = {
   email: string;
   password: string;
-  displayName?: string;
+  username: string;
 };
 
 export type VerifyOtpInput = {

@@ -20,8 +20,8 @@ export type ApiResponse<T> = ApiSuccess<T> | ApiFailure;
 export type AuthUser = {
   id: string;
   email: string;
-  username: string | null;
-  displayName: string | null;
+  username: string;
+  name: string | null;
   bio: string | null;
   avatarUrl: string | null;
   hasPassword: boolean;
@@ -114,8 +114,8 @@ export type MemoryDetail = {
 /** Minimal public identity for another user (friend, requester, reactor). */
 export type PublicUser = {
   id: string;
-  username: string | null;
-  displayName: string | null;
+  username: string;
+  name: string | null;
   avatarUrl: string | null;
 };
 
@@ -267,8 +267,9 @@ export type UserProfile = AuthUser & {
 };
 
 export type UpdateProfileInput = {
-  username?: string | null;
-  displayName?: string | null;
+  /** Never null — a username can be changed but not cleared. */
+  username?: string;
+  name?: string | null;
   bio?: string | null;
   avatarUrl?: string;
   avatarPublicId?: string;

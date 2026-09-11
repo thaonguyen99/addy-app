@@ -1,12 +1,13 @@
 import { z } from "zod";
 
-export const USERNAME_PATTERN = /^[a-z0-9_.]*$/;
+export const USERNAME_PATTERN = /^[a-z0-9_.]+$/;
 
 export const profileFormSchema = z.object({
-  displayName: z.string().trim().max(100, "Keep it under 100 characters"),
+  name: z.string().trim().max(100, "Keep it under 100 characters"),
   username: z
     .string()
     .trim()
+    .min(1, "Username is required")
     .max(100, "Keep it under 100 characters")
     .regex(
       USERNAME_PATTERN,

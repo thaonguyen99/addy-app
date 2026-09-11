@@ -1,4 +1,16 @@
 import { z } from "zod";
+import { USERNAME_PATTERN } from "@/features/profile/schema";
+
+export const usernameSchema = z
+  .string()
+  .trim()
+  .toLowerCase()
+  .min(1, "Username is required")
+  .max(100, "Keep it under 100 characters")
+  .regex(
+    USERNAME_PATTERN,
+    "Only lowercase letters, numbers, underscores and dots",
+  );
 
 export const emailSchema = z
   .string()
@@ -20,7 +32,7 @@ export const signUpSchema = z
     email: emailSchema,
     password: passwordSchema,
     confirmPassword: z.string().min(1, "Confirm your password"),
-    displayName: z.string().trim().optional(),
+    username: usernameSchema,
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Passwords do not match",

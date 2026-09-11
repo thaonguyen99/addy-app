@@ -5,7 +5,7 @@ import { BrandColors } from "@/constants/theme";
 import type { PublicUser } from "@/types/api";
 
 export function userDisplayName(user: PublicUser): string {
-  return user.displayName ?? user.username ?? "Addy user";
+  return user.name ?? user.username ?? "Addy user";
 }
 
 export function UserAvatar({

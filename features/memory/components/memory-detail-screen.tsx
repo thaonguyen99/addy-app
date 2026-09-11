@@ -105,7 +105,7 @@ export function MemoryDetailScreen({ id }: MemoryDetailScreenProps) {
       ? MOOD_SCORE_OPTIONS.find((o) => o.score === data.moodScore)
       : null;
 
-  const displayName = profile?.displayName ?? profile?.email ?? "You";
+  const displayName = profile?.name ?? profile?.email ?? "You";
   const initials = displayName.charAt(0).toUpperCase();
 
   const formattedDate = data

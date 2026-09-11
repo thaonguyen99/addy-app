@@ -13,7 +13,7 @@ export default function HomeScreen() {
   const { data: stats, isLoading } = useStatsQuery();
 
   const name =
-    user?.displayName || user?.username || user?.email?.split("@")[0] || "";
+    user?.name || user?.username || user?.email?.split("@")[0] || "";
 
   return (
     <SafeAreaView style={styles.safe} edges={["top"]}>

@@ -1,5 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Link, router } from "expo-router";
+import { useEffect, useRef, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { Alert, StyleSheet, Text, View } from "react-native";
 
@@ -14,16 +15,33 @@ import {
 } from "@/features/auth/schemas/auth-schemas";
 import { useAuthStore } from "@/features/auth/store/auth-store";
 import { ApiClientError } from "@/lib/api/errors";
-import { useRegisterMutation } from "@/lib/query/hooks";
+import { useCheckUsernameMutation, useRegisterMutation } from "@/lib/query/hooks";
 import { BrandColors } from "@/constants/theme";
+
+type UsernameStatus = "idle" | "checking" | "available" | "taken" | "invalid";
+
+function usernameHint(status: UsernameStatus): string | undefined {
+  switch (status) {
+    case "checking":
+      return "Checking availability…";
+    case "taken":
+      return "That username is taken.";
+    default:
+      return undefined;
+  }
+}
 
 export default function SignUpScreen() {
   const setPendingVerification = useAuthStore((s) => s.setPendingVerification);
   const registerMutation = useRegisterMutation();
+  const { mutateAsync: checkUsernameAvailable } = useCheckUsernameMutation();
+
+  const [usernameStatus, setUsernameStatus] = useState<UsernameStatus>("idle");
 
   const {
     control,
     handleSubmit,
+    watch,
     formState: { errors, isSubmitting },
   } = useForm<SignUpForm>({
     resolver: zodResolver(signUpSchema),
@@ -31,21 +49,57 @@ export default function SignUpScreen() {
       email: "",
       password: "",
       confirmPassword: "",
-      displayName: "",
+      username: "",
     },
   });
 
+  // Debounced live availability check, mirroring the profile screen's.
+  const usernameValue = watch("username");
+  const latestUsernameRef = useRef(usernameValue);
+  latestUsernameRef.current = usernameValue.trim().toLowerCase();
+
+  useEffect(() => {
+    const next = usernameValue.trim().toLowerCase();
+    if (next === "") {
+      setUsernameStatus("idle");
+      return;
+    }
+
+    setUsernameStatus("checking");
+    const timer = setTimeout(async () => {
+      try {
+        const { available } = await checkUsernameAvailable(next);
+        if (latestUsernameRef.current === next) {
+          setUsernameStatus(available ? "available" : "taken");
+        }
+      } catch {
+        setUsernameStatus("idle");
+      }
+    }, 400);
+
+    return () => clearTimeout(timer);
+  }, [usernameValue, checkUsernameAvailable]);
+
   const onSubmit = handleSubmit(async (values) => {
+    if (usernameStatus === "taken") {
+      Alert.alert("Sign up", "Pick a different username before continuing.");
+      return;
+    }
+
     try {
       await registerMutation.mutateAsync({
         email: values.email,
         password: values.password,
-        displayName: values.displayName || undefined,
+        username: values.username,
       });
       await setPendingVerification(values.email, "register");
       router.push("/verify-otp");
     } catch (error) {
       if (error instanceof ApiClientError && error.code === "CONFLICT") {
+        if (error.message.toLowerCase().includes("username")) {
+          Alert.alert("Sign up", "That username was just taken. Try another.");
+          return;
+        }
         Alert.alert(
           "Account exists",
           "This email is already registered. Try signing in.",
@@ -78,13 +132,16 @@ export default function SignUpScreen() {
       </View>
       <Controller
         control={control}
-        name="displayName"
+        name="username"
         render={({ field: { onChange, onBlur, value } }) => (
           <AuthTextField
-            label="Display name (optional)"
+            label="Username"
+            autoCapitalize="none"
+            autoCorrect={false}
             onBlur={onBlur}
-            onChangeText={onChange}
+            onChangeText={(text) => onChange(text.toLowerCase())}
             value={value}
+            error={errors.username?.message ?? usernameHint(usernameStatus)}
           />
         )}
       />

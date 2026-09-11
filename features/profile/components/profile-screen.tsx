@@ -56,9 +56,9 @@ export function ProfileScreen() {
 
   const initial = useMemo(() => {
     const source =
-      profile?.displayName || profile?.username || profile?.email || "?";
+      profile?.name || profile?.username || profile?.email || "?";
     return source.charAt(0).toUpperCase();
-  }, [profile?.displayName, profile?.username, profile?.email]);
+  }, [profile?.name, profile?.username, profile?.email]);
 
   const {
     control,
@@ -68,15 +68,15 @@ export function ProfileScreen() {
     formState: { errors },
   } = useForm<ProfileForm>({
     resolver: zodResolver(profileFormSchema),
-    defaultValues: { displayName: "", username: "", bio: "" },
+    defaultValues: { name: "", username: "", bio: "" },
   });
 
   // Load server values into the form once the profile arrives.
   useEffect(() => {
     if (profile) {
       reset({
-        displayName: profile.displayName ?? "",
-        username: profile.username ?? "",
+        name: profile.name ?? "",
+        username: profile.username,
         bio: profile.bio ?? "",
       });
     }
@@ -118,11 +118,11 @@ export function ProfileScreen() {
     setSaveError(null);
 
     const payload: Parameters<typeof updateProfile.mutateAsync>[0] = {};
-    if (values.displayName !== (profile?.displayName ?? "")) {
-      payload.displayName = values.displayName || null;
+    if (values.name !== (profile?.name ?? "")) {
+      payload.name = values.name || null;
     }
     if (values.username !== currentUsername) {
-      payload.username = values.username || null;
+      payload.username = values.username;
     }
     if (values.bio !== (profile?.bio ?? "")) {
       payload.bio = values.bio || null;
@@ -219,7 +219,7 @@ export function ProfileScreen() {
 
             <Controller
               control={control}
-              name="displayName"
+              name="name"
               render={({ field: { onChange, onBlur, value } }) => (
                 <AuthTextField
                   label="Name"
@@ -227,7 +227,7 @@ export function ProfileScreen() {
                   value={value}
                   onBlur={onBlur}
                   onChangeText={onChange}
-                  error={errors.displayName?.message}
+                  error={errors.name?.message}
                 />
               )}
             />
