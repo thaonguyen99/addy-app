@@ -1,6 +1,8 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
+import { StickerCard } from "@/components/ui/sticker-card";
 import { BrandColors } from "@/constants/theme";
+import { StickerRadius } from "@/constants/sticker-style";
 import { MOOD_SCORE_OPTIONS } from "@/features/camera/constants/mood-score";
 import { cameraLayout } from "@/features/camera/styles/shared-styles";
 
@@ -27,12 +29,27 @@ export function MoodScorePicker({ value, onChange }: MoodScorePickerProps) {
                 onChange(selected ? null : option.score)
               }
               style={({ pressed }) => [
-                styles.option,
-                selected && styles.optionSelected,
+                styles.optionWrap,
                 pressed && styles.optionPressed,
               ]}
             >
-              <Text style={styles.emoji}>{option.emoji}</Text>
+              <StickerCard
+                style={styles.optionCard}
+                radius={StickerRadius.chip}
+                borderStyle={selected ? "solid" : "dashed"}
+                backgroundColor={selected ? undefined : BrandColors.paper}
+                gradientColors={
+                  selected
+                    ? [BrandColors.primaryLight, BrandColors.primary]
+                    : undefined
+                }
+                shadow={selected}
+                shadowOffset={2}
+              >
+                <View style={styles.optionInner}>
+                  <Text style={styles.emoji}>{option.emoji}</Text>
+                </View>
+              </StickerCard>
             </Pressable>
           );
         })}
@@ -50,11 +67,11 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 15,
     fontWeight: "600",
-    color: BrandColors.neutral,
+    color: BrandColors.ink,
   },
   hint: {
     fontSize: 13,
-    color: BrandColors.neutralMuted,
+    color: BrandColors.inkMuted,
     marginBottom: 4,
   },
   row: {
@@ -62,23 +79,21 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     gap: 8,
   },
-  option: {
+  optionWrap: {
     flex: 1,
-    aspectRatio: 1,
     maxWidth: 56,
-    alignItems: "center",
-    justifyContent: "center",
-    borderRadius: cameraLayout.cornerRadiusMd,
-    borderWidth: 1.5,
-    borderColor: BrandColors.neutralBorder,
-    backgroundColor: BrandColors.secondary,
-  },
-  optionSelected: {
-    borderColor: BrandColors.primary,
-    backgroundColor: BrandColors.primaryMuted,
+    aspectRatio: 1,
   },
   optionPressed: {
     opacity: 0.85,
+  },
+  optionCard: {
+    flex: 1,
+  },
+  optionInner: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
   },
   emoji: {
     fontSize: 26,

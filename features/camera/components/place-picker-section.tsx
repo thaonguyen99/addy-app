@@ -7,7 +7,9 @@ import {
   View,
 } from "react-native";
 
+import { StickerCard } from "@/components/ui/sticker-card";
 import { BrandColors } from "@/constants/theme";
+import { StickerRadius } from "@/constants/sticker-style";
 import { PlaceSuggestionRow } from "@/features/camera/components/place-suggestion-row";
 import { cameraLayout } from "@/features/camera/styles/shared-styles";
 import { useSuggestedPlaces } from "@/features/location/hooks/use-suggested-places";
@@ -88,35 +90,43 @@ export function PlacePickerSection({
   return (
     <View style={styles.wrap}>
       {permissionDenied ? (
-        <View style={styles.banner}>
-          <Text style={styles.bannerText}>
-            Location off — enable it in Settings to pin this memory.
-          </Text>
-          <Pressable
-            onPress={() => void Linking.openSettings()}
-            style={styles.settingsBtn}
-          >
-            <Text style={styles.settingsBtnText}>Open Settings</Text>
-          </Pressable>
-        </View>
+        <StickerCard radius={StickerRadius.button} shadowOffset={2}>
+          <View style={styles.banner}>
+            <Text style={styles.bannerText}>
+              Location off — enable it in Settings to pin this memory.
+            </Text>
+            <Pressable
+              onPress={() => void Linking.openSettings()}
+              style={styles.settingsBtn}
+            >
+              <Text style={styles.settingsBtnText}>Open Settings</Text>
+            </Pressable>
+          </View>
+        </StickerCard>
       ) : null}
 
       {showSelectedChip ? (
-        <View style={styles.selectedChip}>
-          <MaterialIcons
-            name="place"
-            size={18}
-            color={BrandColors.primary}
-          />
-          <View style={styles.selectedTextWrap}>
-            <Text style={styles.selectedName} numberOfLines={1}>
-              {selectedPlace.name}
-            </Text>
-            <Text style={styles.selectedAddress} numberOfLines={1}>
-              {selectedPlace.address}
-            </Text>
+        <StickerCard
+          radius={StickerRadius.button}
+          backgroundColor={BrandColors.primaryMuted}
+          shadowOffset={2}
+        >
+          <View style={styles.selectedChip}>
+            <MaterialIcons
+              name="place"
+              size={18}
+              color={BrandColors.primary}
+            />
+            <View style={styles.selectedTextWrap}>
+              <Text style={styles.selectedName} numberOfLines={1}>
+                {selectedPlace.name}
+              </Text>
+              <Text style={styles.selectedAddress} numberOfLines={1}>
+                {selectedPlace.address}
+              </Text>
+            </View>
           </View>
-        </View>
+        </StickerCard>
       ) : null}
 
       <View style={styles.listHeader}>
@@ -193,14 +203,10 @@ const styles = StyleSheet.create({
   banner: {
     gap: 8,
     padding: 12,
-    borderRadius: cameraLayout.cornerRadiusMd,
-    backgroundColor: BrandColors.secondary,
-    borderWidth: 1,
-    borderColor: BrandColors.neutralBorder,
   },
   bannerText: {
     fontSize: 13,
-    color: BrandColors.neutralMuted,
+    color: BrandColors.inkMuted,
     lineHeight: 18,
   },
   settingsBtn: {
@@ -216,10 +222,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 10,
     padding: 12,
-    borderRadius: cameraLayout.cornerRadiusMd,
-    borderWidth: 1,
-    borderColor: BrandColors.primary,
-    backgroundColor: BrandColors.primaryMuted,
   },
   selectedTextWrap: {
     flex: 1,
@@ -228,11 +230,11 @@ const styles = StyleSheet.create({
   selectedName: {
     fontSize: 14,
     fontWeight: "600",
-    color: BrandColors.neutral,
+    color: BrandColors.ink,
   },
   selectedAddress: {
     fontSize: 12,
-    color: BrandColors.neutralMuted,
+    color: BrandColors.inkMuted,
   },
   listHeader: {
     flexDirection: "row",
@@ -242,7 +244,7 @@ const styles = StyleSheet.create({
   listLabel: {
     fontSize: 13,
     fontWeight: "600",
-    color: BrandColors.neutralMuted,
+    color: BrandColors.inkMuted,
     textTransform: "uppercase",
     letterSpacing: 0.5,
   },
@@ -255,7 +257,7 @@ const styles = StyleSheet.create({
   skeletonRow: {
     height: 56,
     borderRadius: cameraLayout.cornerRadiusMd,
-    backgroundColor: BrandColors.neutralBorder,
+    backgroundColor: BrandColors.gray200,
   },
   emptyWrap: {
     paddingVertical: 12,
@@ -263,12 +265,12 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 13,
-    color: BrandColors.neutralMuted,
+    color: BrandColors.inkMuted,
     textAlign: "center",
   },
   emptyHint: {
     fontSize: 12,
-    color: BrandColors.neutralMuted,
+    color: BrandColors.inkMuted,
     textAlign: "center",
     lineHeight: 18,
   },

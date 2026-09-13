@@ -115,7 +115,7 @@ export function PrivacyPolicyScreen() {
 const styles = StyleSheet.create({
   safe: {
     flex: 1,
-    backgroundColor: BrandColors.gray900,
+    backgroundColor: BrandColors.paper,
   },
   topBar: {
     flexDirection: "row",

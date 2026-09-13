@@ -32,7 +32,7 @@ export function FriendSearchScreen() {
   const latest = useRef("");
   latest.current = input.trim();
 
-  // Debounce the query term, mirroring the username check in profile-screen.
+  // Debounce the query term, mirroring the username check in account-screen.
   useEffect(() => {
     const next = input.trim();
     const timer = setTimeout(() => {
@@ -130,7 +130,7 @@ function SearchResultRow({
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: BrandColors.gray900 },
+  safe: { flex: 1, backgroundColor: BrandColors.paper },
   searchBox: { paddingHorizontal: 16, paddingTop: 12, paddingBottom: 4 },
   center: { flex: 1, alignItems: "center", justifyContent: "center" },
   list: { paddingHorizontal: 16, paddingBottom: 40, flexGrow: 1 },
@@ -146,7 +146,11 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     backgroundColor: BrandColors.elevated,
   },
-  actionPrimary: { backgroundColor: BrandColors.primary },
-  actionText: { fontSize: 13, fontWeight: "600", color: BrandColors.neutralMuted },
-  actionTextPrimary: { color: BrandColors.white },
+  actionPrimary: {
+    backgroundColor: BrandColors.primary,
+    borderWidth: 2,
+    borderColor: BrandColors.ink,
+  },
+  actionText: { fontSize: 13, fontWeight: "600", color: BrandColors.inkMuted },
+  actionTextPrimary: { color: BrandColors.ink },
 });

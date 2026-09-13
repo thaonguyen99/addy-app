@@ -1,49 +1,45 @@
-import { StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text } from "react-native";
 
+import { StickerShadowBox } from "@/components/ui/sticker-shadow";
 import { BrandColors } from "@/constants/theme";
 import { MOOD_SCORE_OPTIONS } from "@/features/camera/constants/mood-score";
 
 type MoodStickerProps = {
   score: number | null | undefined;
+  size?: number;
 };
 
 /**
  * A small "stuck on afterward" sticker showing a memory's mood — meant to be
- * absolutely positioned by the caller over the top-right corner of a polaroid
- * photo. Shared by the feed card and the memory detail hero so mood reads as
- * the same object in both places.
+ * absolutely positioned by the caller over the top-right corner of a photo.
+ * Shared by the feed card and the memory detail hero so mood reads as the
+ * same object in both places.
  */
-export function MoodSticker({ score }: MoodStickerProps) {
+export function MoodSticker({ score, size = 32 }: MoodStickerProps) {
   const mood =
     score != null ? MOOD_SCORE_OPTIONS.find((o) => o.score === score) : null;
 
   if (!mood) return null;
 
   return (
-    <View style={styles.sticker}>
-      <Text style={styles.emoji}>{mood.emoji}</Text>
-    </View>
+    <StickerShadowBox
+      radius={size / 2}
+      shadowOffset={2}
+      style={[styles.sticker, { width: size, height: size, borderRadius: size / 2 }]}
+    >
+      <Text style={[styles.emoji, { fontSize: size * 0.5 }]}>{mood.emoji}</Text>
+    </StickerShadowBox>
   );
 }
 
-const SIZE = 32;
-
 const styles = StyleSheet.create({
   sticker: {
-    width: SIZE,
-    height: SIZE,
-    borderRadius: SIZE / 2,
-    backgroundColor: BrandColors.paper,
-    borderWidth: 1.5,
-    borderColor: BrandColors.white,
+    backgroundColor: BrandColors.accentPink,
+    borderWidth: 2.5,
+    borderColor: BrandColors.ink,
     alignItems: "center",
     justifyContent: "center",
-    transform: [{ rotate: "8deg" }],
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
+    transform: [{ rotate: "12deg" }],
   },
-  emoji: { fontSize: 16 },
+  emoji: { textAlign: "center" },
 });

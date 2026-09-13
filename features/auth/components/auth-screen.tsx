@@ -58,7 +58,7 @@ export function AuthScreen({
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: BrandColors.gray900 },
+  safe: { flex: 1, backgroundColor: BrandColors.paper },
   flex: { flex: 1 },
   scroll: {
     flexGrow: 1,

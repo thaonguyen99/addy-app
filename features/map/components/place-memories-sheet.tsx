@@ -16,8 +16,9 @@ import {
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { StickerCard } from "@/components/ui/sticker-card";
 import { BrandColors } from "@/constants/theme";
-import { POLAROID } from "@/features/feed/utils/polaroid";
+import { StickerBorderWidth, StickerRadius } from "@/constants/sticker-style";
 import { usePlaceMemoriesQuery } from "@/lib/query/hooks";
 import type { PlaceMemory } from "@/types/api";
 
@@ -93,16 +94,21 @@ export const PlaceMemoriesSheet = forwardRef<PlaceMemoriesSheetRef>(
             showsHorizontalScrollIndicator={false}
             renderItem={({ item }: { item: PlaceMemory }) => (
               <Pressable
-                style={styles.thumbFrame}
                 onPress={() => openMemory(item.id)}
                 accessibilityRole="button"
                 accessibilityLabel="Open memory"
               >
-                <Image
-                  source={{ uri: item.imageUrl }}
-                  style={styles.thumbPhoto}
-                  contentFit="cover"
-                />
+                <StickerCard
+                  style={styles.thumbFrame}
+                  radius={StickerRadius.card}
+                  borderWidth={StickerBorderWidth.standard}
+                >
+                  <Image
+                    source={{ uri: item.imageUrl }}
+                    style={styles.thumbPhoto}
+                    contentFit="cover"
+                  />
+                </StickerCard>
               </Pressable>
             )}
             ListEmptyComponent={
@@ -118,8 +124,8 @@ export const PlaceMemoriesSheet = forwardRef<PlaceMemoriesSheetRef>(
 const THUMB_SIZE = 96;
 
 const styles = StyleSheet.create({
-  background: { backgroundColor: BrandColors.gray900 },
-  handleIndicator: { backgroundColor: BrandColors.neutralBorder, width: 40 },
+  background: { backgroundColor: BrandColors.paper },
+  handleIndicator: { backgroundColor: BrandColors.ink, width: 40 },
   titleRow: {
     paddingHorizontal: 16,
     paddingTop: 4,
@@ -127,22 +133,15 @@ const styles = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: BrandColors.stroke2,
   },
-  title: { color: BrandColors.neutral, fontSize: 18, fontWeight: "700" },
+  title: { color: BrandColors.ink, fontSize: 18, fontFamily: "Fredoka-SemiBold" },
   center: { padding: 40, alignItems: "center" },
   list: { paddingHorizontal: 16, paddingVertical: 16, gap: 14 },
   thumbFrame: {
-    backgroundColor: POLAROID.frameColor,
-    borderRadius: POLAROID.radius,
-    paddingTop: POLAROID.borderTop,
-    paddingLeft: POLAROID.borderSide,
-    paddingRight: POLAROID.borderSide,
-    paddingBottom: POLAROID.borderBottom,
-    ...POLAROID.shadow,
+    alignSelf: "flex-start",
   },
   thumbPhoto: {
     width: THUMB_SIZE,
     height: THUMB_SIZE,
-    borderRadius: 1,
     backgroundColor: BrandColors.gray200,
   },
   empty: {

@@ -1,7 +1,7 @@
 import type { CameraType } from "expo-camera";
+import { LinearGradient } from "expo-linear-gradient";
 import { memo } from "react";
 import { Pressable, StyleSheet, View } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import {
   CAMERA_SCREEN_HORIZONTAL_PADDING,
@@ -12,6 +12,8 @@ import { sharedInteractionStyles } from "@/features/camera/styles/shared-styles"
 import type { AddyMemoryImage } from "@/types/addy-memory";
 
 import { BrandColors } from "@/constants/theme";
+import { StickerBorderWidth, accentCyanDeep } from "@/constants/sticker-style";
+import { StickerShadowBox } from "@/components/ui/sticker-shadow";
 import { Ionicons } from "@expo/vector-icons";
 import { CapturedImageStack } from "./CapturedImageStack";
 
@@ -32,11 +34,8 @@ function CameraActionBarInner({
   onFlipCameraPress,
   captureDisabled,
 }: CameraActionBarProps) {
-  const insets = useSafeAreaInsets();
-  const bottomPad = Math.max(insets.bottom, 14);
-
   return (
-    <View style={[styles.bar, { paddingBottom: bottomPad }]}>
+    <View style={styles.bar}>
       <View style={styles.col}>
         <Pressable
           accessibilityRole="button"
@@ -63,12 +62,20 @@ function CameraActionBarInner({
           disabled={captureDisabled}
           onPress={onCapturePress}
           style={({ pressed }) => [
-            styles.snapOuter,
             pressed && styles.snapPressed,
             captureDisabled && styles.snapDisabled,
           ]}
         >
-          <View style={styles.snapInner} />
+          <StickerShadowBox radius={SNAP_OUTER_DIAMETER / 2} style={styles.snapShadow}>
+            <View style={styles.snapOuter}>
+              <LinearGradient
+                colors={["#FFFFFF", BrandColors.primaryLight, BrandColors.primary]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.snapInner}
+              />
+            </View>
+          </StickerShadowBox>
         </Pressable>
       </View>
 
@@ -87,13 +94,20 @@ function CameraActionBarInner({
             pressed && sharedInteractionStyles.pressedMedium,
           ]}
         >
-          <View style={styles.flipCircle}>
-            <Ionicons
-              name="camera-reverse-outline"
-              size={26}
-              color={BrandColors.white}
-            />
-          </View>
+          <StickerShadowBox radius={23} style={styles.flipShadow}>
+            <LinearGradient
+              colors={[BrandColors.accentCyan, accentCyanDeep]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.flipCircle}
+            >
+              <Ionicons
+                name="camera-reverse-outline"
+                size={26}
+                color={BrandColors.ink}
+              />
+            </LinearGradient>
+          </StickerShadowBox>
         </Pressable>
       </View>
     </View>
@@ -104,12 +118,13 @@ export const CameraActionBar = memo(CameraActionBarInner);
 
 const styles = StyleSheet.create({
   bar: {
-    backgroundColor: "rgba(43, 28, 33, 0.55)",
+    backgroundColor: "rgba(22, 23, 26, 0.55)",
     paddingHorizontal: CAMERA_SCREEN_HORIZONTAL_PADDING,
-    paddingTop: 18,
+    paddingVertical: 16,
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
+    marginTop: 8,
   },
   col: {
     flex: 1,
@@ -133,26 +148,24 @@ const styles = StyleSheet.create({
     textAlign: "center",
     lineHeight: 13,
   },
-  snapOuter: {
+  snapShadow: {
     width: SNAP_OUTER_DIAMETER,
     height: SNAP_OUTER_DIAMETER,
+  },
+  snapOuter: {
+    flex: 1,
     borderRadius: SNAP_OUTER_DIAMETER / 2,
     borderWidth: 4,
-    borderColor: BrandColors.white,
-    backgroundColor: BrandColors.white,
+    borderColor: BrandColors.ink,
+    backgroundColor: BrandColors.paper,
     alignItems: "center",
     justifyContent: "center",
-    shadowColor: BrandColors.black,
-    shadowOpacity: 0.35,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 6,
+    overflow: "hidden",
   },
   snapInner: {
     width: SNAP_INNER_DIAMETER,
     height: SNAP_INNER_DIAMETER,
     borderRadius: SNAP_INNER_DIAMETER / 2,
-    backgroundColor: BrandColors.primary,
   },
   snapPressed: {
     transform: [{ scale: 0.96 }],
@@ -161,12 +174,17 @@ const styles = StyleSheet.create({
   snapDisabled: {
     opacity: 0.45,
   },
-  flipCircle: {
+  flipShadow: {
     width: 46,
     height: 46,
+  },
+  flipCircle: {
+    flex: 1,
     borderRadius: 23,
-    backgroundColor: BrandColors.primary,
+    borderWidth: StickerBorderWidth.thin,
+    borderColor: BrandColors.ink,
     alignItems: "center",
     justifyContent: "center",
+    overflow: "hidden",
   },
 });

@@ -69,7 +69,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: BrandColors.neutralBorder,
     borderRadius: 12,
-    backgroundColor: BrandColors.secondary,
+    backgroundColor: BrandColors.placeHolder,
   },
   input: {
     flex: 1,
@@ -79,6 +79,6 @@ const styles = StyleSheet.create({
     color: BrandColors.neutral,
   },
   eyeButton: { paddingHorizontal: 12 },
-  inputError: { borderColor: BrandColors.primary },
-  error: { fontSize: 13, color: BrandColors.primary },
+  inputError: { borderColor: BrandColors.accentPink },
+  error: { fontSize: 13, color: BrandColors.accentPink },
 });

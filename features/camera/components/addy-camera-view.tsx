@@ -115,7 +115,7 @@ function AddyCameraViewInner({
 
       <SafeAreaView
         style={styles.overlay}
-        edges={["top", "bottom"]}
+        edges={["top"]}
         pointerEvents="box-none"
       >
         <View style={styles.topRow} pointerEvents="box-none">
@@ -160,6 +160,6 @@ const styles = StyleSheet.create({
     alignItems: "flex-start",
   },
   bottomStack: {
-    paddingBottom: 8,
+    paddingBottom: 0,
   },
 });

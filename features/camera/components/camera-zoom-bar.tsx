@@ -93,6 +93,7 @@ function CameraZoomBarInner({
         >
           <View style={styles.track}>
             <View style={[styles.fill, { width: `${Math.round(zoom * 100)}%` }]} />
+            <View style={[styles.thumb, { left: `${Math.round(zoom * 100)}%` }]} />
           </View>
         </View>
       </View>
@@ -153,10 +154,10 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   scaleText: {
-    fontSize: 12,
-    fontFamily: "BeVietnam-SemiBold",
+    fontSize: 15,
+    fontFamily: "VT323-Regular",
     color: BrandColors.white,
-    letterSpacing: 0.2,
+    letterSpacing: 0.3,
   },
   trackHit: {
     width: "100%",
@@ -167,12 +168,22 @@ const styles = StyleSheet.create({
     height: 4,
     width: "100%",
     borderRadius: 2,
-    backgroundColor: BrandColors.neutralBorder,
-    overflow: "hidden",
+    backgroundColor: "rgba(22, 23, 26, 0.55)",
   },
   fill: {
     height: "100%",
     borderRadius: 2,
     backgroundColor: BrandColors.primary,
+  },
+  thumb: {
+    position: "absolute",
+    top: -4,
+    width: 12,
+    height: 12,
+    marginLeft: -6,
+    borderRadius: 6,
+    backgroundColor: BrandColors.primary,
+    borderWidth: 2,
+    borderColor: BrandColors.ink,
   },
 });

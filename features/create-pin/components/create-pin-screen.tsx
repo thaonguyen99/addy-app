@@ -4,8 +4,9 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { BrandColors } from "@/constants/theme";
+import { GlossyButton } from "@/components/ui/glossy-button";
+import { StickerCard } from "@/components/ui/sticker-card";
 import { ToggleRow } from "@/components/ui/toggle-row";
-import { AuthPrimaryButton } from "@/features/auth/components/auth-primary-button";
 import { MOOD_SCORE_OPTIONS } from "@/features/camera/constants/mood-score";
 import { useCreatePinSubmit } from "@/features/create-pin/hooks/use-create-pin-submit";
 import { useCreatePinHandoffStore } from "@/features/create-pin/store/create-pin-handoff-store";
@@ -36,7 +37,7 @@ export function CreatePinScreen() {
           <Text style={styles.emptyTitle}>
             {!images.length ? "No photos selected" : "No place selected"}
           </Text>
-          <AuthPrimaryButton
+          <GlossyButton
             label="Go back"
             onPress={() => safeBack("/place-selection")}
           />
@@ -67,17 +68,19 @@ export function CreatePinScreen() {
           ))}
         </ScrollView>
 
-        <View style={styles.placeCard}>
-          <MaterialIcons
-            name="place"
-            size={22}
-            color={BrandColors.primary}
-          />
-          <View style={styles.placeTextWrap}>
-            <Text style={styles.placeName}>{selectedPlace.name}</Text>
-            <Text style={styles.placeAddress}>{selectedPlace.address}</Text>
+        <StickerCard style={styles.placeCardShadow}>
+          <View style={styles.placeCard}>
+            <MaterialIcons
+              name="place"
+              size={22}
+              color={BrandColors.primary}
+            />
+            <View style={styles.placeTextWrap}>
+              <Text style={styles.placeName}>{selectedPlace.name}</Text>
+              <Text style={styles.placeAddress}>{selectedPlace.address}</Text>
+            </View>
           </View>
-        </View>
+        </StickerCard>
 
         <Pressable
           onPress={() => safeBack("/place-selection")}
@@ -87,30 +90,34 @@ export function CreatePinScreen() {
         </Pressable>
 
         {(emoji || feeling.trim()) ? (
-          <View style={styles.metaSection}>
-            <Text style={styles.metaLabel}>Your moment</Text>
-            {emoji ? (
-              <Text style={styles.moodEmoji}>{emoji}</Text>
-            ) : null}
-            {feeling.trim() ? (
-              <Text style={styles.feelingText}>{feeling.trim()}</Text>
-            ) : null}
-          </View>
+          <StickerCard borderStyle="dashed" style={styles.metaSectionShadow}>
+            <View style={styles.metaSection}>
+              <Text style={styles.metaLabel}>Your moment</Text>
+              {emoji ? (
+                <Text style={styles.moodEmoji}>{emoji}</Text>
+              ) : null}
+              {feeling.trim() ? (
+                <Text style={styles.feelingText}>{feeling.trim()}</Text>
+              ) : null}
+            </View>
+          </StickerCard>
         ) : null}
 
-        <View style={styles.visibilityCard}>
-          <ToggleRow
-            label="Share with friends"
-            description="Friends can see this memory on their map. Off = only you."
-            value={visibility === "friends"}
-            onValueChange={(next) =>
-              setVisibility(next ? "friends" : "private")
-            }
-          />
-        </View>
+        <StickerCard style={styles.visibilityCardShadow}>
+          <View style={styles.visibilityCard}>
+            <ToggleRow
+              label="Share with friends"
+              description="Friends can see this memory on their map. Off = only you."
+              value={visibility === "friends"}
+              onValueChange={(next) =>
+                setVisibility(next ? "friends" : "private")
+              }
+            />
+          </View>
+        </StickerCard>
 
-        <AuthPrimaryButton
-          label="Save memory"
+        <GlossyButton
+          label={submitting ? "Saving…" : "Save memory"}
           loading={submitting}
           onPress={onSubmit}
         />
@@ -123,7 +130,7 @@ export function CreatePinScreen() {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: BrandColors.gray900 },
+  safe: { flex: 1, backgroundColor: BrandColors.paper },
   scroll: { padding: 24, gap: 14, paddingBottom: 40 },
   title: { fontSize: 28, fontWeight: "700", color: BrandColors.neutral },
   subtitle: { fontSize: 15, color: BrandColors.neutralMuted, lineHeight: 22 },
@@ -133,8 +140,8 @@ const styles = StyleSheet.create({
     position: "absolute",
     bottom: 6,
     left: 6,
-    backgroundColor: BrandColors.primary,
-    color: BrandColors.neutral,
+    backgroundColor: BrandColors.accentPink,
+    color: BrandColors.white,
     fontSize: 11,
     fontWeight: "600",
     paddingHorizontal: 6,
@@ -142,15 +149,14 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     overflow: "hidden",
   },
+  placeCardShadow: {
+    alignSelf: "stretch",
+  },
   placeCard: {
     flexDirection: "row",
     alignItems: "flex-start",
     gap: 12,
     padding: 14,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: BrandColors.neutralBorder,
-    backgroundColor: BrandColors.secondary,
   },
   placeTextWrap: {
     flex: 1,
@@ -159,11 +165,11 @@ const styles = StyleSheet.create({
   placeName: {
     fontSize: 16,
     fontWeight: "600",
-    color: BrandColors.neutral,
+    color: BrandColors.ink,
   },
   placeAddress: {
     fontSize: 14,
-    color: BrandColors.neutralMuted,
+    color: BrandColors.inkMuted,
     lineHeight: 20,
   },
   changePlaceBtn: {
@@ -175,23 +181,23 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: BrandColors.primary,
   },
+  metaSectionShadow: {
+    alignSelf: "stretch",
+  },
   metaSection: {
     gap: 6,
     padding: 14,
-    borderRadius: 12,
-    backgroundColor: BrandColors.primaryMuted,
+  },
+  visibilityCardShadow: {
+    alignSelf: "stretch",
   },
   visibilityCard: {
     paddingHorizontal: 14,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: BrandColors.neutralBorder,
-    backgroundColor: BrandColors.secondary,
   },
   metaLabel: {
     fontSize: 13,
     fontWeight: "600",
-    color: BrandColors.neutralMuted,
+    color: BrandColors.inkMuted,
     textTransform: "uppercase",
     letterSpacing: 0.4,
   },
@@ -200,15 +206,15 @@ const styles = StyleSheet.create({
   },
   feelingText: {
     fontSize: 15,
-    color: BrandColors.neutral,
+    color: BrandColors.ink,
     lineHeight: 22,
   },
   cancel: {
     textAlign: "center",
-    color: BrandColors.neutralMuted,
+    color: BrandColors.inkMuted,
     fontSize: 15,
     marginTop: 4,
   },
   empty: { flex: 1, justifyContent: "center", padding: 24, gap: 16 },
-  emptyTitle: { fontSize: 18, fontWeight: "600", color: BrandColors.neutral },
+  emptyTitle: { fontSize: 18, fontWeight: "600", color: BrandColors.ink },
 });

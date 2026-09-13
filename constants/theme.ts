@@ -1,6 +1,9 @@
 /**
- * App color tokens. The product is dark-only: light and dark palettes match
- * so ThemedText / useThemeColor cannot fall back to a white screen.
+ * App color tokens — Y2K sticker rebrand. The app inverts from dark-first to
+ * light-first: background is now `paper`, not the old plum-cocoa dark. Key
+ * names are unchanged from the pre-rebrand palette so every existing
+ * `BrandColors.xxx` call site keeps compiling; only values (and in several
+ * cases the underlying *role* — see comments) changed.
  */
 
 import { Platform } from "react-native";
@@ -9,46 +12,72 @@ export const BrandColors = {
   white: "#FFFFFF",
   black: "#000000",
 
-  // Warm plum-cocoa dark scale (derived from secondary #2b1c21), for backgrounds/surfaces/borders
-  gray50: "#F4ECE9", // near-white, faint mauve warmth — light text on dark, or rare light surfaces
-  gray100: "#E9DDD3", // = Sand Veil — primary light text/icon color
-  gray200: "#C6B2AE", // secondary text, subtle icons
-  gray300: "#9E8288", // disabled text, low-emphasis icons
-  gray400: "#6F565E", // disabled controls, placeholder icons
-  gray500: "#4C3841", // mid-tone borders, dividers on elevated surfaces
-  gray600: "#3A2831", // elevated surface (cards, sheets, modals)
-  gray700: "#2B1C21", // = secondary — dark surfaces
-  gray800: "#241820", // deeper nested surfaces
-  gray900: "#1C1218", // deepest app background
+  // Paper-forward light scale (replaces the plum-cocoa dark scale).
+  // App background is now light — this ramps from paper down to ink,
+  // instead of the old near-white-to-deepest-dark direction.
+  gray50: "#FBFBF6", // = paper — app background (was deepest dark before)
+  gray100: "#F1F1E8", // = paper dim — recessed surfaces: nav bar, dashed cards
+  gray200: "#E4E4D8", // subtle dividers on paper
+  gray300: "#B8B8AC", // disabled text / low-emphasis icons
+  gray400: "#8B8B80", // secondary text on paper
+  gray500: "#5C5C54", // stronger muted text, captions
+  gray600: "#33333A", // dark surface, lighter step (rarely used now)
+  gray700: "#22222A", // deeper dark surface
+  gray800: "#1C1D21", // camera viewfinder background
+  gray900: "#16171A", // = outline ink — deepest tone; ALL sticker outlines,
+  // hard-shadows, and default text color use this
 
-  elevated: "#3A2831", // card/sheet surface, one step up from background
-  placeHolder: "#33222A", // input field background (between bg and elevated)
+  elevated: "#FFFFFF", // card surface, one step up from paper background
+  placeHolder: "#F1F1E8", // input field background — same as gray100/paper dim
 
-  link: "#A9AAD8", // light periwinkle — legible link on warm dark bg
+  link: "#3AA8E0", // cyan-leaning link color, legible on paper
 
-  stroke1: "rgba(233, 221, 211, 0.08)", // subtle divider
-  stroke2: "rgba(233, 221, 211, 0.16)", // default border
-  stroke3: "rgba(233, 221, 211, 0.32)", // emphasized border / focus ring base
+  // Subtle dividers only — the bold sticker outline is NOT this, it's a
+  // solid 100%-opacity gray900 stroke at 2.5–4px. These three are for
+  // quieter internal dividers (e.g. inside a list), not component borders.
+  stroke1: "rgba(22, 23, 26, 0.08)",
+  stroke2: "rgba(22, 23, 26, 0.16)",
+  stroke3: "rgba(22, 23, 26, 0.32)",
 
-  /** Primary actions, selected states, key CTAs. */
-  primary: "#6667AB",
-  /** Dark surfaces and app backgrounds. */
-  secondary: "#2b1c21",
-  /** Text, icons, and light-on-dark contrast. */
-  neutral: "#E9DDD3",
-  /** Selected fills on dark surfaces. */
-  primaryMuted: "rgba(102, 103, 171, 0.22)",
-  /** Captions and placeholders — warm sand, readable on secondary. */
-  neutralMuted: "#C6B2AE",
-  /** Visible edge on plum-cocoa surfaces. */
-  neutralBorder: "#6F565E",
+  /** Primary actions, selected states, key CTAs. Was periwinkle #6667AB. */
+  primary: "#9FE000", // Lime Deep — solid CTA color (buttons use a
+  // primary → primaryLight gradient, see below, but flat UI elements like
+  // toggles/selected chips use this solid value)
+  /** Was the dark app-background color. Now repurposed: the ink/outline
+   *  color used for borders, text, and the rare remaining dark surface
+   *  (camera viewfinder). The app itself no longer has a dark background. */
+  secondary: "#16171A",
+  /** Text, icons, default foreground on the new light/paper base.
+   *  Was light-on-dark (#E9DDD3); now dark-on-light since the base flipped. */
+  neutral: "#16171A",
+  /** Selected fills — now Slime Lime at low opacity instead of periwinkle. */
+  primaryMuted: "rgba(199, 242, 58, 0.22)",
+  /** Captions and placeholders on paper surfaces. */
+  neutralMuted: "#5C5C54",
+  /** Visible edge on sticker/paper surfaces — bold, not soft; same as ink
+   *  since every component border in this system is a solid dark outline. */
+  neutralBorder: "#16171A",
 
-  /** Ink for text on light paper / polaroid surfaces. */
-  ink: "#2B1C21",
-  /** Secondary ink on light surfaces (place name, date). */
-  inkMuted: "#6A525A",
-  /** Light paper surface for polaroid frames. */
-  paper: "#F1E7DC",
+  /** Ink for text on light/paper surfaces — same role as before, now the
+   *  dominant text color app-wide rather than a polaroid-only special case. */
+  ink: "#16171A",
+  /** Secondary ink — captions, place names, dates on light cards. */
+  inkMuted: "#5C5C54",
+  /** Light paper surface — now the app-wide background, not just polaroid
+   *  frames. */
+  paper: "#FBFBF6",
+
+  // --- New tokens: the old single-accent (periwinkle) system becomes a
+  // multi-accent sticker system. These didn't exist before; add them. ---
+  /** Gradient partner for `primary` — used as the lighter stop in CTA
+   *  button gradients (primaryLight → primary, top-left to bottom-right). */
+  primaryLight: "#C7F23A", // "Slime Lime"
+  /** Secondary sticker accent — default pin fill, info chips. */
+  accentCyan: "#5FCBFF", // "Chatroom Cyan"
+  /** Tertiary sticker accent — "favorite" tags, mood/reveal stickers. */
+  accentPink: "#FF5CAE", // "Sticker Pink"
+  /** Badge/sparkle accent — star stickers, highlight badges. */
+  accentYellow: "#FFDD4A", // "Star Yellow"
 };
 
 export type BrandColorName = keyof typeof BrandColors;

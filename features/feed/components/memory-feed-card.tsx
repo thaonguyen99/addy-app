@@ -2,12 +2,17 @@ import { Image } from "expo-image";
 import { memo, useMemo } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
+import { StickerCard } from "@/components/ui/sticker-card";
 import { BrandColors } from "@/constants/theme";
+import { StickerBorderWidth, StickerRadius } from "@/constants/sticker-style";
 import { formatRelativeTime } from "@/features/feed/utils/format-relative-time";
 import { MoodSticker } from "@/features/feed/components/mood-sticker";
 import { pickCover } from "@/features/feed/utils/pick-cover";
-import { POLAROID, rotationForId } from "@/features/feed/utils/polaroid";
 import type { MemoryListItem } from "@/types/api";
+
+// Fixed so every card in a grid row lines up regardless of caption length.
+const CAPTION_LINE_HEIGHT = 16;
+const CAPTION_HEIGHT = CAPTION_LINE_HEIGHT * 2 + 10 * 2;
 
 type MemoryFeedCardProps = {
   memory: MemoryListItem;
@@ -16,16 +21,20 @@ type MemoryFeedCardProps = {
 
 function MemoryFeedCardBase({ memory, onPress }: MemoryFeedCardProps) {
   const cover = useMemo(() => pickCover(memory.images), [memory.images]);
-  const rotation = useMemo(() => rotationForId(memory.id), [memory.id]);
   const timeAgo = formatRelativeTime(memory.capturedAt);
+  const caption = memory.feeling?.trim() || memory.place.name;
 
   return (
-    <View style={[styles.tilt, { transform: [{ rotate: rotation }] }]}>
-      <Pressable
+    <Pressable
+      onPress={() => onPress(memory.id)}
+      accessibilityRole="button"
+      accessibilityLabel={`Open memory at ${memory.place.name}`}
+    >
+      <StickerCard
         style={styles.frame}
-        onPress={() => onPress(memory.id)}
-        accessibilityRole="button"
-        accessibilityLabel={`Open memory at ${memory.place.name}`}
+        radius={StickerRadius.card}
+        borderWidth={StickerBorderWidth.standard}
+        backgroundColor={BrandColors.paper}
       >
         <View style={styles.photoWrapper}>
           {cover ? (
@@ -46,40 +55,23 @@ function MemoryFeedCardBase({ memory, onPress }: MemoryFeedCardProps) {
         </View>
 
         <View style={styles.caption}>
-          {memory.feeling ? (
-            <Text style={styles.note} numberOfLines={2}>
-              {memory.feeling}
-            </Text>
-          ) : null}
-          <Text style={styles.place} numberOfLines={1}>
-            {memory.place.name}
+          <Text style={styles.note} numberOfLines={1}>
+            {caption}
           </Text>
-          {timeAgo ? (
-            <Text style={styles.meta} numberOfLines={1}>
-              {timeAgo}
-            </Text>
-          ) : null}
+          <Text style={styles.meta} numberOfLines={1}>
+            {timeAgo || memory.place.name}
+          </Text>
         </View>
-      </Pressable>
-    </View>
+      </StickerCard>
+    </Pressable>
   );
 }
 
 export const MemoryFeedCard = memo(MemoryFeedCardBase);
 
 const styles = StyleSheet.create({
-  tilt: {
-    alignItems: "center",
-  },
   frame: {
     width: "100%",
-    backgroundColor: POLAROID.frameColor,
-    borderRadius: POLAROID.radius,
-    paddingTop: POLAROID.borderTop,
-    paddingLeft: POLAROID.borderSide,
-    paddingRight: POLAROID.borderSide,
-    paddingBottom: POLAROID.borderBottom,
-    ...POLAROID.shadow,
   },
   photoWrapper: {
     position: "relative",
@@ -87,7 +79,6 @@ const styles = StyleSheet.create({
   photo: {
     width: "100%",
     aspectRatio: 1,
-    borderRadius: 1,
     backgroundColor: BrandColors.gray200,
   },
   photoFallback: { alignItems: "center", justifyContent: "center" },
@@ -98,22 +89,20 @@ const styles = StyleSheet.create({
     right: -8,
   },
   caption: {
-    paddingTop: 10,
+    height: CAPTION_HEIGHT,
+    padding: 10,
+    justifyContent: "center",
     gap: 3,
   },
   note: {
     fontSize: 13,
-    lineHeight: 18,
+    lineHeight: CAPTION_LINE_HEIGHT,
+    fontFamily: "Fredoka-SemiBold",
     color: BrandColors.ink,
-  },
-  place: {
-    fontSize: 11,
-    fontWeight: "600",
-    color: BrandColors.inkMuted,
   },
   meta: {
     fontSize: 11,
+    lineHeight: CAPTION_LINE_HEIGHT,
     color: BrandColors.inkMuted,
-    opacity: 0.75,
   },
 });

@@ -40,19 +40,15 @@ export function NotificationSettingsSection() {
 const styles = StyleSheet.create({
   section: {
     gap: 4,
-    paddingTop: 20,
-    marginTop: 8,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: BrandColors.stroke2,
   },
   heading: {
     fontSize: 16,
     fontWeight: "700",
-    color: BrandColors.neutral,
+    color: BrandColors.ink,
     marginBottom: 4,
   },
   note: {
     fontSize: 14,
-    color: BrandColors.neutralMuted,
+    color: BrandColors.inkMuted,
   },
 });

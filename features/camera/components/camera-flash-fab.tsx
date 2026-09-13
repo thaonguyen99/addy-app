@@ -123,7 +123,7 @@ const styles = StyleSheet.create({
     borderRadius: FAB_SIZE / 2,
     overflow: "hidden",
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: BrandColors.stroke3,
+    borderColor: "rgba(251, 251, 246, 0.4)",
   },
   /** Milky frost on top of blur for a clearer “glass” read. */
   glassFrost: {
@@ -133,10 +133,10 @@ const styles = StyleSheet.create({
   glassRim: {
     borderRadius: FAB_SIZE / 2,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: BrandColors.stroke3,
+    borderColor: "rgba(251, 251, 246, 0.4)",
   },
   webGlass: {
-    backgroundColor: "rgba(43, 28, 33, 0.38)",
+    backgroundColor: "rgba(22, 23, 26, 0.38)",
   },
   inner: {
     flex: 1,

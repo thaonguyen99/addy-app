@@ -21,7 +21,7 @@ export function ScreenHeader({
         hitSlop={12}
         style={styles.back}
       >
-        <Ionicons name="chevron-back" size={22} color={BrandColors.primary} />
+        <Ionicons name="chevron-back" size={22} color={BrandColors.ink} />
         <Text style={styles.title}>{title}</Text>
       </Pressable>
       {right ? <View>{right}</View> : null}
@@ -35,10 +35,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: 12,
-    paddingVertical: 10,
+    paddingVertical: 14,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: BrandColors.stroke2,
   },
   back: { flexDirection: "row", alignItems: "center", gap: 4 },
-  title: { fontSize: 17, fontWeight: "700", color: BrandColors.neutral },
+  title: { fontFamily: "Fredoka-SemiBold", fontSize: 18, color: BrandColors.ink },
 });

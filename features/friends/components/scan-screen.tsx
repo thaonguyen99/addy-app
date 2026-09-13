@@ -10,8 +10,8 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { GlossyButton } from "@/components/ui/glossy-button";
 import { BrandColors } from "@/constants/theme";
-import { AuthPrimaryButton } from "@/features/auth/components/auth-primary-button";
 import { ScreenHeader } from "@/features/friends/components/screen-header";
 
 /** Pull the `token` param out of an addyapp://add-friend?token=... deep link. */
@@ -47,7 +47,7 @@ export function ScanScreen() {
               Addy needs camera access to scan an invite QR code.
             </Text>
             {permission.canAskAgain ? (
-              <AuthPrimaryButton
+              <GlossyButton
                 label="Allow camera"
                 onPress={() => void requestPermission()}
               />
@@ -76,7 +76,7 @@ export function ScanScreen() {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: BrandColors.gray900 },
+  safe: { flex: 1, backgroundColor: BrandColors.paper },
   body: { flex: 1 },
   camera: { flex: 1, alignItems: "center", justifyContent: "center" },
   reticle: {

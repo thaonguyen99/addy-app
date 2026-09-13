@@ -17,6 +17,6 @@ export function MemoriesScreen() {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: BrandColors.gray900 },
+  safe: { flex: 1, backgroundColor: BrandColors.paper },
   body: { flex: 1 },
 });

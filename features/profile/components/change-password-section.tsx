@@ -3,8 +3,8 @@ import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { Alert, StyleSheet, Text, View } from "react-native";
 
+import { GlossyButton } from "@/components/ui/glossy-button";
 import { BrandColors } from "@/constants/theme";
-import { AuthPrimaryButton } from "@/features/auth/components/auth-primary-button";
 import { AuthTextField } from "@/features/auth/components/auth-text-field";
 import {
   type ChangePasswordForm,
@@ -110,8 +110,8 @@ export function ChangePasswordSection({
           {done ? (
             <Text style={styles.success}>Password updated.</Text>
           ) : null}
-          <AuthPrimaryButton
-            label="Update password"
+          <GlossyButton
+            label={changePassword.isPending ? "Updating…" : "Update password"}
             variant="secondary"
             loading={changePassword.isPending}
             onPress={onSubmit}
@@ -125,23 +125,19 @@ export function ChangePasswordSection({
 const styles = StyleSheet.create({
   section: {
     gap: 12,
-    paddingTop: 20,
-    marginTop: 8,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: BrandColors.stroke2,
   },
   heading: {
     fontSize: 16,
     fontWeight: "700",
-    color: BrandColors.neutral,
+    color: BrandColors.ink,
   },
   note: {
     fontSize: 14,
-    color: BrandColors.neutralMuted,
+    color: BrandColors.inkMuted,
     lineHeight: 20,
   },
   success: {
     fontSize: 13,
-    color: BrandColors.neutralMuted,
+    color: BrandColors.inkMuted,
   },
 });

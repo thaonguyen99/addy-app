@@ -11,8 +11,10 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import QRCode from "react-native-qrcode-svg";
 
+import { GlossyButton } from "@/components/ui/glossy-button";
+import { StickerCard } from "@/components/ui/sticker-card";
 import { BrandColors } from "@/constants/theme";
-import { AuthPrimaryButton } from "@/features/auth/components/auth-primary-button";
+import { StickerRadius } from "@/constants/sticker-style";
 import { ScreenHeader } from "@/features/friends/components/screen-header";
 import { getApiErrorMessage } from "@/lib/api/errors";
 import { useInviteQuery, useRotateInviteMutation } from "@/lib/query/hooks";
@@ -55,19 +57,24 @@ export function InviteScreen() {
             <Text style={styles.caption}>
               Have a friend scan this in Addy → Friends → scan.
             </Text>
-            <View style={styles.qrCard}>
-              <QRCode
-                value={query.data.url}
-                size={220}
-                backgroundColor={BrandColors.paper}
-                color={BrandColors.ink}
-              />
+            <View style={styles.qrCardWrap}>
+              <Text style={styles.qrStar}>✦</Text>
+              <StickerCard radius={StickerRadius.card} style={styles.qrCardShadow}>
+                <View style={styles.qrCard}>
+                  <QRCode
+                    value={query.data.url}
+                    size={200}
+                    backgroundColor={BrandColors.paper}
+                    color={BrandColors.ink}
+                  />
+                </View>
+              </StickerCard>
             </View>
             <Text style={styles.code} selectable>
               {query.data.token}
             </Text>
 
-            <AuthPrimaryButton label="Share link" onPress={onShare} />
+            <GlossyButton label="🔗 Share link" onPress={onShare} />
             <Pressable onPress={onRegenerate} disabled={rotate.isPending}>
               <Text style={styles.regenerate}>
                 {rotate.isPending ? "Regenerating…" : "Regenerate link"}
@@ -86,22 +93,35 @@ export function InviteScreen() {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: BrandColors.gray900 },
+  safe: { flex: 1, backgroundColor: BrandColors.paper },
   body: { flex: 1, alignItems: "center", justifyContent: "center", gap: 18, padding: 32 },
   caption: {
     fontSize: 14,
-    color: BrandColors.neutralMuted,
+    color: BrandColors.inkMuted,
     textAlign: "center",
     lineHeight: 20,
   },
+  qrCardWrap: {
+    position: "relative",
+  },
+  qrStar: {
+    position: "absolute",
+    top: -16,
+    right: -8,
+    fontSize: 26,
+    color: BrandColors.accentYellow,
+    zIndex: 1,
+    transform: [{ rotate: "15deg" }],
+  },
+  qrCardShadow: {
+    alignSelf: "center",
+  },
   qrCard: {
-    padding: 20,
-    borderRadius: 20,
-    backgroundColor: BrandColors.paper,
+    padding: 18,
   },
   code: {
     fontSize: 13,
-    color: BrandColors.neutralMuted,
+    color: BrandColors.inkMuted,
     fontFamily: "BeVietnam-Medium",
   },
   regenerate: {
@@ -110,5 +130,5 @@ const styles = StyleSheet.create({
     color: BrandColors.primary,
     paddingVertical: 8,
   },
-  error: { fontSize: 13, color: BrandColors.primary },
+  error: { fontSize: 13, color: BrandColors.accentPink },
 });

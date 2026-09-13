@@ -5,21 +5,17 @@ import {
   BeVietnamPro_700Bold,
   useFonts,
 } from "@expo-google-fonts/be-vietnam-pro";
+import { Fredoka_600SemiBold, Fredoka_700Bold } from "@expo-google-fonts/fredoka";
 import { PatrickHand_400Regular } from "@expo-google-fonts/patrick-hand";
+import { VT323_400Regular } from "@expo-google-fonts/vt323";
 import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
-import { DarkTheme, ThemeProvider } from "@react-navigation/native";
+import { DefaultTheme, ThemeProvider } from "@react-navigation/native";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
-import {
-  ActivityIndicator,
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import "react-native-reanimated";
 import {
@@ -31,17 +27,18 @@ import { BrandColors } from "@/constants/theme";
 import { useAuthStore } from "@/features/auth/store/auth-store";
 import { configureNotificationHandler } from "@/features/notifications/push-registration";
 import { useNotificationRouter } from "@/features/notifications/use-notification-router";
+import { AnimatedSplashScreen } from "@/features/splash/components/animated-splash-screen";
 import { queryClient } from "@/lib/query/client";
 
 configureNotificationHandler();
 
 const navigationTheme = {
-  ...DarkTheme,
+  ...DefaultTheme,
   colors: {
-    ...DarkTheme.colors,
+    ...DefaultTheme.colors,
     primary: BrandColors.primary,
-    background: BrandColors.gray900,
-    card: BrandColors.gray900,
+    background: BrandColors.paper,
+    card: BrandColors.paper,
     text: BrandColors.neutral,
     border: BrandColors.stroke2,
     notification: BrandColors.primary,
@@ -78,6 +75,9 @@ export default function RootLayout() {
     "BeVietnam-SemiBold": BeVietnamPro_600SemiBold,
     "BeVietnam-Bold": BeVietnamPro_700Bold,
     "PatrickHand-Regular": PatrickHand_400Regular,
+    "Fredoka-SemiBold": Fredoka_600SemiBold,
+    "Fredoka-Bold": Fredoka_700Bold,
+    "VT323-Regular": VT323_400Regular,
   });
 
   useEffect(() => {
@@ -94,9 +94,10 @@ export default function RootLayout() {
 
   if (!fontsLoaded || status === "idle" || status === "hydrating") {
     return (
-      <View style={styles.boot}>
-        <ActivityIndicator size="large" color={BrandColors.primary} />
-      </View>
+      <>
+        <AnimatedSplashScreen progress={fontsLoaded ? 0.55 : 0.08} />
+        <StatusBar style="dark" />
+      </>
     );
   }
 
@@ -116,7 +117,7 @@ export default function RootLayout() {
                   options={{ presentation: "modal", title: "Modal" }}
                 />
               </Stack>
-              <StatusBar style="light" />
+              <StatusBar style="dark" />
               <TourGuideOverlay />
             </TourGuideProvider>
           </BottomSheetModalProvider>
@@ -132,7 +133,7 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: BrandColors.gray900,
+    backgroundColor: BrandColors.paper,
     padding: 24,
     gap: 16,
   },

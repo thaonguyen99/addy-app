@@ -41,6 +41,9 @@ export function FriendsScreen() {
       ? params.tab
       : "friends";
   const [tab, setTab] = useState<Tab>(initialTab);
+  const incomingRequests = useFriendRequestsQuery("incoming");
+  const hasIncomingRequests =
+    (incomingRequests.data?.pages[0]?.items.length ?? 0) > 0;
 
   return (
     <SafeAreaView style={styles.safe} edges={["top", "bottom"]}>
@@ -100,6 +103,9 @@ export function FriendsScreen() {
             >
               {t.label}
             </Text>
+            {t.key === "incoming" && hasIncomingRequests ? (
+              <View style={styles.tabBadgeDot} />
+            ) : null}
           </Pressable>
         ))}
       </View>
@@ -205,15 +211,17 @@ function RequestsList({ direction }: { direction: "incoming" | "outgoing" }) {
               <View style={styles.rowActions}>
                 <Pressable
                   onPress={() => accept.mutate(item.id)}
-                  style={styles.primaryBtn}
+                  style={styles.acceptBtn}
+                  accessibilityLabel="Accept request"
                 >
-                  <Text style={styles.primaryBtnText}>Accept</Text>
+                  <Text style={styles.acceptBtnText}>✓</Text>
                 </Pressable>
                 <Pressable
                   onPress={() => decline.mutate(item.id)}
-                  style={styles.secondaryBtn}
+                  style={styles.declineBtn}
+                  accessibilityLabel="Decline request"
                 >
-                  <Text style={styles.secondaryBtnText}>Decline</Text>
+                  <Text style={styles.declineBtnText}>✕</Text>
                 </Pressable>
               </View>
             ) : (
@@ -262,7 +270,7 @@ function Empty({ text }: { text: string }) {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: BrandColors.gray900 },
+  safe: { flex: 1, backgroundColor: BrandColors.paper },
   headerActions: { flexDirection: "row", gap: 18 },
   tabs: {
     flexDirection: "row",
@@ -271,33 +279,70 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   tab: {
-    paddingVertical: 7,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    paddingVertical: 8,
     paddingHorizontal: 14,
-    borderRadius: 999,
-    backgroundColor: BrandColors.elevated,
+    borderRadius: 14,
+    borderWidth: 2.5,
+    borderColor: BrandColors.ink,
+    backgroundColor: BrandColors.paper,
   },
-  tabActive: { backgroundColor: BrandColors.primary },
-  tabLabel: { color: BrandColors.neutralMuted, fontWeight: "600", fontSize: 13 },
-  tabLabelActive: { color: BrandColors.white },
+  tabActive: {
+    backgroundColor: BrandColors.primaryLight,
+    shadowColor: BrandColors.ink,
+    shadowOffset: { width: 2, height: 2 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 3,
+  },
+  tabLabel: { color: BrandColors.inkMuted, fontWeight: "600", fontSize: 13 },
+  tabLabelActive: { color: BrandColors.ink },
+  tabBadgeDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: BrandColors.accentPink,
+    borderWidth: 1.5,
+    borderColor: BrandColors.ink,
+  },
   list: { paddingHorizontal: 16, paddingBottom: 40, flexGrow: 1 },
   center: { flex: 1, alignItems: "center", justifyContent: "center", padding: 40 },
-  emptyText: { color: BrandColors.neutralMuted, fontSize: 14, textAlign: "center" },
+  emptyText: { color: BrandColors.inkMuted, fontSize: 14, textAlign: "center" },
   rowActions: { flexDirection: "row", gap: 8 },
-  primaryBtn: {
-    paddingHorizontal: 14,
-    paddingVertical: 7,
-    borderRadius: 8,
+  acceptBtn: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    borderWidth: 2,
+    borderColor: BrandColors.ink,
     backgroundColor: BrandColors.primary,
+    alignItems: "center",
+    justifyContent: "center",
   },
-  primaryBtnText: { color: BrandColors.white, fontWeight: "600", fontSize: 13 },
+  acceptBtnText: { color: BrandColors.ink, fontWeight: "700", fontSize: 14 },
+  declineBtn: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    borderWidth: 2,
+    borderColor: BrandColors.ink,
+    backgroundColor: "#FFB3B3",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  declineBtnText: { color: BrandColors.ink, fontWeight: "700", fontSize: 14 },
   secondaryBtn: {
     paddingHorizontal: 14,
     paddingVertical: 7,
-    borderRadius: 8,
-    backgroundColor: BrandColors.elevated,
+    borderRadius: 10,
+    borderWidth: 2,
+    borderColor: BrandColors.ink,
+    backgroundColor: BrandColors.paper,
   },
   secondaryBtnText: {
-    color: BrandColors.neutral,
+    color: BrandColors.ink,
     fontWeight: "600",
     fontSize: 13,
   },

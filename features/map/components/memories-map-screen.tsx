@@ -1,15 +1,17 @@
 import { useFocusEffect } from "@react-navigation/native";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import {
-  Animated,
-  Platform,
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
+import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withDelay,
+  withSequence,
+  withTiming,
+} from "react-native-reanimated";
 import {
   Camera,
+  GeoJSONSource,
+  Layer,
   Map,
   Marker,
   type CameraRef,
@@ -22,6 +24,9 @@ import { router } from "expo-router";
 import { TourTarget, useTourGuide } from "@wrack/react-native-tour-guide";
 import Ionicons from "@expo/vector-icons/Ionicons";
 
+import { ChatBubbleBanner } from "@/components/ui/chat-bubble-banner";
+import { StickerShadowBox } from "@/components/ui/sticker-shadow";
+import { StickerBorderWidth, StickerRadius } from "@/constants/sticker-style";
 import { GOONG_MAP_API_KEY } from "@/lib/env";
 import {
   useFriendsMapQuery,
@@ -30,25 +35,28 @@ import {
 } from "@/lib/query/hooks";
 import type { MapBounds } from "@/types/api";
 import { BrandColors } from "@/constants/theme";
-import { ClusterMarker } from "@/features/map/components/cluster-marker";
-import { PolaroidMapMarker } from "@/features/map/components/polaroid-map-marker";
+import {
+  MAP_PHOTO_PIN_HEIGHT,
+  MAP_PHOTO_PIN_WIDTH,
+  MapPhotoPin,
+} from "@/features/map/components/map-photo-pin";
 import {
   PlaceMemoriesSheet,
   type PlaceMemoriesSheetRef,
 } from "@/features/map/components/place-memories-sheet";
 import { useMapFocusStore } from "@/features/map/store/map-focus-store";
 import { clusterPins } from "@/features/map/utils/cluster-pins";
+import { pinsToTrailGeoJSON } from "@/features/map/utils/pins-to-trail";
 import {
   ONBOARDING_ADD_MEMORY_STEP_ID,
   ONBOARDING_MAP_PIN_TARGET_ID,
   ONBOARDING_TOUR_ID,
 } from "@/features/onboarding/onboarding-tour";
 
-// The polaroid marker's visual footprint (features/map/components/polaroid-map-marker.tsx):
-// PIN_SIZE(28) + POLAROID_HEIGHT(71) - 6px overlap, extending UPWARD from the
-// marker's anchor="bottom" point.
-const MARKER_VISUAL_WIDTH = 66;
-const MARKER_VISUAL_HEIGHT = 93;
+// MapPhotoPin's visual footprint (features/map/components/map-photo-pin.tsx),
+// extending UPWARD from the marker's anchor="bottom" point.
+const MARKER_VISUAL_WIDTH = MAP_PHOTO_PIN_WIDTH;
+const MARKER_VISUAL_HEIGHT = MAP_PHOTO_PIN_HEIGHT;
 const HIGHLIGHT_PADDING = 12;
 
 const GOONG_STYLE_URL = `https://tiles.goong.io/assets/goong_map_web.json?api_key=${GOONG_MAP_API_KEY}`;
@@ -70,22 +78,42 @@ function boundsToMapBounds([west, south, east, north]: LngLatBounds): MapBounds 
   return { north, south, east, west, limit: 50 };
 }
 
-function SuccessToast() {
-  const translateY = useRef(new Animated.Value(-120)).current;
+function ToastSparkle({
+  visible,
+  delayMs,
+  style,
+}: {
+  visible: boolean;
+  delayMs: number;
+  style: object;
+}) {
+  const opacity = useSharedValue(0);
 
   useEffect(() => {
-    Animated.spring(translateY, {
-      toValue: 0,
-      useNativeDriver: true,
-      tension: 80,
-      friction: 10,
-    }).start();
-  }, [translateY]);
+    opacity.value = visible
+      ? withDelay(
+          delayMs,
+          withSequence(withTiming(1, { duration: 150 }), withTiming(0, { duration: 400 })),
+        )
+      : withTiming(0, { duration: 0 });
+  }, [visible, delayMs, opacity]);
+
+  const animatedStyle = useAnimatedStyle(() => ({ opacity: opacity.value }));
 
   return (
-    <Animated.View style={[styles.toast, { transform: [{ translateY }] }]}>
+    <Animated.Text style={[styles.toastSparkle, style, animatedStyle]}>
+      ✦
+    </Animated.Text>
+  );
+}
+
+function SuccessToast({ visible }: { visible: boolean }) {
+  return (
+    <ChatBubbleBanner visible={visible}>
       <Text style={styles.toastText}>📍 Memory pinned!</Text>
-    </Animated.View>
+      <ToastSparkle visible={visible} delayMs={200} style={styles.toastSparkleLeft} />
+      <ToastSparkle visible={visible} delayMs={320} style={styles.toastSparkleRight} />
+    </ChatBubbleBanner>
   );
 }
 
@@ -186,6 +214,10 @@ export function MemoriesMapScreen() {
   const { data: stats, isLoading: isStatsLoading } = useStatsQuery();
   const totalMemories = stats?.totalMemories;
 
+  // Own-pins-only, unclustered, so the line reflects true pin-to-pin
+  // chronological order rather than cluster centroids.
+  const trailGeoJSON = useMemo(() => pinsToTrailGeoJSON(pins), [pins]);
+
   // Clustered separately so own vs. friend pins never merge into one bubble —
   // keeps the bordered/unbordered visual distinction between them intact.
   const ownClusters = useMemo(() => clusterPins(pins, zoom), [pins, zoom]);
@@ -245,15 +277,31 @@ export function MemoriesMapScreen() {
           ref={cameraRef}
           initialViewState={{ center: DEFAULT_CENTER, zoom: DEFAULT_ZOOM }}
         />
+        <GeoJSONSource id="memory-trail" data={trailGeoJSON}>
+          <Layer
+            type="line"
+            id="memory-trail-line"
+            paint={{
+              "line-color": BrandColors.ink,
+              "line-width": 1.5,
+              "line-dasharray": [2, 3],
+              "line-opacity": 0.2,
+            }}
+          />
+        </GeoJSONSource>
         {friendClusters.map((group) =>
           group.pins.length > 1 ? (
             <Marker
               key={`friend-cluster-${group.latitude}-${group.longitude}`}
-              lngLat={[group.longitude, group.latitude]}
-              anchor="center"
+              lngLat={[group.pins[0].longitude, group.pins[0].latitude]}
+              anchor="bottom"
               onPress={() => flyIntoCluster(group.latitude, group.longitude)}
             >
-              <ClusterMarker count={group.pins.length} />
+              <MapPhotoPin
+                imageUrl={group.pins[0].imageUrl}
+                count={group.pins.length}
+                isFriend
+              />
             </Marker>
           ) : (
             <Marker
@@ -262,7 +310,7 @@ export function MemoriesMapScreen() {
               anchor="bottom"
               onPress={() => openPin(group.pins[0])}
             >
-              <PolaroidMapMarker
+              <MapPhotoPin
                 imageUrl={group.pins[0].imageUrl}
                 count={group.pins[0].memoryCount}
                 isFriend
@@ -274,11 +322,14 @@ export function MemoriesMapScreen() {
           group.pins.length > 1 ? (
             <Marker
               key={`cluster-${group.latitude}-${group.longitude}`}
-              lngLat={[group.longitude, group.latitude]}
-              anchor="center"
+              lngLat={[group.pins[0].longitude, group.pins[0].latitude]}
+              anchor="bottom"
               onPress={() => flyIntoCluster(group.latitude, group.longitude)}
             >
-              <ClusterMarker count={group.pins.length} />
+              <MapPhotoPin
+                imageUrl={group.pins[0].imageUrl}
+                count={group.pins.length}
+              />
             </Marker>
           ) : (
             <Marker
@@ -287,7 +338,7 @@ export function MemoriesMapScreen() {
               anchor="bottom"
               onPress={() => openPin(group.pins[0])}
             >
-              <PolaroidMapMarker
+              <MapPhotoPin
                 imageUrl={group.pins[0].imageUrl}
                 count={group.pins[0].memoryCount}
               />
@@ -310,29 +361,31 @@ export function MemoriesMapScreen() {
         edges={["top"]}
         pointerEvents="box-none"
       >
-        {showSuccessToast ? <SuccessToast /> : null}
+        <SuccessToast visible={showSuccessToast} />
         <View style={styles.topRow}>
-        <Pressable
-          onPress={openFeed}
-          style={({ pressed }) => [
-            styles.badge,
-            pressed && styles.badgePressed,
-          ]}
-          accessibilityRole="button"
-          accessibilityLabel="Show all your memories"
-        >
-          <Text style={styles.badgeText}>
-            {totalMemories == null
-              ? isStatsLoading
-                ? "Loading…"
-                : `${pins.length} memories`
-              : totalMemories === 1
-                ? "1 memory"
-                : `${totalMemories} memories`}
-            {isError && totalMemories == null ? " · offline" : ""}
-          </Text>
-          <Text style={styles.badgeChevron}>›</Text>
-        </Pressable>
+        <StickerShadowBox radius={StickerRadius.chip} shadowOffset={2}>
+          <Pressable
+            onPress={openFeed}
+            style={({ pressed }) => [
+              styles.badge,
+              pressed && styles.badgePressed,
+            ]}
+            accessibilityRole="button"
+            accessibilityLabel="Show all your memories"
+          >
+            <Text style={styles.badgeText}>
+              {totalMemories == null
+                ? isStatsLoading
+                  ? "Loading…"
+                  : `${pins.length} memories`
+                : totalMemories === 1
+                  ? "1 memory"
+                  : `${totalMemories} memories`}
+              {isError && totalMemories == null ? " · offline" : ""}
+            </Text>
+            <Text style={styles.badgeChevron}>›</Text>
+          </Pressable>
+        </StickerShadowBox>
         </View>
       </SafeAreaView>
 
@@ -348,27 +401,29 @@ export function MemoriesMapScreen() {
             </Text>
           </View>
         ) : null}
-        <Pressable
-          onPress={() => setShowFriends((v) => !v)}
-          style={[styles.friendsFab, showFriends && styles.friendsFabOn]}
-          accessibilityRole="switch"
-          accessibilityState={{ checked: showFriends }}
-          accessibilityLabel="Show friends' memories on the map"
-        >
-          <Ionicons
-            name="people"
-            size={18}
-            color={showFriends ? BrandColors.white : BrandColors.neutralMuted}
-          />
-          <Text
-            style={[
-              styles.friendsFabText,
-              showFriends && styles.friendsFabTextOn,
-            ]}
+        <StickerShadowBox radius={StickerRadius.pill} shadowOffset={2}>
+          <Pressable
+            onPress={() => setShowFriends((v) => !v)}
+            style={[styles.friendsFab, showFriends && styles.friendsFabOn]}
+            accessibilityRole="switch"
+            accessibilityState={{ checked: showFriends }}
+            accessibilityLabel="Show friends' memories on the map"
           >
-            Friends
-          </Text>
-        </Pressable>
+            <Ionicons
+              name="people"
+              size={18}
+              color={BrandColors.ink}
+            />
+            <Text
+              style={[
+                styles.friendsFabText,
+                showFriends && styles.friendsFabTextOn,
+              ]}
+            >
+              Friends
+            </Text>
+          </Pressable>
+        </StickerShadowBox>
       </SafeAreaView>
 
       <PlaceMemoriesSheet ref={placeMemoriesSheetRef} />
@@ -380,28 +435,24 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   map: { flex: 1 },
   pinHighlightTarget: { position: "absolute" },
-  safe: { flex: 1, backgroundColor: BrandColors.gray900 },
+  safe: { flex: 1, backgroundColor: BrandColors.paper },
   overlay: { position: "absolute", top: 0, left: 0, right: 0 },
 
-  toast: {
-    alignSelf: "center",
-    backgroundColor: BrandColors.gray900,
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderRadius: 24,
-    marginBottom: 8,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
-    elevation: 8,
-  },
   toastText: {
-    color: BrandColors.neutral,
+    color: BrandColors.ink,
     fontSize: 14,
-    fontWeight: "600",
+    fontFamily: "Fredoka-SemiBold",
     letterSpacing: 0.2,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
   },
+  toastSparkle: {
+    position: "absolute",
+    fontSize: 16,
+    color: BrandColors.accentYellow,
+  },
+  toastSparkleLeft: { top: -6, left: 18 },
+  toastSparkleRight: { top: -4, right: 22 },
 
   topRow: {
     flexDirection: "row",
@@ -414,10 +465,12 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
-    backgroundColor: "rgba(43, 28, 33, 0.92)",
+    backgroundColor: BrandColors.paper,
+    borderWidth: StickerBorderWidth.standard,
+    borderColor: BrandColors.ink,
     paddingHorizontal: 12,
     paddingVertical: 8,
-    borderRadius: 10,
+    borderRadius: StickerRadius.chip,
   },
   bottomOverlay: {
     position: "absolute",
@@ -435,40 +488,40 @@ const styles = StyleSheet.create({
     gap: 8,
     paddingHorizontal: 16,
     paddingVertical: 12,
-    borderRadius: 24,
-    backgroundColor: "rgba(43, 28, 33, 0.92)",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.25,
-    shadowRadius: 6,
-    elevation: 6,
+    borderRadius: StickerRadius.pill,
+    backgroundColor: BrandColors.paper,
+    borderWidth: StickerBorderWidth.standard,
+    borderColor: BrandColors.ink,
   },
-  friendsFabOn: { backgroundColor: BrandColors.primary },
+  friendsFabOn: { backgroundColor: BrandColors.accentPink },
   friendsFabText: {
     fontSize: 14,
-    fontWeight: "600",
-    color: BrandColors.neutralMuted,
+    fontFamily: "Fredoka-SemiBold",
+    color: BrandColors.ink,
   },
-  friendsFabTextOn: { color: BrandColors.white },
+  friendsFabTextOn: { color: BrandColors.ink },
   friendsHintRow: {
     alignSelf: "flex-end",
   },
   friendsHintText: {
-    backgroundColor: "rgba(43, 28, 33, 0.92)",
-    color: BrandColors.neutralMuted,
+    backgroundColor: BrandColors.gray100,
+    color: BrandColors.inkMuted,
     fontSize: 13,
+    fontFamily: "VT323-Regular",
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: 10,
+    borderRadius: StickerRadius.chip,
+    borderWidth: StickerBorderWidth.thin,
+    borderColor: BrandColors.ink,
     overflow: "hidden",
   },
   badgePressed: { opacity: 0.7 },
-  badgeText: { fontSize: 14, fontWeight: "600", color: BrandColors.neutral },
+  badgeText: { fontSize: 14, fontFamily: "Fredoka-SemiBold", color: BrandColors.ink },
   badgeChevron: {
     fontSize: 18,
     lineHeight: 18,
     fontWeight: "700",
-    color: BrandColors.neutralMuted,
+    color: BrandColors.inkMuted,
   },
   webFallback: {
     flex: 1,

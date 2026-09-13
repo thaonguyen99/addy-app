@@ -1,3 +1,4 @@
+import * as Haptics from "expo-haptics";
 import { router } from "expo-router";
 
 import { useMapFocusStore } from "@/features/map/store/map-focus-store";
@@ -14,6 +15,7 @@ export function navigateAfterCreatePin(
 ) {
   useMapFocusStore.getState().setPendingFocus({ latitude, longitude });
   useMapFocusStore.getState().setShowSuccessToast(true);
+  void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
   if (router.canDismiss()) {
     router.dismissAll();

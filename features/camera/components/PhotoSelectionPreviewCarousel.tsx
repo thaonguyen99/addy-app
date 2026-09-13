@@ -232,7 +232,12 @@ const styles = StyleSheet.create({
   },
   selectionControlSelected: {
     backgroundColor: BrandColors.primary,
-    borderColor: BrandColors.neutral,
+    borderColor: BrandColors.ink,
+    shadowColor: BrandColors.ink,
+    shadowOffset: { width: 2, height: 2 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 3,
   },
   dotsRow: {
     flexDirection: "row",

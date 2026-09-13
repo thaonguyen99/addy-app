@@ -61,7 +61,7 @@ const styles = StyleSheet.create({
   },
   primary: { backgroundColor: BrandColors.primary },
   secondary: {
-    backgroundColor: BrandColors.secondary,
+    backgroundColor: BrandColors.paper,
     borderWidth: 1,
     borderColor: BrandColors.neutralBorder,
   },
@@ -72,5 +72,5 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: BrandColors.neutral,
   },
-  secondaryLabel: { color: BrandColors.neutral },
+  secondaryLabel: { color: BrandColors.ink },
 });

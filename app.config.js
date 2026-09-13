@@ -49,9 +49,8 @@ module.exports = ({ config }) => ({
   },
   android: {
     adaptiveIcon: {
-      backgroundColor: "#657CBD",
+      backgroundColor: "#C7F23A",
       foregroundImage: "./assets/images/android-icon-foreground.png",
-      backgroundImage: "./assets/images/android-icon-background.png",
       monochromeImage: "./assets/images/android-icon-monochrome.png",
     },
     edgeToEdgeEnabled: true,
@@ -100,8 +99,10 @@ module.exports = ({ config }) => ({
         image: "./assets/images/splash-icon.png",
         imageWidth: 220,
         resizeMode: "contain",
-        backgroundColor: "#2B1C21",
-        dark: { backgroundColor: "#2B1C21" },
+        // Keep in sync with BrandColors.paper in constants/theme.ts — this
+        // file can't import that (plain Node config, no RN/TS runtime).
+        backgroundColor: "#FBFBF6",
+        dark: { backgroundColor: "#FBFBF6" },
       },
     ],
     iosUrlScheme
@@ -114,7 +115,7 @@ module.exports = ({ config }) => ({
     [
       "expo-notifications",
       {
-        color: "#6667AB",
+        color: "#C7F23A",
       },
     ],
   ],

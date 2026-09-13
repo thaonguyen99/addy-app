@@ -52,7 +52,10 @@ export default function AppLayout() {
           options={{ presentation: "modal", animation: "slide_from_bottom" }}
         />
         <Stack.Screen name="memory/[id]" />
-        <Stack.Screen name="profile" />
+        <Stack.Screen name="profile/index" />
+        <Stack.Screen name="profile/account" />
+        <Stack.Screen name="profile/security" />
+        <Stack.Screen name="profile/notifications" />
         <Stack.Screen name="privacy-policy" />
         <Stack.Screen name="friends/index" />
         <Stack.Screen name="friends/search" />

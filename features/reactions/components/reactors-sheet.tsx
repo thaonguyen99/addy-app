@@ -98,7 +98,7 @@ export const ReactorsSheet = forwardRef<
 });
 
 const styles = StyleSheet.create({
-  background: { backgroundColor: BrandColors.gray900 },
+  background: { backgroundColor: BrandColors.paper },
   handleIndicator: { backgroundColor: BrandColors.neutralBorder, width: 40 },
   titleRow: {
     paddingHorizontal: 16,

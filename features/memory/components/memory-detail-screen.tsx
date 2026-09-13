@@ -1,9 +1,11 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
+import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import * as Haptics from "expo-haptics";
 import { Image } from "expo-image";
 import { useRef, useState } from "react";
 import {
   ActivityIndicator,
+  Alert,
   Dimensions,
   NativeScrollEvent,
   NativeSyntheticEvent,
@@ -16,10 +18,10 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { TourTarget } from "@wrack/react-native-tour-guide";
 
+import { StickerCard } from "@/components/ui/sticker-card";
+import { StickerRadius } from "@/constants/sticker-style";
 import { BrandColors } from "@/constants/theme";
-import { ToggleRow } from "@/components/ui/toggle-row";
 import { MoodSticker } from "@/features/feed/components/mood-sticker";
-import { POLAROID } from "@/features/feed/utils/polaroid";
 import { ONBOARDING_MEMORY_DETAIL_TARGET_ID } from "@/features/onboarding/onboarding-tour";
 import { ReactorsSheet } from "@/features/reactions/components/reactors-sheet";
 import type { ReactorsSheetRef } from "@/features/reactions/components/reactors-sheet";
@@ -33,6 +35,8 @@ import {
 import type { MemoryImage } from "@/types/api";
 
 const SCREEN_WIDTH = Dimensions.get("window").width;
+const HERO_PADDING = 20;
+const HERO_WIDTH = SCREEN_WIDTH - HERO_PADDING * 2;
 const HERO_HEIGHT = 340;
 
 type MemoryDetailScreenProps = {
@@ -50,7 +54,7 @@ function ImageCarousel({ images }: { images: MemoryImage[] }) {
   });
 
   const onScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
-    const idx = Math.round(e.nativeEvent.contentOffset.x / SCREEN_WIDTH);
+    const idx = Math.round(e.nativeEvent.contentOffset.x / HERO_WIDTH);
     setActiveIndex(idx);
   };
 
@@ -120,8 +124,30 @@ export function MemoryDetailScreen({ id }: MemoryDetailScreenProps) {
       })
     : null;
 
+  const openVisibilityMenu = () => {
+    if (!data) return;
+    const isFriends = data.visibility === "friends";
+    Alert.alert(
+      "Memory visibility",
+      `Currently: ${isFriends ? "Visible to friends" : "Private"}`,
+      [
+        {
+          text: "Private",
+          onPress: () => updateMemory.mutate({ visibility: "private" }),
+        },
+        {
+          text: "Visible to friends",
+          onPress: () => updateMemory.mutate({ visibility: "friends" }),
+        },
+        { text: "Cancel", style: "cancel" },
+      ],
+    );
+  };
+
+  const liked = data ? (data.isOwner ? data.reactionCount > 0 : data.hasReacted) : false;
+
   return (
-    <SafeAreaView style={styles.safe} edges={["bottom"]}>
+    <SafeAreaView style={styles.safe} edges={["top", "bottom"]}>
       {isLoading ? (
         <View style={styles.center}>
           <ActivityIndicator color={BrandColors.primary} size="large" />
@@ -136,59 +162,85 @@ export function MemoryDetailScreen({ id }: MemoryDetailScreenProps) {
           contentContainerStyle={styles.scroll}
           showsVerticalScrollIndicator={false}
         >
-          {/* Hero photo with floating header controls on top */}
-          <View style={styles.heroSection}>
-            <ImageCarousel images={data.images} />
-
-            <SafeAreaView
-              style={styles.heroHeader}
-              edges={["top"]}
-              pointerEvents="box-none"
+          <View style={styles.headerRow}>
+            <Pressable
+              onPress={() => safeBack("/(app)/(tabs)")}
+              hitSlop={12}
+              style={styles.circleButton}
+              accessibilityRole="button"
+              accessibilityLabel="Back"
             >
-              <Pressable
-                onPress={() => safeBack("/(app)/(tabs)")}
-                hitSlop={12}
-                style={styles.circleButton}
-                accessibilityRole="button"
-                accessibilityLabel="Back"
-              >
-                <Ionicons
-                  name="chevron-back"
-                  size={22}
-                  color={BrandColors.white}
-                />
-              </Pressable>
+              <Ionicons name="chevron-back" size={22} color={BrandColors.ink} />
+            </Pressable>
+            <View style={styles.headerRight}>
+              {data.isOwner ? (
+                <Pressable
+                  onPress={openVisibilityMenu}
+                  hitSlop={12}
+                  style={styles.circleButton}
+                  accessibilityRole="button"
+                  accessibilityLabel="Memory options"
+                >
+                  <Ionicons
+                    name="ellipsis-horizontal"
+                    size={20}
+                    color={BrandColors.ink}
+                  />
+                </Pressable>
+              ) : null}
               <View style={styles.circleButton}>
                 <Text style={styles.avatarText}>{initials}</Text>
               </View>
-            </SafeAreaView>
+            </View>
+          </View>
 
+          {/* Photo strip — sticker-carded, mood badge tilted on the corner,
+              matching the "memory reveal" moodboard reference. */}
+          <View style={styles.heroSection}>
+            <TourTarget id={ONBOARDING_MEMORY_DETAIL_TARGET_ID}>
+              <StickerCard radius={StickerRadius.card} style={styles.heroCard}>
+                <ImageCarousel images={data.images} />
+              </StickerCard>
+            </TourTarget>
             <View style={styles.heroSticker}>
-              <MoodSticker score={data.moodScore} />
+              <MoodSticker score={data.moodScore} size={42} />
             </View>
           </View>
 
           <View style={styles.content}>
-            {/* Feeling / note — a paper note with a paperclip */}
             {data.feeling ? (
-              <View style={styles.noteCard}>
-                <Text style={styles.paperclip}>📎</Text>
-                <Text style={styles.noteText}>"{data.feeling}"</Text>
-              </View>
+              <Text style={styles.capLine}>{data.feeling}</Text>
             ) : null}
 
-            {/* Place name + address + date */}
-            <TourTarget id={ONBOARDING_MEMORY_DETAIL_TARGET_ID}>
-              <View style={styles.placeCard}>
-                <Text style={styles.placeName}>{data.place.name}</Text>
-                <Text style={styles.address}>
-                  📍 {data.place.formattedAddress}
+            <View style={styles.tagRow}>
+              <StickerCard
+                radius={StickerRadius.chip}
+                backgroundColor={BrandColors.accentCyan}
+                shadowOffset={2}
+                style={styles.tagSticker}
+              >
+                <Text style={styles.tagText} numberOfLines={1}>
+                  📍 {data.place.name}
                 </Text>
-                <Text style={styles.metaText}>🗓 {formattedDate}</Text>
-              </View>
-            </TourTarget>
+              </StickerCard>
+            </View>
 
-            {/* Reactions */}
+            <StickerCard borderStyle="dashed" shadowOffset={2}>
+              <View style={styles.placeCard}>
+                <MaterialIcons name="place" size={18} color={BrandColors.primary} />
+                <Text style={styles.address}>{data.place.formattedAddress}</Text>
+              </View>
+              <View style={styles.placeCardDivider} />
+              <View style={styles.placeCard}>
+                <MaterialIcons
+                  name="calendar-today"
+                  size={16}
+                  color={BrandColors.inkMuted}
+                />
+                <Text style={styles.metaText}>{formattedDate}</Text>
+              </View>
+            </StickerCard>
+
             <View style={styles.reactionRow}>
               {!data.isOwner ? (
                 <Pressable
@@ -206,54 +258,31 @@ export function MemoryDetailScreen({ id }: MemoryDetailScreenProps) {
                   }
                 >
                   <Ionicons
-                    name={data.hasReacted ? "heart" : "heart-outline"}
-                    size={24}
-                    color={
-                      data.hasReacted
-                        ? BrandColors.primary
-                        : BrandColors.neutralMuted
-                    }
+                    name={liked ? "heart" : "heart-outline"}
+                    size={22}
+                    color={liked ? BrandColors.accentPink : BrandColors.inkMuted}
                   />
                 </Pressable>
               ) : (
-                <Ionicons
-                  name="heart"
-                  size={22}
-                  color={BrandColors.neutralMuted}
-                />
+                <View style={styles.reactionButton}>
+                  <Ionicons
+                    name={liked ? "heart" : "heart-outline"}
+                    size={22}
+                    color={liked ? BrandColors.accentPink : BrandColors.inkMuted}
+                  />
+                </View>
               )}
-              <Pressable
-                onPress={() => {
-                  if (data.reactionCount > 0) reactorsSheet.current?.present();
-                }}
-                hitSlop={8}
-              >
-                <Text style={styles.reactionCount}>
-                  {data.reactionCount === 0
-                    ? "No reactions yet"
-                    : `${data.reactionCount} ${
-                        data.reactionCount === 1 ? "reaction" : "reactions"
-                      }`}
-                </Text>
-              </Pressable>
+              {data.reactionCount > 0 ? (
+                <Pressable
+                  onPress={() => reactorsSheet.current?.present()}
+                  hitSlop={8}
+                >
+                  <Text style={styles.reactionCount}>
+                    {data.reactionCount}
+                  </Text>
+                </Pressable>
+              ) : null}
             </View>
-
-            {/* Owner: visibility control */}
-            {data.isOwner ? (
-              <View style={styles.visibilityCard}>
-                <ToggleRow
-                  label="Visible to friends"
-                  description="Friends can see this memory on their map."
-                  value={data.visibility === "friends"}
-                  disabled={updateMemory.isPending}
-                  onValueChange={(next) =>
-                    updateMemory.mutate({
-                      visibility: next ? "friends" : "private",
-                    })
-                  }
-                />
-              </View>
-            ) : null}
           </View>
         </ScrollView>
       )}
@@ -263,69 +292,73 @@ export function MemoryDetailScreen({ id }: MemoryDetailScreenProps) {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: BrandColors.gray900 },
+  safe: { flex: 1, backgroundColor: BrandColors.paper },
 
   center: { flex: 1, alignItems: "center", justifyContent: "center", gap: 12 },
   errorEmoji: { fontSize: 40 },
   errorText: {
     fontSize: 16,
-    color: BrandColors.neutralMuted,
+    color: BrandColors.inkMuted,
     fontWeight: "500",
   },
 
   scroll: { paddingBottom: 40 },
 
-  // Hero
-  heroSection: {
-    position: "relative",
-  },
-  heroHeader: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
+  headerRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     paddingHorizontal: 16,
-    paddingTop: 8,
+    paddingVertical: 8,
+  },
+  headerRight: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
   },
   circleButton: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: "rgba(43, 28, 33, 0.55)",
+    backgroundColor: "rgba(22, 23, 26, 0.08)",
+    borderWidth: 2,
+    borderColor: BrandColors.ink,
     alignItems: "center",
     justifyContent: "center",
   },
   avatarText: {
-    color: BrandColors.white,
+    color: BrandColors.ink,
     fontSize: 14,
     fontWeight: "700",
   },
+
+  heroSection: {
+    position: "relative",
+    paddingHorizontal: HERO_PADDING,
+  },
+  heroCard: {
+    alignSelf: "center",
+  },
   heroScroll: {
     height: HERO_HEIGHT,
+    width: HERO_WIDTH,
   },
   heroPhoto: {
-    width: SCREEN_WIDTH,
+    width: HERO_WIDTH,
     height: HERO_HEIGHT,
-    borderBottomLeftRadius: 24,
-    borderBottomRightRadius: 24,
     backgroundColor: BrandColors.gray200,
   },
   heroPlaceholder: {
-    width: SCREEN_WIDTH,
+    width: HERO_WIDTH,
     height: HERO_HEIGHT,
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: BrandColors.primaryMuted,
-    borderBottomLeftRadius: 24,
-    borderBottomRightRadius: 24,
   },
   heroPlaceholderText: { fontSize: 48 },
   heroSticker: {
     position: "absolute",
-    bottom: 12,
-    right: 16,
+    top: -12,
+    right: HERO_PADDING + 8,
   },
 
   dotsRow: {
@@ -351,56 +384,51 @@ const styles = StyleSheet.create({
 
   content: {
     paddingHorizontal: 20,
-    paddingTop: 20,
-    gap: 18,
-  },
-
-  // Feeling — paper note with a paperclip
-  noteCard: {
-    backgroundColor: BrandColors.paper,
-    borderRadius: 6,
-    paddingHorizontal: 16,
     paddingTop: 18,
-    paddingBottom: 14,
-    ...POLAROID.shadow,
-  },
-  paperclip: {
-    position: "absolute",
-    top: -14,
-    left: 16,
-    fontSize: 26,
-    transform: [{ rotate: "-12deg" }],
-  },
-  noteText: {
-    fontFamily: "PatrickHand-Regular",
-    fontSize: 19,
-    lineHeight: 24,
-    color: BrandColors.ink,
+    gap: 14,
   },
 
-  // Place + date
-  placeCard: {
-    backgroundColor: BrandColors.elevated,
-    borderRadius: 14,
-    padding: 16,
-    gap: 6,
-  },
-  placeName: {
+  capLine: {
+    fontFamily: "VT323-Regular",
     fontSize: 20,
-    fontWeight: "700",
-    color: BrandColors.neutral,
-    lineHeight: 26,
+    color: BrandColors.ink,
+    textAlign: "center",
+  },
+
+  tagRow: {
+    alignItems: "center",
+  },
+  tagSticker: {
+    transform: [{ rotate: "-2deg" }],
+  },
+  tagText: {
+    fontFamily: "VT323-Regular",
+    fontSize: 16,
+    color: BrandColors.ink,
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+  },
+
+  placeCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    padding: 14,
+  },
+  placeCardDivider: {
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: BrandColors.stroke2,
+    marginHorizontal: 14,
   },
   address: {
-    fontSize: 13,
-    color: BrandColors.neutralMuted,
-    lineHeight: 19,
-    flexWrap: "wrap",
+    flex: 1,
+    fontSize: 14,
+    color: BrandColors.ink,
+    lineHeight: 20,
   },
   metaText: {
     fontSize: 13,
-    color: BrandColors.neutralMuted,
-    marginTop: 4,
+    color: BrandColors.inkMuted,
   },
 
   reactionRow: {
@@ -409,23 +437,14 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   reactionButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 32,
+    height: 32,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: BrandColors.elevated,
   },
   reactionCount: {
-    fontSize: 14,
-    color: BrandColors.neutralMuted,
-    fontWeight: "600",
-  },
-  visibilityCard: {
-    paddingHorizontal: 14,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: BrandColors.neutralBorder,
-    backgroundColor: BrandColors.elevated,
+    fontSize: 15,
+    color: BrandColors.ink,
+    fontWeight: "700",
   },
 });

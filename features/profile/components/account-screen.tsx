@@ -1,12 +1,8 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import Ionicons from "@expo/vector-icons/Ionicons";
-import { Image } from "expo-image";
-import { router } from "expo-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import {
   ActivityIndicator,
-  Alert,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -18,12 +14,10 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { GlossyButton } from "@/components/ui/glossy-button";
 import { BrandColors } from "@/constants/theme";
-import { AuthPrimaryButton } from "@/features/auth/components/auth-primary-button";
 import { AuthTextField } from "@/features/auth/components/auth-text-field";
-import { useAuthStore } from "@/features/auth/store/auth-store";
-import { ChangePasswordSection } from "@/features/profile/components/change-password-section";
-import { NotificationSettingsSection } from "@/features/profile/components/notification-settings-section";
+import { ProfileSubHeader } from "@/features/profile/components/profile-sub-header";
 import { useAvatarUpload } from "@/features/profile/hooks/use-avatar-upload";
 import {
   type ProfileForm,
@@ -33,26 +27,19 @@ import {
 import { getApiErrorMessage } from "@/lib/api/errors";
 import {
   useCheckUsernameMutation,
-  useDeleteAccountMutation,
   useProfileQuery,
   useUpdateProfileMutation,
 } from "@/lib/query/hooks";
 import { safeBack } from "@/lib/navigation/safe-router";
+import { Image } from "expo-image";
 
-type UsernameStatus =
-  | "idle"
-  | "checking"
-  | "available"
-  | "taken"
-  | "invalid";
+type UsernameStatus = "idle" | "checking" | "available" | "taken" | "invalid";
 
-export function ProfileScreen() {
+export function AccountScreen() {
   const { data: profile, isLoading, isError, refetch } = useProfileQuery();
   const updateProfile = useUpdateProfileMutation();
   const { mutateAsync: checkUsernameAvailable } = useCheckUsernameMutation();
   const { pickAndUpload, busy: avatarBusy } = useAvatarUpload();
-  const signOut = useAuthStore((s) => s.signOut);
-  const deleteAccount = useDeleteAccountMutation();
 
   const [saveError, setSaveError] = useState<string | null>(null);
   const [usernameStatus, setUsernameStatus] = useState<UsernameStatus>("idle");
@@ -74,7 +61,6 @@ export function ProfileScreen() {
     defaultValues: { name: "", username: "", bio: "" },
   });
 
-  // Load server values into the form once the profile arrives.
   useEffect(() => {
     if (profile) {
       reset({
@@ -105,7 +91,6 @@ export function ProfileScreen() {
     const timer = setTimeout(async () => {
       try {
         const { available } = await checkUsernameAvailable(next);
-        // Guard against a stale response after further typing.
         if (latestUsernameRef.current === next) {
           setUsernameStatus(available ? "available" : "taken");
         }
@@ -132,7 +117,7 @@ export function ProfileScreen() {
     }
 
     if (Object.keys(payload).length === 0) {
-      safeBack("/(app)/(tabs)");
+      safeBack("/(app)/profile");
       return;
     }
 
@@ -143,57 +128,15 @@ export function ProfileScreen() {
 
     try {
       await updateProfile.mutateAsync(payload);
-      safeBack("/(app)/(tabs)");
+      safeBack("/(app)/profile");
     } catch (error) {
       setSaveError(getApiErrorMessage(error, "Could not save your profile."));
     }
   });
 
-  const onSignOut = () => {
-    void signOut().then(() => router.replace("/sign-in"));
-  };
-
-  const onDeleteAccount = () => {
-    Alert.alert(
-      "Delete account?",
-      "This permanently deletes your account, memories, photos, and friend connections. This cannot be undone.",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Delete account",
-          style: "destructive",
-          onPress: () => {
-            void deleteAccount
-              .mutateAsync()
-              .then(() => signOut())
-              .then(() => router.replace("/sign-in"))
-              .catch((error) => {
-                Alert.alert(
-                  "Delete account",
-                  getApiErrorMessage(error, "Could not delete your account."),
-                );
-              });
-          },
-        },
-      ],
-    );
-  };
-
   return (
     <SafeAreaView style={styles.safe} edges={["top", "bottom"]}>
-      <View style={styles.topBar}>
-        <Pressable
-          onPress={() => safeBack("/(app)/(tabs)")}
-          hitSlop={12}
-          style={styles.backButton}
-        >
-          <Ionicons name="chevron-back" size={22} color={BrandColors.primary} />
-          <Text style={styles.backLabel}>Profile</Text>
-        </Pressable>
-        <Pressable onPress={onSignOut} hitSlop={12}>
-          <Text style={styles.signOutLink}>Sign out</Text>
-        </Pressable>
-      </View>
+      <ProfileSubHeader title="Account" />
 
       {isLoading ? (
         <View style={styles.center}>
@@ -236,9 +179,12 @@ export function ProfileScreen() {
                 )}
                 {avatarBusy ? (
                   <View style={styles.avatarOverlay}>
-                    <ActivityIndicator color={BrandColors.neutral} />
+                    <ActivityIndicator color={BrandColors.ink} />
                   </View>
                 ) : null}
+                <View style={styles.avatarEditBadge}>
+                  <Text style={styles.avatarEditGlyph}>✏️</Text>
+                </View>
               </Pressable>
               <Pressable onPress={pickAndUpload} disabled={avatarBusy}>
                 <Text style={styles.changePhoto}>Change photo</Text>
@@ -287,7 +233,7 @@ export function ProfileScreen() {
                   <TextInput
                     style={styles.bioInput}
                     placeholder="A short line about your memories"
-                    placeholderTextColor={BrandColors.neutralMuted}
+                    placeholderTextColor={BrandColors.inkMuted}
                     multiline
                     maxLength={300}
                     value={value}
@@ -305,70 +251,11 @@ export function ProfileScreen() {
               <Text style={styles.errorText}>{saveError}</Text>
             ) : null}
 
-            <AuthPrimaryButton
-              label="Save"
+            <GlossyButton
+              label={updateProfile.isPending ? "Saving…" : "Save changes"}
               loading={updateProfile.isPending}
               onPress={onSubmit}
             />
-
-            <Pressable
-              style={styles.linkRow}
-              onPress={() => router.push("/(app)/friends")}
-            >
-              <Text style={styles.linkRowText}>Friends</Text>
-              <Ionicons
-                name="chevron-forward"
-                size={18}
-                color={BrandColors.neutralMuted}
-              />
-            </Pressable>
-
-            <NotificationSettingsSection />
-
-            <Pressable
-              style={styles.linkRow}
-              onPress={() => router.push("/(app)/blocked-accounts")}
-            >
-              <Text style={styles.linkRowText}>Blocked accounts</Text>
-              <Ionicons
-                name="chevron-forward"
-                size={18}
-                color={BrandColors.neutralMuted}
-              />
-            </Pressable>
-
-            <Pressable
-              style={styles.linkRow}
-              onPress={() => router.push("/(app)/privacy-policy")}
-            >
-              <Text style={styles.linkRowText}>Privacy Policy</Text>
-              <Ionicons
-                name="chevron-forward"
-                size={18}
-                color={BrandColors.neutralMuted}
-              />
-            </Pressable>
-
-            <ChangePasswordSection hasPassword={profile.hasPassword} />
-
-            <Pressable
-              style={styles.linkRow}
-              onPress={onDeleteAccount}
-              disabled={deleteAccount.isPending}
-            >
-              <Text style={[styles.linkRowText, styles.deleteAccountText]}>
-                Delete account
-              </Text>
-              <Ionicons
-                name="chevron-forward"
-                size={18}
-                color={BrandColors.neutralMuted}
-              />
-            </Pressable>
-
-            <Pressable onPress={onSignOut} style={styles.signOut}>
-              <Text style={styles.signOutText}>Sign out</Text>
-            </Pressable>
           </ScrollView>
         </KeyboardAvoidingView>
       )}
@@ -392,32 +279,8 @@ function usernameHint(status: UsernameStatus): string | undefined {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: BrandColors.gray900 },
+  safe: { flex: 1, backgroundColor: BrandColors.paper },
   flex: { flex: 1 },
-  topBar: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: BrandColors.stroke2,
-  },
-  backButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-  },
-  backLabel: {
-    fontSize: 17,
-    color: BrandColors.neutral,
-    fontWeight: "700",
-  },
-  signOutLink: {
-    fontSize: 15,
-    color: BrandColors.neutralMuted,
-    fontWeight: "600",
-  },
   center: {
     flex: 1,
     alignItems: "center",
@@ -427,7 +290,7 @@ const styles = StyleSheet.create({
   },
   muted: {
     fontSize: 14,
-    color: BrandColors.neutralMuted,
+    color: BrandColors.inkMuted,
     textAlign: "center",
   },
   retry: {
@@ -436,10 +299,10 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     backgroundColor: BrandColors.elevated,
   },
-  retryText: { color: BrandColors.neutral, fontWeight: "600" },
+  retryText: { color: BrandColors.ink, fontWeight: "600" },
   scroll: {
     paddingHorizontal: 24,
-    paddingTop: 20,
+    paddingTop: 8,
     paddingBottom: 40,
     gap: 16,
   },
@@ -452,24 +315,51 @@ const styles = StyleSheet.create({
     width: 96,
     height: 96,
     borderRadius: 48,
-    backgroundColor: BrandColors.elevated,
-    borderWidth: 1,
-    borderColor: BrandColors.neutralBorder,
+    borderWidth: 4,
+    borderColor: BrandColors.ink,
+    backgroundColor: BrandColors.paper,
     alignItems: "center",
     justifyContent: "center",
-    overflow: "hidden",
+    overflow: "visible",
+    shadowColor: BrandColors.ink,
+    shadowOffset: { width: 3, height: 3 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 4,
   },
-  avatarImage: { width: "100%", height: "100%" },
+  avatarImage: {
+    width: "100%",
+    height: "100%",
+    borderRadius: 44,
+  },
   avatarInitial: {
+    fontFamily: "Fredoka-Bold",
     fontSize: 36,
-    fontWeight: "700",
-    color: BrandColors.neutral,
+    color: BrandColors.ink,
   },
   avatarOverlay: {
     ...StyleSheet.absoluteFillObject,
+    borderRadius: 44,
+    overflow: "hidden",
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: BrandColors.primaryMuted,
+  },
+  avatarEditBadge: {
+    position: "absolute",
+    bottom: -2,
+    right: -2,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: BrandColors.accentYellow,
+    borderWidth: 2.5,
+    borderColor: BrandColors.ink,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  avatarEditGlyph: {
+    fontSize: 12,
   },
   changePhoto: {
     fontSize: 14,
@@ -478,48 +368,25 @@ const styles = StyleSheet.create({
   },
   email: {
     fontSize: 13,
-    color: BrandColors.neutralMuted,
+    color: BrandColors.inkMuted,
   },
   field: { gap: 6 },
   label: {
     fontSize: 14,
     fontWeight: "600",
-    color: BrandColors.neutralMuted,
+    color: BrandColors.inkMuted,
   },
   bioInput: {
     borderWidth: 1,
     borderColor: BrandColors.neutralBorder,
     borderRadius: 12,
-    backgroundColor: BrandColors.secondary,
+    backgroundColor: BrandColors.placeHolder,
     paddingHorizontal: 14,
     paddingVertical: 12,
     fontSize: 16,
-    color: BrandColors.neutral,
+    color: BrandColors.ink,
     minHeight: 88,
     textAlignVertical: "top",
   },
-  errorText: { fontSize: 13, color: BrandColors.primary },
-  linkRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingVertical: 16,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: BrandColors.stroke2,
-    marginTop: 8,
-  },
-  linkRowText: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: BrandColors.neutral,
-  },
-  deleteAccountText: {
-    color: BrandColors.primary,
-  },
-  signOut: {
-    alignItems: "center",
-    paddingVertical: 14,
-    marginTop: 4,
-  },
-  signOutText: { color: BrandColors.neutralMuted, fontSize: 15 },
+  errorText: { fontSize: 13, color: BrandColors.accentPink },
 });
