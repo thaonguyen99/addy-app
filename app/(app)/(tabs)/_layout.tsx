@@ -2,18 +2,23 @@ import { LinearGradient } from "expo-linear-gradient";
 import { Tabs } from "expo-router";
 import React from "react";
 import { StyleSheet } from "react-native";
-import { TourTarget } from "@wrack/react-native-tour-guide";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { HapticTab } from "@/components/haptic-tab";
 import { ChunkyNavIcon } from "@/components/ui/chunky-nav-icon";
 import { BrandColors } from "@/constants/theme";
-import { ONBOARDING_ADD_MEMORY_STEP_ID } from "@/features/onboarding/onboarding-tour";
+import {
+  TAB_BAR_DOCK_PADDING as DOCK_PADDING,
+  TAB_BAR_ICON_SIZE as ICON_SIZE,
+} from "@/constants/tab-bar";
 
 // Deliberately outside the paper palette — the tab bar reads as device
 // chrome (like a physical dock), not another paper surface.
 const DOCK_GRADIENT: [string, string] = ["#E9E9E9", "#CFCFCF"];
 
 export default function TabLayout() {
+  const insets = useSafeAreaInsets();
+
   return (
     <Tabs
       screenOptions={{
@@ -21,6 +26,9 @@ export default function TabLayout() {
         tabBarStyle: {
           borderTopColor: BrandColors.neutralBorder,
           borderTopWidth: 3,
+          height: DOCK_PADDING * 2 + ICON_SIZE + insets.bottom,
+          paddingTop: DOCK_PADDING,
+          paddingBottom: insets.bottom,
         },
         tabBarBackground: () => (
           <LinearGradient
@@ -28,7 +36,7 @@ export default function TabLayout() {
             style={StyleSheet.absoluteFill}
           />
         ),
-        tabBarItemStyle: { paddingTop: 10 },
+        tabBarItemStyle: { paddingVertical: 0 },
         headerShown: false,
         tabBarButton: HapticTab,
       }}
@@ -45,14 +53,6 @@ export default function TabLayout() {
         options={{
           title: "Camera",
           tabBarIcon: ({ focused }) => <ChunkyNavIcon name="camera.fill" active={focused} />,
-          tabBarButton: (props) => (
-            <TourTarget
-              id={ONBOARDING_ADD_MEMORY_STEP_ID}
-              style={{ flex: 1, borderRadius: 16 }}
-            >
-              <HapticTab {...props} />
-            </TourTarget>
-          ),
         }}
       />
       <Tabs.Screen

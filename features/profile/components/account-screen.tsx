@@ -388,5 +388,5 @@ const styles = StyleSheet.create({
     minHeight: 88,
     textAlignVertical: "top",
   },
-  errorText: { fontSize: 13, color: BrandColors.accentPink },
+  errorText: { fontSize: 13, color: BrandColors.danger },
 });

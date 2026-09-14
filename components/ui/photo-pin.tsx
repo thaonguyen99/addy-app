@@ -1,5 +1,12 @@
 import { StyleProp, Text, View, ViewStyle } from "react-native";
-import Svg, { ClipPath, Defs, Ellipse, Image, Path } from "react-native-svg";
+import Svg, {
+  Circle,
+  ClipPath,
+  Defs,
+  Ellipse,
+  Image,
+  Path,
+} from "react-native-svg";
 
 import { BrandColors } from "@/constants/theme";
 
@@ -11,19 +18,26 @@ const PIN_PATH =
 const VIEWBOX_WIDTH = 100;
 const VIEWBOX_HEIGHT = 128;
 
+// The photo sits as an inset circle within the teardrop's bulb, leaving a
+// visible paper margin — it never fills the silhouette edge-to-edge.
+const PHOTO_CIRCLE_CX = 50;
+const PHOTO_CIRCLE_CY = 48;
+const PHOTO_CIRCLE_R = 34;
+
 type PhotoPinProps = {
   uri: string;
   size?: number;
+  /** Category badge — omit for the plain pin (the common case). */
   badgeEmoji?: string;
   badgeColor?: string;
   style?: StyleProp<ViewStyle>;
 };
 
-/** The core map/memory visual motif: a photo clipped into a teardrop pin. */
+/** The core map/memory visual motif: a photo inset into a paper teardrop pin. */
 export function PhotoPin({
   uri,
   size = 100,
-  badgeEmoji = "📍",
+  badgeEmoji,
   badgeColor = BrandColors.accentCyan,
   style,
 }: PhotoPinProps) {
@@ -32,36 +46,47 @@ export function PhotoPin({
 
   return (
     <View style={[{ width: size, height }, style]}>
-      <Svg width={size} height={height} viewBox={`0 0 ${VIEWBOX_WIDTH} ${VIEWBOX_HEIGHT}`}>
+      <Svg
+        width={size}
+        height={height}
+        viewBox={`0 0 ${VIEWBOX_WIDTH} ${VIEWBOX_HEIGHT}`}
+      >
         <Defs>
-          <ClipPath id="pinClip">
-            <Path d={PIN_PATH} />
+          <ClipPath id="photoClip">
+            <Circle
+              cx={PHOTO_CIRCLE_CX}
+              cy={PHOTO_CIRCLE_CY}
+              r={PHOTO_CIRCLE_R}
+            />
           </ClipPath>
         </Defs>
 
         {/* Hard shadow — drawn first so it sits beneath everything else. */}
         <Path d={PIN_PATH} fill={BrandColors.ink} transform="translate(3, 3)" />
 
-        {/* Photo, clipped to the exact teardrop shape (tip included). */}
+        {/* Paper teardrop body. */}
+        <Path d={PIN_PATH} fill={BrandColors.paper} />
+
+        {/* Photo, inset as a circle with a visible paper margin. */}
         <Image
           href={{ uri }}
-          x={0}
-          y={0}
-          width={VIEWBOX_WIDTH}
-          height={VIEWBOX_HEIGHT}
+          x={PHOTO_CIRCLE_CX - PHOTO_CIRCLE_R}
+          y={PHOTO_CIRCLE_CY - PHOTO_CIRCLE_R}
+          width={PHOTO_CIRCLE_R * 2}
+          height={PHOTO_CIRCLE_R * 2}
           preserveAspectRatio="xMidYMid slice"
-          clipPath="url(#pinClip)"
+          clipPath="url(#photoClip)"
         />
 
-        {/* Decorative gloss highlight. */}
+        {/* Decorative gloss highlight on the photo circle. */}
         <Ellipse
-          cx={32}
-          cy={30}
-          rx={14}
-          ry={8}
+          cx={38}
+          cy={32}
+          rx={10}
+          ry={6}
           fill="#FFFFFF"
-          fillOpacity={0.35}
-          transform="rotate(-25 32 30)"
+          fillOpacity={0.55}
+          transform="rotate(-25 38 32)"
         />
 
         {/* Outline stroke on top. */}
@@ -74,23 +99,25 @@ export function PhotoPin({
         />
       </Svg>
 
-      <View
-        style={{
-          position: "absolute",
-          right: -badgeSize * 0.15,
-          bottom: height * 0.28,
-          width: badgeSize,
-          height: badgeSize,
-          borderRadius: badgeSize / 2,
-          borderWidth: 2.5,
-          borderColor: BrandColors.ink,
-          backgroundColor: badgeColor,
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
-        <Text style={{ fontSize: badgeSize * 0.55 }}>{badgeEmoji}</Text>
-      </View>
+      {badgeEmoji ? (
+        <View
+          style={{
+            position: "absolute",
+            right: -badgeSize * 0.15,
+            bottom: height * 0.28,
+            width: badgeSize,
+            height: badgeSize,
+            borderRadius: badgeSize / 2,
+            borderWidth: 2.5,
+            borderColor: BrandColors.ink,
+            backgroundColor: badgeColor,
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <Text style={{ fontSize: badgeSize * 0.55 }}>{badgeEmoji}</Text>
+        </View>
+      ) : null}
     </View>
   );
 }

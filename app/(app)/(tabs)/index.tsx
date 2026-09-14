@@ -1,4 +1,5 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
+import { TourTarget } from "@wrack/react-native-tour-guide";
 import { router } from "expo-router";
 import { useCallback } from "react";
 import {
@@ -12,23 +13,22 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { TourTarget } from "@wrack/react-native-tour-guide";
 
 import { ChatBubbleBanner } from "@/components/ui/chat-bubble-banner";
 import { StatChip } from "@/components/ui/stat-chip";
 import { ThemedText } from "@/components/ui/themed-text";
+import { BrandColors } from "@/constants/theme";
 import { useAuthStore } from "@/features/auth/store/auth-store";
-import { useMemoryFeed } from "@/features/feed/hooks/use-memory-feed";
 import { MemoryFeedCard } from "@/features/feed/components/memory-feed-card";
+import { useMemoryFeed } from "@/features/feed/hooks/use-memory-feed";
 import { useMapFocusStore } from "@/features/map/store/map-focus-store";
 import { ONBOARDING_ADD_FRIEND_TARGET_ID } from "@/features/onboarding/onboarding-tour";
 import { useFriendPinNearby } from "@/features/social/hooks/use-friend-pin-nearby";
 import { useStatsQuery } from "@/lib/query/hooks";
-import { BrandColors } from "@/constants/theme";
 import type { MemoryListItem } from "@/types/api";
 
-const GRID_COLUMNS = 2;
-const GRID_GAP = 12;
+const GRID_COLUMNS = 3;
+const GRID_GAP = 8;
 const GRID_PADDING = 24;
 
 export default function HomeScreen() {
@@ -47,8 +47,7 @@ export default function HomeScreen() {
     useFriendPinNearby();
   const setPendingFocus = useMapFocusStore((s) => s.setPendingFocus);
 
-  const name =
-    user?.name || user?.username || user?.email?.split("@")[0] || "";
+  const name = user?.name || user?.username || user?.email?.split("@")[0] || "";
 
   const onOpenNearbyPin = () => {
     if (!nearbyFriendPin) return;
@@ -71,7 +70,7 @@ export default function HomeScreen() {
   const renderItem = useCallback(
     ({ item }: { item: MemoryListItem }) => (
       <View style={{ width: tileSize }}>
-        <MemoryFeedCard memory={item} onPress={openMemory} />
+        <MemoryFeedCard memory={item} onPress={openMemory} compact />
       </View>
     ),
     [openMemory, tileSize],
@@ -127,9 +126,9 @@ export default function HomeScreen() {
         </View>
       )}
 
-      <ThemedText type="subtitle" style={styles.gridHeading}>
+      {/* <ThemedText type="subtitle" style={styles.gridHeading}>
         Your memories
-      </ThemedText>
+      </ThemedText> */}
     </View>
   );
 

@@ -42,7 +42,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: BrandColors.neutralBorder,
     borderRadius: cameraLayout.cornerRadiusMd,
-    backgroundColor: BrandColors.secondary,
+    backgroundColor: BrandColors.placeHolder,
     paddingHorizontal: 12,
     minHeight: 44,
   },

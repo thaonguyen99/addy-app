@@ -27,7 +27,10 @@ module.exports = ({ config }) => ({
   orientation: "portrait",
   icon: "./assets/images/icon.png",
   scheme: "addyapp",
-  userInterfaceStyle: "automatic",
+  // The app is a light-only design with no dark theme built — "automatic"
+  // let native system UI (gallery picker, alerts, keyboard) go dark whenever
+  // the device is in Dark Mode, clashing with every in-app screen.
+  userInterfaceStyle: "light",
   newArchEnabled: true,
   // Over-the-air updates (EAS Update). On launch the app pulls the latest JS
   // bundle for its channel and applies it on the next start.

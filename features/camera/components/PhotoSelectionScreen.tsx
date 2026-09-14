@@ -1,7 +1,6 @@
 import { MoodScorePicker } from "@/features/camera/components/mood-score-picker";
 import { PhotoSelectionPreviewCarousel } from "@/features/camera/components/PhotoSelectionPreviewCarousel";
 import { PhotoSelectionGalleryButton } from "@/features/camera/components/photo-selection-header";
-import { CameraUi } from "@/features/camera/constants/layout";
 import { usePhotoSelectionScreen } from "@/features/camera/hooks/usePhotoSelectionScreen";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import {
@@ -171,7 +170,7 @@ const emptyStyles = StyleSheet.create({
 const styles = StyleSheet.create({
   safe: {
     flex: 1,
-    backgroundColor: CameraUi.screenBg,
+    backgroundColor: BrandColors.paper,
   },
   topBar: {
     flexDirection: "row",
@@ -181,7 +180,7 @@ const styles = StyleSheet.create({
     paddingTop: 4,
     paddingBottom: 12,
     gap: 8,
-    backgroundColor: CameraUi.screenBg,
+    backgroundColor: BrandColors.paper,
   },
   screenTitle: {
     flex: 1,
@@ -222,7 +221,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: BrandColors.neutralBorder,
     borderRadius: cameraLayout.cornerRadiusMd,
-    backgroundColor: BrandColors.secondary,
+    backgroundColor: BrandColors.placeHolder,
     paddingHorizontal: 14,
     paddingVertical: 12,
     fontSize: 16,
@@ -232,9 +231,9 @@ const styles = StyleSheet.create({
   footer: {
     paddingHorizontal: cameraLayout.screenPaddingHorizontal,
     paddingTop: 12,
-    backgroundColor: CameraUi.screenBg,
+    backgroundColor: BrandColors.paper,
   },
   confirmBtnDisabled: {
-    backgroundColor: BrandColors.neutralBorder,
+    backgroundColor: BrandColors.gray200,
   },
 });

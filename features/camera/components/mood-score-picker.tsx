@@ -1,8 +1,8 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import { StickerCard } from "@/components/ui/sticker-card";
-import { BrandColors } from "@/constants/theme";
 import { StickerRadius } from "@/constants/sticker-style";
+import { BrandColors } from "@/constants/theme";
 import { MOOD_SCORE_OPTIONS } from "@/features/camera/constants/mood-score";
 import { cameraLayout } from "@/features/camera/styles/shared-styles";
 
@@ -25,9 +25,7 @@ export function MoodScorePicker({ value, onChange }: MoodScorePickerProps) {
               accessibilityRole="button"
               accessibilityLabel={`Mood ${option.label}`}
               accessibilityState={{ selected }}
-              onPress={() =>
-                onChange(selected ? null : option.score)
-              }
+              onPress={() => onChange(selected ? null : option.score)}
               style={({ pressed }) => [
                 styles.optionWrap,
                 pressed && styles.optionPressed,
@@ -36,7 +34,6 @@ export function MoodScorePicker({ value, onChange }: MoodScorePickerProps) {
               <StickerCard
                 style={styles.optionCard}
                 radius={StickerRadius.chip}
-                borderStyle={selected ? "solid" : "dashed"}
                 backgroundColor={selected ? undefined : BrandColors.paper}
                 gradientColors={
                   selected
@@ -46,7 +43,7 @@ export function MoodScorePicker({ value, onChange }: MoodScorePickerProps) {
                 shadow={selected}
                 shadowOffset={2}
               >
-                <View style={styles.optionInner}>
+                <View style={styles.emojiWrap}>
                   <Text style={styles.emoji}>{option.emoji}</Text>
                 </View>
               </StickerCard>
@@ -81,7 +78,7 @@ const styles = StyleSheet.create({
   },
   optionWrap: {
     flex: 1,
-    maxWidth: 56,
+    minWidth: 40,
     aspectRatio: 1,
   },
   optionPressed: {
@@ -90,10 +87,14 @@ const styles = StyleSheet.create({
   optionCard: {
     flex: 1,
   },
-  optionInner: {
-    flex: 1,
+  emojiWrap: {
+    width: "100%",
+    textAlign: "center",
+    textAlignVertical: "center",
+    display: "flex",
     alignItems: "center",
     justifyContent: "center",
+    height: "100%",
   },
   emoji: {
     fontSize: 26,

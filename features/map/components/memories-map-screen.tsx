@@ -22,7 +22,6 @@ import type { NativeSyntheticEvent } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import { TourTarget, useTourGuide } from "@wrack/react-native-tour-guide";
-import Ionicons from "@expo/vector-icons/Ionicons";
 
 import { ChatBubbleBanner } from "@/components/ui/chat-bubble-banner";
 import { StickerShadowBox } from "@/components/ui/sticker-shadow";
@@ -40,6 +39,10 @@ import {
   MAP_PHOTO_PIN_WIDTH,
   MapPhotoPin,
 } from "@/features/map/components/map-photo-pin";
+import {
+  AllMemoriesSheet,
+  type AllMemoriesSheetRef,
+} from "@/features/map/components/all-memories-sheet";
 import {
   PlaceMemoriesSheet,
   type PlaceMemoriesSheetRef,
@@ -121,6 +124,7 @@ export function MemoriesMapScreen() {
   const cameraRef = useRef<CameraRef>(null);
   const mapContainerRef = useRef<View>(null);
   const placeMemoriesSheetRef = useRef<PlaceMemoriesSheetRef>(null);
+  const allMemoriesSheetRef = useRef<AllMemoriesSheetRef>(null);
   const pendingFocus = useMapFocusStore((s) => s.pendingFocus);
   const setPendingFocus = useMapFocusStore((s) => s.setPendingFocus);
   const showSuccessToast = useMapFocusStore((s) => s.showSuccessToast);
@@ -238,8 +242,15 @@ export function MemoriesMapScreen() {
   );
 
   const openFeed = useCallback(() => {
-    router.push("/(app)/memories");
+    allMemoriesSheetRef.current?.present();
   }, []);
+
+  const onSelectSheetPin = useCallback(
+    (latitude: number, longitude: number) => {
+      setPendingFocus({ latitude, longitude });
+    },
+    [setPendingFocus],
+  );
 
   const openPin = useCallback(
     (pin: { id: string; placeId: string; memoryCount: number }) => {
@@ -409,11 +420,6 @@ export function MemoriesMapScreen() {
             accessibilityState={{ checked: showFriends }}
             accessibilityLabel="Show friends' memories on the map"
           >
-            <Ionicons
-              name="people"
-              size={18}
-              color={BrandColors.ink}
-            />
             <Text
               style={[
                 styles.friendsFabText,
@@ -427,6 +433,7 @@ export function MemoriesMapScreen() {
       </SafeAreaView>
 
       <PlaceMemoriesSheet ref={placeMemoriesSheetRef} />
+      <AllMemoriesSheet ref={allMemoriesSheetRef} onSelectPin={onSelectSheetPin} />
     </View>
   );
 }
@@ -465,7 +472,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
-    backgroundColor: BrandColors.paper,
+    backgroundColor: BrandColors.ink,
     borderWidth: StickerBorderWidth.standard,
     borderColor: BrandColors.ink,
     paddingHorizontal: 12,
@@ -493,13 +500,16 @@ const styles = StyleSheet.create({
     borderWidth: StickerBorderWidth.standard,
     borderColor: BrandColors.ink,
   },
-  friendsFabOn: { backgroundColor: BrandColors.accentPink },
+  friendsFabOn: {
+    backgroundColor: BrandColors.accentPink,
+    borderColor: BrandColors.ink,
+  },
   friendsFabText: {
     fontSize: 14,
     fontFamily: "Fredoka-SemiBold",
     color: BrandColors.ink,
   },
-  friendsFabTextOn: { color: BrandColors.ink },
+  friendsFabTextOn: { color: BrandColors.paper },
   friendsHintRow: {
     alignSelf: "flex-end",
   },
@@ -516,12 +526,12 @@ const styles = StyleSheet.create({
     overflow: "hidden",
   },
   badgePressed: { opacity: 0.7 },
-  badgeText: { fontSize: 14, fontFamily: "Fredoka-SemiBold", color: BrandColors.ink },
+  badgeText: { fontSize: 14, fontFamily: "Fredoka-SemiBold", color: BrandColors.paper },
   badgeChevron: {
     fontSize: 18,
     lineHeight: 18,
     fontWeight: "700",
-    color: BrandColors.inkMuted,
+    color: BrandColors.paper,
   },
   webFallback: {
     flex: 1,

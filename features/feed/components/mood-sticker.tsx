@@ -7,6 +7,10 @@ import { MOOD_SCORE_OPTIONS } from "@/features/camera/constants/mood-score";
 type MoodStickerProps = {
   score: number | null | undefined;
   size?: number;
+  /** Tilted "hanging off the corner" style for a hero moment; false gives a
+   *  small, level, inset badge for tight grid/list contexts. */
+  tilted?: boolean;
+  backgroundColor?: string;
 };
 
 /**
@@ -15,7 +19,12 @@ type MoodStickerProps = {
  * Shared by the feed card and the memory detail hero so mood reads as the
  * same object in both places.
  */
-export function MoodSticker({ score, size = 32 }: MoodStickerProps) {
+export function MoodSticker({
+  score,
+  size = 32,
+  tilted = true,
+  backgroundColor = BrandColors.accentPink,
+}: MoodStickerProps) {
   const mood =
     score != null ? MOOD_SCORE_OPTIONS.find((o) => o.score === score) : null;
 
@@ -25,7 +34,16 @@ export function MoodSticker({ score, size = 32 }: MoodStickerProps) {
     <StickerShadowBox
       radius={size / 2}
       shadowOffset={2}
-      style={[styles.sticker, { width: size, height: size, borderRadius: size / 2 }]}
+      style={[
+        styles.sticker,
+        {
+          width: size,
+          height: size,
+          borderRadius: size / 2,
+          backgroundColor,
+          transform: tilted ? [{ rotate: "12deg" }] : undefined,
+        },
+      ]}
     >
       <Text style={[styles.emoji, { fontSize: size * 0.5 }]}>{mood.emoji}</Text>
     </StickerShadowBox>
@@ -34,12 +52,10 @@ export function MoodSticker({ score, size = 32 }: MoodStickerProps) {
 
 const styles = StyleSheet.create({
   sticker: {
-    backgroundColor: BrandColors.accentPink,
     borderWidth: 2.5,
     borderColor: BrandColors.ink,
     alignItems: "center",
     justifyContent: "center",
-    transform: [{ rotate: "12deg" }],
   },
   emoji: { textAlign: "center" },
 });

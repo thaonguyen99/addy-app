@@ -3,23 +3,30 @@ import { memo, useMemo } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import { StickerCard } from "@/components/ui/sticker-card";
-import { BrandColors } from "@/constants/theme";
 import { StickerBorderWidth, StickerRadius } from "@/constants/sticker-style";
-import { formatRelativeTime } from "@/features/feed/utils/format-relative-time";
+import { BrandColors } from "@/constants/theme";
 import { MoodSticker } from "@/features/feed/components/mood-sticker";
+import { formatRelativeTime } from "@/features/feed/utils/format-relative-time";
 import { pickCover } from "@/features/feed/utils/pick-cover";
 import type { MemoryListItem } from "@/types/api";
 
 // Fixed so every card in a grid row lines up regardless of caption length.
 const CAPTION_LINE_HEIGHT = 16;
-const CAPTION_HEIGHT = CAPTION_LINE_HEIGHT * 2 + 10 * 2;
+const CAPTION_HEIGHT_COMPACT = CAPTION_LINE_HEIGHT + 10 * 2;
+const CAPTION_HEIGHT_FULL = CAPTION_LINE_HEIGHT * 2 + 10 * 2;
 
 type MemoryFeedCardProps = {
   memory: MemoryListItem;
   onPress: (id: string) => void;
+  /** Single caption line only, no timestamp — for the dense home grid. */
+  compact?: boolean;
 };
 
-function MemoryFeedCardBase({ memory, onPress }: MemoryFeedCardProps) {
+function MemoryFeedCardBase({
+  memory,
+  onPress,
+  compact = false,
+}: MemoryFeedCardProps) {
   const cover = useMemo(() => pickCover(memory.images), [memory.images]);
   const timeAgo = formatRelativeTime(memory.capturedAt);
   const caption = memory.feeling?.trim() || memory.place.name;
@@ -49,19 +56,31 @@ function MemoryFeedCardBase({ memory, onPress }: MemoryFeedCardProps) {
               <Text style={styles.photoFallbackText}>📷</Text>
             </View>
           )}
-          <View style={styles.sticker}>
-            <MoodSticker score={memory.moodScore} />
+          <View style={compact ? styles.stickerInset : styles.sticker}>
+            <MoodSticker
+              score={memory.moodScore}
+              size={compact ? 22 : 32}
+              tilted={!compact}
+              backgroundColor={compact ? BrandColors.accentYellow : undefined}
+            />
           </View>
         </View>
 
-        <View style={styles.caption}>
+        {/* <View
+          style={[
+            styles.caption,
+            { height: compact ? CAPTION_HEIGHT_COMPACT : CAPTION_HEIGHT_FULL },
+          ]}
+        >
           <Text style={styles.note} numberOfLines={1}>
             {caption}
           </Text>
-          <Text style={styles.meta} numberOfLines={1}>
-            {timeAgo || memory.place.name}
-          </Text>
-        </View>
+          {compact ? null : (
+            <Text style={styles.meta} numberOfLines={1}>
+              {timeAgo || memory.place.name}
+            </Text>
+          )}
+        </View> */}
       </StickerCard>
     </Pressable>
   );
@@ -72,9 +91,11 @@ export const MemoryFeedCard = memo(MemoryFeedCardBase);
 const styles = StyleSheet.create({
   frame: {
     width: "100%",
+    overflow: "visible",
   },
   photoWrapper: {
     position: "relative",
+    overflow: "visible",
   },
   photo: {
     width: "100%",
@@ -88,8 +109,12 @@ const styles = StyleSheet.create({
     top: -8,
     right: -8,
   },
+  stickerInset: {
+    position: "absolute",
+    top: 6,
+    right: 6,
+  },
   caption: {
-    height: CAPTION_HEIGHT,
     padding: 10,
     justifyContent: "center",
     gap: 3,

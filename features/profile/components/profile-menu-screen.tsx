@@ -14,12 +14,19 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { StickerCard } from "@/components/ui/sticker-card";
-import { StickerRadius, accentCyanDeep, accentPinkDeep } from "@/constants/sticker-style";
+import {
+  StickerRadius,
+  accentCyanDeep,
+  accentPinkDeep,
+  darkenHex,
+} from "@/constants/sticker-style";
 import { BrandColors } from "@/constants/theme";
 import { useAuthStore } from "@/features/auth/store/auth-store";
 import { getApiErrorMessage } from "@/lib/api/errors";
 import { useDeleteAccountMutation, useProfileQuery } from "@/lib/query/hooks";
 import { safeBack } from "@/lib/navigation/safe-router";
+
+const accentYellowDeep = darkenHex(BrandColors.accentYellow, 0.15);
 
 type MenuItem = {
   key: string;
@@ -28,6 +35,8 @@ type MenuItem = {
   sublabel: string;
   gradient: [string, string];
   onPress: () => void;
+  disabled?: boolean;
+  destructive?: boolean;
 };
 
 export function ProfileMenuScreen() {
@@ -95,6 +104,40 @@ export function ProfileMenuScreen() {
       gradient: [BrandColors.accentPink, accentPinkDeep],
       onPress: () => router.push("/(app)/profile/notifications"),
     },
+    {
+      key: "friends",
+      icon: "people",
+      label: "Friends",
+      sublabel: "your connections",
+      gradient: [BrandColors.accentYellow, accentYellowDeep],
+      onPress: () => router.push("/(app)/friends"),
+    },
+    {
+      key: "blocked",
+      icon: "block",
+      label: "Blocked accounts",
+      sublabel: "manage blocked users",
+      gradient: [BrandColors.primaryLight, BrandColors.primary],
+      onPress: () => router.push("/(app)/blocked-accounts"),
+    },
+    {
+      key: "privacy",
+      icon: "privacy-tip",
+      label: "Privacy Policy",
+      sublabel: "how we use your data",
+      gradient: [BrandColors.accentCyan, accentCyanDeep],
+      onPress: () => router.push("/(app)/privacy-policy"),
+    },
+    {
+      key: "delete",
+      icon: "delete-forever",
+      label: "Delete account",
+      sublabel: "permanently erase everything",
+      gradient: [BrandColors.dangerLight, BrandColors.danger],
+      onPress: onDeleteAccount,
+      disabled: deleteAccount.isPending,
+      destructive: true,
+    },
   ];
 
   return (
@@ -153,8 +196,10 @@ export function ProfileMenuScreen() {
               <Pressable
                 key={item.key}
                 onPress={item.onPress}
+                disabled={item.disabled}
                 accessibilityRole="button"
                 accessibilityLabel={item.label}
+                style={item.disabled && styles.menuRowDisabled}
               >
                 <StickerCard radius={StickerRadius.button} shadowOffset={2}>
                   <View style={styles.menuRow}>
@@ -174,7 +219,14 @@ export function ProfileMenuScreen() {
                       </View>
                     </View>
                     <View style={styles.menuTextWrap}>
-                      <Text style={styles.menuLabel}>{item.label}</Text>
+                      <Text
+                        style={[
+                          styles.menuLabel,
+                          item.destructive && styles.menuLabelDestructive,
+                        ]}
+                      >
+                        {item.label}
+                      </Text>
                       <Text style={styles.menuSublabel}>{item.sublabel}</Text>
                     </View>
                     <Text style={styles.chevron}>›</Text>
@@ -182,59 +234,6 @@ export function ProfileMenuScreen() {
                 </StickerCard>
               </Pressable>
             ))}
-          </View>
-
-          <View style={styles.flatLinks}>
-            <Pressable
-              style={styles.linkRow}
-              onPress={() => router.push("/(app)/friends")}
-            >
-              <Text style={styles.linkRowText}>Friends</Text>
-              <Ionicons
-                name="chevron-forward"
-                size={18}
-                color={BrandColors.inkMuted}
-              />
-            </Pressable>
-
-            <Pressable
-              style={styles.linkRow}
-              onPress={() => router.push("/(app)/blocked-accounts")}
-            >
-              <Text style={styles.linkRowText}>Blocked accounts</Text>
-              <Ionicons
-                name="chevron-forward"
-                size={18}
-                color={BrandColors.inkMuted}
-              />
-            </Pressable>
-
-            <Pressable
-              style={styles.linkRow}
-              onPress={() => router.push("/(app)/privacy-policy")}
-            >
-              <Text style={styles.linkRowText}>Privacy Policy</Text>
-              <Ionicons
-                name="chevron-forward"
-                size={18}
-                color={BrandColors.inkMuted}
-              />
-            </Pressable>
-
-            <Pressable
-              style={styles.linkRow}
-              onPress={onDeleteAccount}
-              disabled={deleteAccount.isPending}
-            >
-              <Text style={[styles.linkRowText, styles.deleteAccountText]}>
-                Delete account
-              </Text>
-              <Ionicons
-                name="chevron-forward"
-                size={18}
-                color={BrandColors.inkMuted}
-              />
-            </Pressable>
           </View>
 
           <Pressable onPress={onSignOut} style={styles.signOut}>
@@ -252,8 +251,8 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: 12,
-    paddingVertical: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
   },
   backButton: {
     flexDirection: "row",
@@ -362,10 +361,16 @@ const styles = StyleSheet.create({
     flex: 1,
     gap: 1,
   },
+  menuRowDisabled: {
+    opacity: 0.5,
+  },
   menuLabel: {
     fontFamily: "Fredoka-SemiBold",
     fontSize: 15,
     color: BrandColors.ink,
+  },
+  menuLabelDestructive: {
+    color: BrandColors.danger,
   },
   menuSublabel: {
     fontFamily: "VT323-Regular",
@@ -376,25 +381,6 @@ const styles = StyleSheet.create({
     fontFamily: "VT323-Regular",
     fontSize: 22,
     color: BrandColors.gray300,
-  },
-  flatLinks: {
-    marginTop: 4,
-  },
-  linkRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingVertical: 16,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: BrandColors.stroke2,
-  },
-  linkRowText: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: BrandColors.ink,
-  },
-  deleteAccountText: {
-    color: BrandColors.accentPink,
   },
   signOut: {
     alignItems: "center",

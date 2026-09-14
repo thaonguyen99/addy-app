@@ -30,3 +30,27 @@ export function formatRelativeTime(
     ...(sameYear ? {} : { year: "numeric" }),
   });
 }
+
+/**
+ * "3h ago" / "5d ago" within the last 7 days, else an absolute "07 Sep 2026" —
+ * for contexts (like the memory-reveal chat bubble) that want a real date
+ * rather than "2w"/"3mo" once something drifts past a week old.
+ */
+export function formatCapturedAtLabel(
+  iso: string,
+  now: number = Date.now(),
+): string {
+  const then = new Date(iso).getTime();
+  if (Number.isNaN(then)) return "";
+
+  const diff = Math.max(0, now - then);
+
+  if (diff < WEEK) {
+    return `${formatRelativeTime(iso, now)} ago`;
+  }
+
+  const date = new Date(then);
+  const day = String(date.getDate()).padStart(2, "0");
+  const month = date.toLocaleDateString("en-US", { month: "short" });
+  return `${day} ${month}, ${date.getFullYear()}`;
+}

@@ -86,7 +86,7 @@ export function CreatePinScreen() {
           onPress={() => safeBack("/place-selection")}
           style={styles.changePlaceBtn}
         >
-          <Text style={styles.changePlaceText}>Change place</Text>
+          <Text style={styles.changePlaceText}>change place</Text>
         </Pressable>
 
         {(emoji || feeling.trim()) ? (
@@ -117,12 +117,12 @@ export function CreatePinScreen() {
         </StickerCard>
 
         <GlossyButton
-          label={submitting ? "Saving…" : "Save memory"}
+          label={submitting ? "Saving…" : "💾 Save memory"}
           loading={submitting}
           onPress={onSubmit}
         />
         <Pressable onPress={() => safeBack("/place-selection")}>
-          <Text style={styles.cancel}>Cancel</Text>
+          <Text style={styles.cancel}>cancel</Text>
         </Pressable>
       </ScrollView>
     </SafeAreaView>
@@ -132,7 +132,7 @@ export function CreatePinScreen() {
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: BrandColors.paper },
   scroll: { padding: 24, gap: 14, paddingBottom: 40 },
-  title: { fontSize: 28, fontWeight: "700", color: BrandColors.neutral },
+  title: { fontSize: 26, fontFamily: "Fredoka-Bold", color: BrandColors.ink },
   subtitle: { fontSize: 15, color: BrandColors.neutralMuted, lineHeight: 22 },
   thumbWrap: { marginRight: 10, position: "relative" },
   thumb: { width: 88, height: 88, borderRadius: 12 },
@@ -179,7 +179,7 @@ const styles = StyleSheet.create({
   changePlaceText: {
     fontSize: 14,
     fontWeight: "600",
-    color: BrandColors.primary,
+    color: BrandColors.link,
   },
   metaSectionShadow: {
     alignSelf: "stretch",

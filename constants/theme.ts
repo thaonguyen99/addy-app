@@ -78,6 +78,12 @@ export const BrandColors = {
   accentPink: "#FF5CAE", // "Sticker Pink"
   /** Badge/sparkle accent — star stickers, highlight badges. */
   accentYellow: "#FFDD4A", // "Star Yellow"
+
+  /** Danger/destructive state — delete actions, errors, decline buttons.
+   *  Distinct from `accentPink` (a brand accent, not a semantic warning). */
+  danger: "#FF5C5C",
+  /** Gradient partner / light fill for `danger`. */
+  dangerLight: "#FFC2C2",
 };
 
 export type BrandColorName = keyof typeof BrandColors;

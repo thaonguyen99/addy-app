@@ -63,9 +63,9 @@ export function FriendsScreen() {
               />
             </Pressable>
             <Pressable
-              onPress={() => router.push("/(app)/friends/invite")}
+              onPress={() => router.push("/(app)/friends/add")}
               hitSlop={10}
-              accessibilityLabel="My invite code"
+              accessibilityLabel="Add friends"
             >
               <Ionicons
                 name="qr-code-outline"
@@ -328,7 +328,7 @@ const styles = StyleSheet.create({
     borderRadius: 15,
     borderWidth: 2,
     borderColor: BrandColors.ink,
-    backgroundColor: "#FFB3B3",
+    backgroundColor: BrandColors.dangerLight,
     alignItems: "center",
     justifyContent: "center",
   },

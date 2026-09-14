@@ -114,16 +114,16 @@ export function PlaceSelectionScreen() {
 const styles = StyleSheet.create({
   safe: {
     flex: 1,
-    backgroundColor: BrandColors.gray900,
+    backgroundColor: BrandColors.paper,
   },
   header: {
     paddingHorizontal: cameraLayout.screenPaddingHorizontal,
     paddingTop: 4,
     paddingBottom: 12,
     gap: 12,
-    backgroundColor: BrandColors.gray900,
+    backgroundColor: BrandColors.paper,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: BrandColors.neutralBorder,
+    borderBottomColor: BrandColors.stroke2,
   },
   headerTopRow: {
     flexDirection: "row",
@@ -155,17 +155,17 @@ const styles = StyleSheet.create({
   footer: {
     paddingHorizontal: cameraLayout.screenPaddingHorizontal,
     paddingTop: 12,
-    backgroundColor: BrandColors.gray900,
+    backgroundColor: BrandColors.paper,
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: BrandColors.neutralBorder,
+    borderTopColor: BrandColors.stroke2,
   },
   confirmBtn: {
     backgroundColor: BrandColors.primary,
   },
   confirmBtnText: {
-    color: BrandColors.neutral,
+    color: BrandColors.ink,
   },
   confirmBtnDisabled: {
-    backgroundColor: BrandColors.neutralBorder,
+    backgroundColor: BrandColors.gray200,
   },
 });

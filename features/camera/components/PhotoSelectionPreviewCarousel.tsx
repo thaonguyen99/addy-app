@@ -193,10 +193,10 @@ const styles = StyleSheet.create({
     alignSelf: "center",
     borderRadius: 16,
     overflow: "hidden",
-    backgroundColor: BrandColors.secondary,
+    backgroundColor: BrandColors.gray200,
   },
   slide: {
-    backgroundColor: BrandColors.secondary,
+    backgroundColor: BrandColors.gray200,
     justifyContent: "center",
     overflow: "hidden",
   },
@@ -215,7 +215,9 @@ const styles = StyleSheet.create({
     backgroundColor: BrandColors.primary,
   },
   badgeUpload: {
-    backgroundColor: BrandColors.secondary,
+    backgroundColor: BrandColors.paper,
+    borderWidth: 1,
+    borderColor: BrandColors.neutralBorder,
   },
   selectionControl: {
     position: "absolute",
@@ -258,6 +260,6 @@ const styles = StyleSheet.create({
   dotInactive: {
     width: 6,
     height: 6,
-    backgroundColor: "rgba(255,255,255,0.35)",
+    backgroundColor: BrandColors.gray300,
   },
 });

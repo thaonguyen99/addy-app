@@ -79,6 +79,6 @@ const styles = StyleSheet.create({
     color: BrandColors.neutral,
   },
   eyeButton: { paddingHorizontal: 12 },
-  inputError: { borderColor: BrandColors.accentPink },
-  error: { fontSize: 13, color: BrandColors.accentPink },
+  inputError: { borderColor: BrandColors.danger },
+  error: { fontSize: 13, color: BrandColors.danger },
 });

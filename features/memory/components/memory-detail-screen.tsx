@@ -1,5 +1,5 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
-import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import { TourTarget } from "@wrack/react-native-tour-guide";
 import * as Haptics from "expo-haptics";
 import { Image } from "expo-image";
 import { useRef, useState } from "react";
@@ -16,15 +16,16 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { TourTarget } from "@wrack/react-native-tour-guide";
 
 import { StickerCard } from "@/components/ui/sticker-card";
-import { StickerRadius } from "@/constants/sticker-style";
+import { StickerShadowBox } from "@/components/ui/sticker-shadow";
+import { StickerBorderWidth, StickerRadius } from "@/constants/sticker-style";
 import { BrandColors } from "@/constants/theme";
 import { MoodSticker } from "@/features/feed/components/mood-sticker";
+import { formatCapturedAtLabel } from "@/features/feed/utils/format-relative-time";
 import { ONBOARDING_MEMORY_DETAIL_TARGET_ID } from "@/features/onboarding/onboarding-tour";
-import { ReactorsSheet } from "@/features/reactions/components/reactors-sheet";
 import type { ReactorsSheetRef } from "@/features/reactions/components/reactors-sheet";
+import { ReactorsSheet } from "@/features/reactions/components/reactors-sheet";
 import { safeBack } from "@/lib/navigation/safe-router";
 import {
   useMemoryQuery,
@@ -36,8 +37,9 @@ import type { MemoryImage } from "@/types/api";
 
 const SCREEN_WIDTH = Dimensions.get("window").width;
 const HERO_PADDING = 20;
-const HERO_WIDTH = SCREEN_WIDTH - HERO_PADDING * 2;
-const HERO_HEIGHT = 340;
+const STRIP_INSET = 10;
+const HERO_WIDTH = SCREEN_WIDTH - HERO_PADDING * 2 - STRIP_INSET * 2;
+const HERO_HEIGHT = 300;
 
 type MemoryDetailScreenProps = {
   id: string;
@@ -144,7 +146,26 @@ export function MemoryDetailScreen({ id }: MemoryDetailScreenProps) {
     );
   };
 
-  const liked = data ? (data.isOwner ? data.reactionCount > 0 : data.hasReacted) : false;
+  const liked = data
+    ? data.isOwner
+      ? data.reactionCount > 0
+      : data.hasReacted
+    : false;
+  const bubbleLabel = data
+    ? `${data.isOwner ? "you" : displayName} · ${formatCapturedAtLabel(data.capturedAt)}`
+    : "";
+
+  const onHeartPress = () => {
+    if (!data) return;
+    if (!data.isOwner) {
+      void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      toggleReaction.mutate();
+      return;
+    }
+    if (data.reactionCount > 0) {
+      reactorsSheet.current?.present();
+    }
+  };
 
   return (
     <SafeAreaView style={styles.safe} edges={["top", "bottom"]}>
@@ -194,41 +215,94 @@ export function MemoryDetailScreen({ id }: MemoryDetailScreenProps) {
             </View>
           </View>
 
-          {/* Photo strip — sticker-carded, mood badge tilted on the corner,
-              matching the "memory reveal" moodboard reference. */}
+          {/* Chat-bubble reveal — matches the "memory reveal" moodboard
+              reference: an incoming-message bubble, then a single photo
+              strip card (photo inset, caption + place tag inside it,
+              mood sticker hanging off its top-right corner). */}
           <View style={styles.heroSection}>
-            <TourTarget id={ONBOARDING_MEMORY_DETAIL_TARGET_ID}>
-              <StickerCard radius={StickerRadius.card} style={styles.heroCard}>
-                <ImageCarousel images={data.images} />
-              </StickerCard>
-            </TourTarget>
-            <View style={styles.heroSticker}>
-              <MoodSticker score={data.moodScore} size={42} />
+            <View style={styles.chatBubble}>
+              <Text style={styles.chatBubbleText}>{bubbleLabel} ~~</Text>
+            </View>
+
+            <View style={styles.stripWrap}>
+              <TourTarget id={ONBOARDING_MEMORY_DETAIL_TARGET_ID}>
+                {/* Explicit size at every layer — a horizontal ScrollView
+                    nested in a hug-content StickerCard mismeasures its
+                    height, so this bypasses StickerCard's own composition
+                    and fixes the box size up front instead of hugging it. */}
+                <StickerShadowBox
+                  radius={StickerRadius.card}
+                  style={styles.stripShadow}
+                >
+                  <View style={styles.stripBorder}>
+                    <View style={styles.photoInset}>
+                      <ImageCarousel images={data.images} />
+                    </View>
+
+                    {data.feeling ? (
+                      <Text style={styles.capLine}>{data.feeling}</Text>
+                    ) : null}
+
+                    <View style={styles.tagRow}>
+                      <StickerCard
+                        radius={StickerRadius.chip}
+                        backgroundColor={BrandColors.accentCyan}
+                        shadowOffset={2}
+                        style={styles.tagSticker}
+                      >
+                        <Text style={styles.tagText} numberOfLines={1}>
+                          📍 {data.place.name}
+                        </Text>
+                      </StickerCard>
+                    </View>
+                  </View>
+                </StickerShadowBox>
+              </TourTarget>
+              <View style={styles.heroSticker}>
+                <MoodSticker score={data.moodScore} size={42} />
+              </View>
+              <Pressable
+                onPress={onHeartPress}
+                hitSlop={8}
+                style={styles.heartStickerWrap}
+                accessibilityRole="button"
+                accessibilityLabel={
+                  !data.isOwner
+                    ? data.hasReacted
+                      ? "Remove reaction"
+                      : "React to this memory"
+                    : data.reactionCount > 0
+                      ? "See who reacted"
+                      : undefined
+                }
+              >
+                <StickerCard radius={StickerRadius.pill} shadowOffset={2}>
+                  <View style={styles.heartStickerInner}>
+                    <Ionicons
+                      name={liked ? "heart" : "heart-outline"}
+                      size={16}
+                      color={BrandColors.accentPink}
+                    />
+                    <Text style={styles.heartStickerCount}>
+                      {data.reactionCount}
+                    </Text>
+                  </View>
+                </StickerCard>
+              </Pressable>
             </View>
           </View>
 
-          <View style={styles.content}>
-            {data.feeling ? (
-              <Text style={styles.capLine}>{data.feeling}</Text>
-            ) : null}
-
-            <View style={styles.tagRow}>
-              <StickerCard
-                radius={StickerRadius.chip}
-                backgroundColor={BrandColors.accentCyan}
-                shadowOffset={2}
-                style={styles.tagSticker}
-              >
-                <Text style={styles.tagText} numberOfLines={1}>
-                  📍 {data.place.name}
-                </Text>
-              </StickerCard>
-            </View>
-
+          {/* <View style={styles.content}>
             <StickerCard borderStyle="dashed" shadowOffset={2}>
               <View style={styles.placeCard}>
-                <MaterialIcons name="place" size={18} color={BrandColors.primary} />
-                <Text style={styles.address}>{data.place.formattedAddress}</Text>
+                <MaterialIcons
+                  name="place"
+                  size={18}
+                  color={BrandColors.primary}
+                />
+                <Text style={styles.address}>
+                  {data.place.formattedAddress}
+                </Text>
               </View>
               <View style={styles.placeCardDivider} />
               <View style={styles.placeCard}>
@@ -240,50 +314,7 @@ export function MemoryDetailScreen({ id }: MemoryDetailScreenProps) {
                 <Text style={styles.metaText}>{formattedDate}</Text>
               </View>
             </StickerCard>
-
-            <View style={styles.reactionRow}>
-              {!data.isOwner ? (
-                <Pressable
-                  onPress={() => {
-                    void Haptics.impactAsync(
-                      Haptics.ImpactFeedbackStyle.Light,
-                    );
-                    toggleReaction.mutate();
-                  }}
-                  hitSlop={10}
-                  style={styles.reactionButton}
-                  accessibilityRole="button"
-                  accessibilityLabel={
-                    data.hasReacted ? "Remove reaction" : "React to this memory"
-                  }
-                >
-                  <Ionicons
-                    name={liked ? "heart" : "heart-outline"}
-                    size={22}
-                    color={liked ? BrandColors.accentPink : BrandColors.inkMuted}
-                  />
-                </Pressable>
-              ) : (
-                <View style={styles.reactionButton}>
-                  <Ionicons
-                    name={liked ? "heart" : "heart-outline"}
-                    size={22}
-                    color={liked ? BrandColors.accentPink : BrandColors.inkMuted}
-                  />
-                </View>
-              )}
-              {data.reactionCount > 0 ? (
-                <Pressable
-                  onPress={() => reactorsSheet.current?.present()}
-                  hitSlop={8}
-                >
-                  <Text style={styles.reactionCount}>
-                    {data.reactionCount}
-                  </Text>
-                </Pressable>
-              ) : null}
-            </View>
-          </View>
+          </View> */}
         </ScrollView>
       )}
       <ReactorsSheet ref={reactorsSheet} memoryId={id} />
@@ -332,11 +363,48 @@ const styles = StyleSheet.create({
   },
 
   heroSection: {
-    position: "relative",
     paddingHorizontal: HERO_PADDING,
+    gap: 10,
   },
-  heroCard: {
+  chatBubble: {
+    alignSelf: "flex-end",
+    maxWidth: "80%",
+    marginRight: 8,
+    backgroundColor: BrandColors.primaryLight,
+    borderWidth: StickerBorderWidth.thin,
+    borderColor: BrandColors.ink,
+    borderRadius: 16,
+    borderBottomRightRadius: 4,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+  },
+  chatBubbleText: {
+    fontFamily: "Fredoka-SemiBold",
+    fontSize: 13,
+    color: BrandColors.ink,
+  },
+  stripWrap: {
+    position: "relative",
+  },
+  stripShadow: {
     alignSelf: "center",
+  },
+  stripBorder: {
+    width: HERO_WIDTH + STRIP_INSET * 2,
+    borderWidth: StickerBorderWidth.standard,
+    borderColor: BrandColors.ink,
+    borderRadius: StickerRadius.card,
+    overflow: "hidden",
+    backgroundColor: BrandColors.paper,
+    padding: STRIP_INSET,
+    gap: 10,
+  },
+  photoInset: {
+    width: HERO_WIDTH,
+    height: HERO_HEIGHT,
+    borderRadius: 10,
+    overflow: "hidden",
+    backgroundColor: BrandColors.gray200,
   },
   heroScroll: {
     height: HERO_HEIGHT,
@@ -357,8 +425,25 @@ const styles = StyleSheet.create({
   heroPlaceholderText: { fontSize: 48 },
   heroSticker: {
     position: "absolute",
-    top: -12,
-    right: HERO_PADDING + 8,
+    top: -14,
+    right: -10,
+  },
+  heartStickerWrap: {
+    position: "absolute",
+    top: -14,
+    left: -10,
+  },
+  heartStickerInner: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+  heartStickerCount: {
+    fontFamily: "Fredoka-SemiBold",
+    fontSize: 13,
+    color: BrandColors.ink,
   },
 
   dotsRow: {
@@ -392,14 +477,14 @@ const styles = StyleSheet.create({
     fontFamily: "VT323-Regular",
     fontSize: 20,
     color: BrandColors.ink,
-    textAlign: "center",
+    // textAlign: "center",
   },
 
   tagRow: {
-    alignItems: "center",
+    alignItems: "flex-start",
   },
   tagSticker: {
-    transform: [{ rotate: "-2deg" }],
+    transform: [{ rotate: "-1.5deg" }],
   },
   tagText: {
     fontFamily: "VT323-Regular",
@@ -429,22 +514,5 @@ const styles = StyleSheet.create({
   metaText: {
     fontSize: 13,
     color: BrandColors.inkMuted,
-  },
-
-  reactionRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-  },
-  reactionButton: {
-    width: 32,
-    height: 32,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  reactionCount: {
-    fontSize: 15,
-    color: BrandColors.ink,
-    fontWeight: "700",
   },
 });

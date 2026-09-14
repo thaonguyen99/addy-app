@@ -22,11 +22,8 @@ const PIN_SIZE = 72;
 export function MapPhotoPin({ imageUrl, count, isFriend }: MapPhotoPinProps) {
   return (
     <View style={styles.wrapper}>
-      <PhotoPin
-        uri={imageUrl}
-        size={PIN_SIZE}
-        badgeColor={isFriend ? BrandColors.accentPink : BrandColors.accentCyan}
-      />
+      <PhotoPin uri={imageUrl} size={PIN_SIZE} />
+      {isFriend ? <View style={styles.friendDot} /> : null}
       {count != null && count > 1 ? (
         <View style={styles.countBadge}>
           <Text style={styles.countBadgeText}>+{count}</Text>
@@ -43,8 +40,8 @@ const styles = StyleSheet.create({
   wrapper: { alignItems: "center" },
   countBadge: {
     position: "absolute",
-    top: -6,
-    right: -6,
+    top: -4,
+    right: -4,
     minWidth: 24,
     height: 24,
     borderRadius: 12,
@@ -60,5 +57,17 @@ const styles = StyleSheet.create({
     color: BrandColors.ink,
     fontSize: 11,
     fontFamily: "VT323-Regular",
+  },
+  friendDot: {
+    position: "absolute",
+    left: -2,
+    bottom: 28,
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: BrandColors.accentPink,
+    borderWidth: 2,
+    borderColor: BrandColors.ink,
+    zIndex: 3,
   },
 });
