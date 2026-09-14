@@ -5,12 +5,19 @@ import {
   BeVietnamPro_700Bold,
   useFonts,
 } from "@expo-google-fonts/be-vietnam-pro";
-import { Fredoka_600SemiBold, Fredoka_700Bold } from "@expo-google-fonts/fredoka";
+import {
+  Fredoka_600SemiBold,
+  Fredoka_700Bold,
+} from "@expo-google-fonts/fredoka";
 import { PatrickHand_400Regular } from "@expo-google-fonts/patrick-hand";
 import { VT323_400Regular } from "@expo-google-fonts/vt323";
 import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 import { DefaultTheme, ThemeProvider } from "@react-navigation/native";
 import { QueryClientProvider } from "@tanstack/react-query";
+import {
+  TourGuideOverlay,
+  TourGuideProvider,
+} from "@wrack/react-native-tour-guide";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
@@ -18,10 +25,6 @@ import { useEffect } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import "react-native-reanimated";
-import {
-  TourGuideOverlay,
-  TourGuideProvider,
-} from "@wrack/react-native-tour-guide";
 
 import { BrandColors } from "@/constants/theme";
 import { useAuthStore } from "@/features/auth/store/auth-store";

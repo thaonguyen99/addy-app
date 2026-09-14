@@ -2,10 +2,10 @@ import { View } from "react-native";
 
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { StickerCard } from "@/components/ui/sticker-card";
-import { BrandColors } from "@/constants/theme";
 import { accentCyanDeep, accentPinkDeep } from "@/constants/sticker-style";
+import { BrandColors } from "@/constants/theme";
 
-type ChunkyNavIconName = "house.fill" | "camera.fill" | "paperplane.fill";
+type ChunkyNavIconName = "house.fill" | "camera.fill" | "map.fill";
 
 type ChunkyNavIconProps = {
   name: ChunkyNavIconName;
@@ -16,11 +16,15 @@ type ChunkyNavIconProps = {
 const NAV_ICON_GRADIENTS: Record<ChunkyNavIconName, [string, string]> = {
   "house.fill": [BrandColors.primaryLight, BrandColors.primary],
   "camera.fill": [BrandColors.accentCyan, accentCyanDeep],
-  "paperplane.fill": [BrandColors.accentPink, accentPinkDeep],
+  "map.fill": [BrandColors.accentPink, accentPinkDeep],
 };
 
 /** Chunky glossy rounded-square nav bar button — one per bottom tab. */
-export function ChunkyNavIcon({ name, active = false, size = 52 }: ChunkyNavIconProps) {
+export function ChunkyNavIcon({
+  name,
+  active = false,
+  size = 52,
+}: ChunkyNavIconProps) {
   return (
     <View
       style={{

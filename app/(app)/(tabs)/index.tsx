@@ -113,9 +113,7 @@ export default function HomeScreen() {
           </Pressable>
         </View>
       </View>
-      <ThemedText style={styles.sub}>
-        Capture place-true memories and find them on your map.
-      </ThemedText>
+      {user?.bio && <ThemedText style={styles.sub}>{user.bio}</ThemedText>}
 
       {statsLoading ? (
         <ActivityIndicator color={BrandColors.primary} />
@@ -197,7 +195,12 @@ const styles = StyleSheet.create({
   title: { color: BrandColors.ink, flex: 1, fontFamily: "Fredoka-Bold" },
   headerActions: { flexDirection: "row", alignItems: "center", gap: 8 },
   settingsButton: { padding: 4 },
-  sub: { color: BrandColors.inkMuted, fontSize: 16, lineHeight: 24 },
+  sub: {
+    color: BrandColors.inkMuted,
+    fontSize: 16,
+    lineHeight: 24,
+    fontFamily: "VT323-Regular",
+  },
   statsRow: { flexDirection: "row", gap: 12 },
   gridHeading: {
     color: BrandColors.ink,

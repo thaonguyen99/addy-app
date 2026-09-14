@@ -6,11 +6,11 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { HapticTab } from "@/components/haptic-tab";
 import { ChunkyNavIcon } from "@/components/ui/chunky-nav-icon";
-import { BrandColors } from "@/constants/theme";
 import {
   TAB_BAR_DOCK_PADDING as DOCK_PADDING,
   TAB_BAR_ICON_SIZE as ICON_SIZE,
 } from "@/constants/tab-bar";
+import { BrandColors } from "@/constants/theme";
 
 // Deliberately outside the paper palette — the tab bar reads as device
 // chrome (like a physical dock), not another paper surface.
@@ -45,21 +45,27 @@ export default function TabLayout() {
         name="index"
         options={{
           title: "Home",
-          tabBarIcon: ({ focused }) => <ChunkyNavIcon name="house.fill" active={focused} />,
+          tabBarIcon: ({ focused }) => (
+            <ChunkyNavIcon name="house.fill" active={focused} />
+          ),
         }}
       />
       <Tabs.Screen
         name="camera"
         options={{
           title: "Camera",
-          tabBarIcon: ({ focused }) => <ChunkyNavIcon name="camera.fill" active={focused} />,
+          tabBarIcon: ({ focused }) => (
+            <ChunkyNavIcon name="camera.fill" active={focused} />
+          ),
         }}
       />
       <Tabs.Screen
         name="explore"
         options={{
           title: "Explore",
-          tabBarIcon: ({ focused }) => <ChunkyNavIcon name="paperplane.fill" active={focused} />,
+          tabBarIcon: ({ focused }) => (
+            <ChunkyNavIcon name="map.fill" active={focused} />
+          ),
         }}
       />
     </Tabs>
