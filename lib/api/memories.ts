@@ -1,4 +1,10 @@
-import { apiClient, apiGet, apiGetPaginated, apiPatch } from "@/lib/api/client";
+import {
+  apiClient,
+  apiDelete,
+  apiGet,
+  apiGetPaginated,
+  apiPatch,
+} from "@/lib/api/client";
 import { parseApiResponse } from "@/lib/api/errors";
 import type {
   CreateMemoryInput,
@@ -94,6 +100,10 @@ export async function getPlaceMemories(placeId: string) {
 
 export async function updateMemory(id: string, input: UpdateMemoryInput) {
   return apiPatch<MemoryDetail>(`/memories/${id}`, input);
+}
+
+export async function deleteMemory(id: string) {
+  return apiDelete<{ deleted: boolean }>(`/memories/${id}`);
 }
 
 export async function toggleReaction(memoryId: string) {

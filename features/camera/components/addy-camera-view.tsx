@@ -1,3 +1,4 @@
+import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import type { CameraType, CameraView, FlashMode } from "expo-camera";
 import { CameraView as ExpoCameraView } from "expo-camera";
 import type { RefObject } from "react";
@@ -16,6 +17,7 @@ import {
 } from "./camera-shutter-flash";
 
 import { CameraUi } from "@/features/camera/constants/layout";
+import { useCameraShutterSound } from "@/features/camera/hooks/useCameraShutterSound";
 import type { AddyMemoryImage } from "@/types/addy-memory";
 
 import { CameraActionBar } from "./CameraActionBar";
@@ -56,6 +58,11 @@ function AddyCameraViewInner({
   onZoomSet,
 }: AddyCameraViewProps) {
   const shutterFlashRef = useRef<CameraShutterFlashRef>(null);
+  const playShutterSound = useCameraShutterSound();
+  // The bottom action row otherwise sits flush with the tab bar's top edge
+  // and reads as clipped by it — pad the gap explicitly instead of relying
+  // on the tab navigator's own content-height reservation.
+  const tabBarHeight = useBottomTabBarHeight();
   const zoomRef = useRef(zoom);
   useEffect(() => {
     zoomRef.current = zoom;
@@ -91,8 +98,9 @@ function AddyCameraViewInner({
 
   const handleCapturePress = useCallback(() => {
     shutterFlashRef.current?.play();
+    void playShutterSound();
     onCapture();
-  }, [onCapture]);
+  }, [onCapture, playShutterSound]);
 
   return (
     <View style={styles.root}>
@@ -122,7 +130,7 @@ function AddyCameraViewInner({
           <CameraFlashFab flash={flash} onPress={onCycleFlash} />
         </View>
 
-        <View style={styles.bottomStack} pointerEvents="box-none">
+        <View style={[styles.bottomStack]} pointerEvents="box-none">
           <CameraZoomBar
             zoom={zoom}
             onZoomOut={onZoomOut}

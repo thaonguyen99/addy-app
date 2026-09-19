@@ -32,7 +32,7 @@ import {
   useMemoriesMapQuery,
   useStatsQuery,
 } from "@/lib/query/hooks";
-import type { MapBounds } from "@/types/api";
+import type { FriendMemoryPin, MapBounds, MemoryPin } from "@/types/api";
 import { BrandColors } from "@/constants/theme";
 import {
   MAP_PHOTO_PIN_HEIGHT,
@@ -44,11 +44,19 @@ import {
   type AllMemoriesSheetRef,
 } from "@/features/map/components/all-memories-sheet";
 import {
+  ClusterPinsSheet,
+  type ClusterPinsSheetRef,
+} from "@/features/map/components/cluster-pins-sheet";
+import {
   PlaceMemoriesSheet,
   type PlaceMemoriesSheetRef,
 } from "@/features/map/components/place-memories-sheet";
 import { useMapFocusStore } from "@/features/map/store/map-focus-store";
-import { clusterPins } from "@/features/map/utils/cluster-pins";
+import {
+  clusterPins,
+  pinsAreInseparable,
+  type ClusterGroup,
+} from "@/features/map/utils/cluster-pins";
 import { pinsToTrailGeoJSON } from "@/features/map/utils/pins-to-trail";
 import {
   ONBOARDING_ADD_MEMORY_STEP_ID,
@@ -125,6 +133,7 @@ export function MemoriesMapScreen() {
   const mapContainerRef = useRef<View>(null);
   const placeMemoriesSheetRef = useRef<PlaceMemoriesSheetRef>(null);
   const allMemoriesSheetRef = useRef<AllMemoriesSheetRef>(null);
+  const clusterPinsSheetRef = useRef<ClusterPinsSheetRef>(null);
   const pendingFocus = useMapFocusStore((s) => s.pendingFocus);
   const setPendingFocus = useMapFocusStore((s) => s.setPendingFocus);
   const showSuccessToast = useMapFocusStore((s) => s.showSuccessToast);
@@ -263,6 +272,20 @@ export function MemoriesMapScreen() {
     [],
   );
 
+  // Pins piled at (or effectively at) the same spot never separate no
+  // matter how far in the camera zooms — offer a picker instead of flying
+  // to a zoom level that changes nothing.
+  const onClusterPress = useCallback(
+    (group: ClusterGroup<MemoryPin | FriendMemoryPin>) => {
+      if (pinsAreInseparable(group.pins)) {
+        clusterPinsSheetRef.current?.present(group.pins);
+      } else {
+        flyIntoCluster(group.latitude, group.longitude);
+      }
+    },
+    [flyIntoCluster],
+  );
+
   if (Platform.OS === "web") {
     return (
       <SafeAreaView style={styles.safe} edges={["top"]}>
@@ -306,7 +329,7 @@ export function MemoriesMapScreen() {
               key={`friend-cluster-${group.latitude}-${group.longitude}`}
               lngLat={[group.pins[0].longitude, group.pins[0].latitude]}
               anchor="bottom"
-              onPress={() => flyIntoCluster(group.latitude, group.longitude)}
+              onPress={() => onClusterPress(group)}
             >
               <MapPhotoPin
                 imageUrl={group.pins[0].imageUrl}
@@ -335,7 +358,7 @@ export function MemoriesMapScreen() {
               key={`cluster-${group.latitude}-${group.longitude}`}
               lngLat={[group.pins[0].longitude, group.pins[0].latitude]}
               anchor="bottom"
-              onPress={() => flyIntoCluster(group.latitude, group.longitude)}
+              onPress={() => onClusterPress(group)}
             >
               <MapPhotoPin
                 imageUrl={group.pins[0].imageUrl}
@@ -434,6 +457,7 @@ export function MemoriesMapScreen() {
 
       <PlaceMemoriesSheet ref={placeMemoriesSheetRef} />
       <AllMemoriesSheet ref={allMemoriesSheetRef} onSelectPin={onSelectSheetPin} />
+      <ClusterPinsSheet ref={clusterPinsSheetRef} onSelectPin={openPin} />
     </View>
   );
 }

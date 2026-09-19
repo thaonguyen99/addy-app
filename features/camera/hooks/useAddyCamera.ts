@@ -58,7 +58,9 @@ export function useAddyCamera() {
     try {
       const photo = await cam.takePictureAsync({
         quality: CAPTURE_QUALITY,
-        shutterSound: true,
+        // The OS default click is replaced by useCameraShutterSound's custom
+        // sound, which is the one that respects silent/ringer mode.
+        shutterSound: false,
       });
       return photo?.uri ?? null;
     } catch {

@@ -108,7 +108,7 @@ export function PlacePickerSection({
       {showSelectedChip ? (
         <StickerCard
           radius={StickerRadius.button}
-          backgroundColor={BrandColors.primaryMuted}
+          backgroundColor={BrandColors.primaryMutedSolid}
           shadowOffset={2}
         >
           <View style={styles.selectedChip}>

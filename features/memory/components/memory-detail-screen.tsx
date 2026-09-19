@@ -23,17 +23,20 @@ import { StickerBorderWidth, StickerRadius } from "@/constants/sticker-style";
 import { BrandColors } from "@/constants/theme";
 import { MoodSticker } from "@/features/feed/components/mood-sticker";
 import { formatCapturedAtLabel } from "@/features/feed/utils/format-relative-time";
+import type { MemoryOptionsSheetRef } from "@/features/memory/components/memory-options-sheet";
+import { MemoryOptionsSheet } from "@/features/memory/components/memory-options-sheet";
 import { ONBOARDING_MEMORY_DETAIL_TARGET_ID } from "@/features/onboarding/onboarding-tour";
 import type { ReactorsSheetRef } from "@/features/reactions/components/reactors-sheet";
 import { ReactorsSheet } from "@/features/reactions/components/reactors-sheet";
 import { safeBack } from "@/lib/navigation/safe-router";
 import {
+  useDeleteMemoryMutation,
   useMemoryQuery,
   useProfileQuery,
   useToggleReactionMutation,
   useUpdateMemoryMutation,
 } from "@/lib/query/hooks";
-import type { MemoryImage } from "@/types/api";
+import type { MemoryImage, MemoryVisibility } from "@/types/api";
 
 const SCREEN_WIDTH = Dimensions.get("window").width;
 const HERO_PADDING = 20;
@@ -107,64 +110,51 @@ export function MemoryDetailScreen({ id }: MemoryDetailScreenProps) {
   const { data, isLoading, isError } = useMemoryQuery(id);
   const { data: profile } = useProfileQuery();
   const updateMemory = useUpdateMemoryMutation(id);
+  const deleteMemory = useDeleteMemoryMutation(id);
   const toggleReaction = useToggleReactionMutation(id);
   const reactorsSheet = useRef<ReactorsSheetRef>(null);
+  const optionsSheet = useRef<MemoryOptionsSheetRef>(null);
 
   const displayName = data?.isOwner
     ? (profile?.name ?? profile?.email ?? "You")
     : (data?.author.name ?? data?.author.username ?? "Friend");
   const initials = displayName.charAt(0).toUpperCase();
 
-  const formattedDate = data
-    ? new Date(data.capturedAt).toLocaleDateString("en-US", {
-        weekday: "short",
-        year: "numeric",
-        month: "short",
-        day: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-      })
-    : null;
-
-  const openVisibilityMenu = () => {
-    if (!data) return;
-    const isFriends = data.visibility === "friends";
-    Alert.alert(
-      "Memory visibility",
-      `Currently: ${isFriends ? "Visible to friends" : "Private"}`,
-      [
-        {
-          text: "Private",
-          onPress: () => updateMemory.mutate({ visibility: "private" }),
-        },
-        {
-          text: "Visible to friends",
-          onPress: () => updateMemory.mutate({ visibility: "friends" }),
-        },
-        { text: "Cancel", style: "cancel" },
-      ],
-    );
+  const openOptionsMenu = () => {
+    optionsSheet.current?.present();
   };
 
-  const liked = data
-    ? data.isOwner
-      ? data.reactionCount > 0
-      : data.hasReacted
-    : false;
+  const onChangeVisibility = (visibility: MemoryVisibility) => {
+    updateMemory.mutate({ visibility });
+  };
+
+  const onDeleteMemory = () => {
+    deleteMemory.mutate(undefined, {
+      onSuccess: () => safeBack("/(app)/(tabs)"),
+      onError: () => {
+        Alert.alert("Couldn't delete memory", "Please try again.");
+      },
+    });
+  };
+
+  // hasReacted always reflects the viewer's own reaction, owner included —
+  // now that owners can react to their own memory too, that's the only
+  // thing "liked" should mean (reactionCount alone would stay true after
+  // the owner un-likes their own post if a friend had also reacted).
+  const liked = data?.hasReacted ?? false;
+
   const bubbleLabel = data
     ? `${data.isOwner ? "you" : displayName} · ${formatCapturedAtLabel(data.capturedAt)}`
     : "";
 
-  const onHeartPress = () => {
-    if (!data) return;
-    if (!data.isOwner) {
-      void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      toggleReaction.mutate();
-      return;
-    }
-    if (data.reactionCount > 0) {
-      reactorsSheet.current?.present();
-    }
+  const onToggleLike = () => {
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    toggleReaction.mutate();
+  };
+
+  const onViewReactors = () => {
+    if (!data || data.reactionCount === 0) return;
+    reactorsSheet.current?.present();
   };
 
   return (
@@ -196,7 +186,7 @@ export function MemoryDetailScreen({ id }: MemoryDetailScreenProps) {
             <View style={styles.headerRight}>
               {data.isOwner ? (
                 <Pressable
-                  onPress={openVisibilityMenu}
+                  onPress={openOptionsMenu}
                   hitSlop={12}
                   style={styles.circleButton}
                   accessibilityRole="button"
@@ -209,9 +199,20 @@ export function MemoryDetailScreen({ id }: MemoryDetailScreenProps) {
                   />
                 </Pressable>
               ) : null}
-              <View style={styles.circleButton}>
-                <Text style={styles.avatarText}>{initials}</Text>
-              </View>
+              {data?.author?.avatarUrl ? (
+                <View style={styles.circleButton}>
+                  <Image
+                    source={{ uri: data.author.avatarUrl }}
+                    style={styles.photo}
+                    contentFit="cover"
+                    transition={150}
+                  />
+                </View>
+              ) : (
+                <View style={styles.circleButton}>
+                  <Text style={styles.avatarText}>{initials}</Text>
+                </View>
+              )}
             </View>
           </View>
 
@@ -261,34 +262,39 @@ export function MemoryDetailScreen({ id }: MemoryDetailScreenProps) {
               <View style={styles.heroSticker}>
                 <MoodSticker score={data.moodScore} size={42} />
               </View>
-              <Pressable
-                onPress={onHeartPress}
-                hitSlop={8}
-                style={styles.heartStickerWrap}
-                accessibilityRole="button"
-                accessibilityLabel={
-                  !data.isOwner
-                    ? data.hasReacted
-                      ? "Remove reaction"
-                      : "React to this memory"
-                    : data.reactionCount > 0
-                      ? "See who reacted"
-                      : undefined
-                }
-              >
+              <View style={styles.heartStickerWrap}>
                 <StickerCard radius={StickerRadius.pill} shadowOffset={2}>
                   <View style={styles.heartStickerInner}>
-                    <Ionicons
-                      name={liked ? "heart" : "heart-outline"}
-                      size={16}
-                      color={BrandColors.accentPink}
-                    />
-                    <Text style={styles.heartStickerCount}>
-                      {data.reactionCount}
-                    </Text>
+                    <Pressable
+                      onPress={onToggleLike}
+                      hitSlop={8}
+                      accessibilityRole="button"
+                      accessibilityLabel={
+                        liked ? "Remove reaction" : "React to this memory"
+                      }
+                    >
+                      <Ionicons
+                        name={liked ? "heart" : "heart-outline"}
+                        size={16}
+                        color={BrandColors.accentPink}
+                      />
+                    </Pressable>
+                    <Pressable
+                      onPress={onViewReactors}
+                      hitSlop={8}
+                      disabled={data.reactionCount === 0}
+                      accessibilityRole="button"
+                      accessibilityLabel={
+                        data.reactionCount > 0 ? "See who reacted" : undefined
+                      }
+                    >
+                      <Text style={styles.heartStickerCount}>
+                        {data.reactionCount}
+                      </Text>
+                    </Pressable>
                   </View>
                 </StickerCard>
-              </Pressable>
+              </View>
             </View>
           </View>
 
@@ -318,6 +324,12 @@ export function MemoryDetailScreen({ id }: MemoryDetailScreenProps) {
         </ScrollView>
       )}
       <ReactorsSheet ref={reactorsSheet} memoryId={id} />
+      <MemoryOptionsSheet
+        ref={optionsSheet}
+        visibility={data?.visibility || "private"}
+        onChangeVisibility={onChangeVisibility}
+        onDelete={onDeleteMemory}
+      />
     </SafeAreaView>
   );
 }
@@ -355,6 +367,7 @@ const styles = StyleSheet.create({
     borderColor: BrandColors.ink,
     alignItems: "center",
     justifyContent: "center",
+    overflow: "hidden",
   },
   avatarText: {
     color: BrandColors.ink,
@@ -514,5 +527,9 @@ const styles = StyleSheet.create({
   metaText: {
     fontSize: 13,
     color: BrandColors.inkMuted,
+  },
+  photo: {
+    width: "100%",
+    height: "100%",
   },
 });

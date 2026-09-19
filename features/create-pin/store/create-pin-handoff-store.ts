@@ -19,25 +19,27 @@ type CreatePinHandoffState = {
   clear: () => void;
 };
 
-export const useCreatePinHandoffStore = create<CreatePinHandoffState>((set) => ({
-  images: [],
-  moodScore: null,
-  feeling: "",
-  selectedPlace: null,
-  visibility: "private",
-  setHandoff: ({
-    images,
-    selectedPlace = null,
-    moodScore = null,
-    feeling = "",
-  }) => set({ images, moodScore, feeling, selectedPlace }),
-  setVisibility: (visibility) => set({ visibility }),
-  clear: () =>
-    set({
-      images: [],
-      moodScore: null,
-      feeling: "",
-      selectedPlace: null,
-      visibility: "private",
-    }),
-}));
+export const useCreatePinHandoffStore = create<CreatePinHandoffState>(
+  (set) => ({
+    images: [],
+    moodScore: null,
+    feeling: "",
+    selectedPlace: null,
+    visibility: "friends",
+    setHandoff: ({
+      images,
+      selectedPlace = null,
+      moodScore = null,
+      feeling = "",
+    }) => set({ images, moodScore, feeling, selectedPlace }),
+    setVisibility: (visibility) => set({ visibility }),
+    clear: () =>
+      set({
+        images: [],
+        moodScore: null,
+        feeling: "",
+        selectedPlace: null,
+        visibility: "friends",
+      }),
+  }),
+);

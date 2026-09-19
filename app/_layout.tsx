@@ -24,6 +24,7 @@ import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { KeyboardProvider } from "react-native-keyboard-controller";
 import "react-native-reanimated";
 
 import { BrandColors } from "@/constants/theme";
@@ -106,26 +107,28 @@ export default function RootLayout() {
 
   return (
     <GestureHandlerRootView style={styles.root}>
-      <QueryClientProvider client={queryClient}>
-        <ThemeProvider value={navigationTheme}>
-          <BottomSheetModalProvider>
-            <TourGuideProvider>
-              <Stack screenOptions={{ headerShown: false }}>
-                <Stack.Screen name="index" />
-                <Stack.Screen name="(auth)" />
-                <Stack.Screen name="(app)" />
-                <Stack.Screen name="add-friend" />
-                <Stack.Screen
-                  name="modal"
-                  options={{ presentation: "modal", title: "Modal" }}
-                />
-              </Stack>
-              <StatusBar style="dark" />
-              <TourGuideOverlay />
-            </TourGuideProvider>
-          </BottomSheetModalProvider>
-        </ThemeProvider>
-      </QueryClientProvider>
+      <KeyboardProvider>
+        <QueryClientProvider client={queryClient}>
+          <ThemeProvider value={navigationTheme}>
+            <BottomSheetModalProvider>
+              <TourGuideProvider>
+                <Stack screenOptions={{ headerShown: false }}>
+                  <Stack.Screen name="index" />
+                  <Stack.Screen name="(auth)" />
+                  <Stack.Screen name="(app)" />
+                  <Stack.Screen name="add-friend" />
+                  <Stack.Screen
+                    name="modal"
+                    options={{ presentation: "modal", title: "Modal" }}
+                  />
+                </Stack>
+                <StatusBar style="dark" />
+                <TourGuideOverlay />
+              </TourGuideProvider>
+            </BottomSheetModalProvider>
+          </ThemeProvider>
+        </QueryClientProvider>
+      </KeyboardProvider>
     </GestureHandlerRootView>
   );
 }

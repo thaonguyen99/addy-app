@@ -26,7 +26,7 @@ export function PlaceSuggestionRow({
     >
       <StickerCard
         radius={StickerRadius.button}
-        backgroundColor={selected ? BrandColors.primaryMuted : BrandColors.paper}
+        backgroundColor={selected ? BrandColors.primaryMutedSolid : BrandColors.paper}
         shadowOffset={2}
       >
         <View style={styles.row}>

@@ -1,6 +1,6 @@
+import { useTourGuide } from "@wrack/react-native-tour-guide";
 import { useState } from "react";
 import { Alert } from "react-native";
-import { useTourGuide } from "@wrack/react-native-tour-guide";
 
 import { useCameraSession } from "@/features/camera/context/camera-session-context";
 import { navigateAfterCreatePin } from "@/features/create-pin/navigate-after-create-pin";
@@ -47,6 +47,20 @@ export function useCreatePinSubmit(images: readonly AddyMemoryImage[]) {
         images.map((image) => image.uri),
       );
 
+      console.log("submit val", {
+        place: placeSuggestionToPlaceInput(selectedPlace),
+        images: uploadedImages.map((uploaded, index) => ({
+          type: index === 0 ? ("cover" as const) : ("other" as const),
+          imageUrl: uploaded.imageUrl,
+          imagePublicId: uploaded.imagePublicId,
+          sortOrder: index,
+        })),
+        moodScore: moodScore ?? undefined,
+        feeling: handoffFeeling.trim() || undefined,
+        capturedAt: cover.createdAt,
+        visibility,
+      });
+
       const memory = await createMutation.mutateAsync({
         place: placeSuggestionToPlaceInput(selectedPlace),
         images: uploadedImages.map((uploaded, index) => ({
@@ -60,6 +74,8 @@ export function useCreatePinSubmit(images: readonly AddyMemoryImage[]) {
         capturedAt: cover.createdAt,
         visibility,
       });
+
+      console.log("🚀 ~ submit ~ memory:", memory);
 
       await removeDraftImages(images.map((img) => img.id));
       clearSession();

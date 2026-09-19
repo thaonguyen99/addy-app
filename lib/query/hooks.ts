@@ -85,6 +85,20 @@ export function useMemoryQuery(id: string | undefined) {
   });
 }
 
+export function useDeleteMemoryMutation(id: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () => memoriesApi.deleteMemory(id),
+    onSuccess: () => {
+      queryClient.removeQueries({ queryKey: queryKeys.memory(id) });
+      // Broad invalidation: a deleted memory can affect the map, the feed,
+      // its place's "memories here" sheet, and lifetime stats all at once.
+      queryClient.invalidateQueries({ queryKey: ["memories"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.stats });
+    },
+  });
+}
+
 export function useMemoriesMapQuery(bounds: MapBounds | null) {
   const key = bounds ? mapBoundsKey(bounds) : "idle";
   return useQuery({

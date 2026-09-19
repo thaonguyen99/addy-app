@@ -59,3 +59,33 @@ export function clusterPins<T extends ClusterablePin>(
 
   return groups;
 }
+
+/** Highest zoom most map styles render tiles for — flying in further gains
+ * nothing, so it's the ceiling for deciding whether zooming can ever split
+ * a cluster apart. */
+const MAX_USEFUL_ZOOM = 20;
+
+/**
+ * True if these pins are close enough that no amount of zooming in will
+ * ever separate them into individually-tappable markers — e.g. several
+ * memories logged at the exact same coordinates. Tapping such a cluster
+ * should offer a picker instead of flying to a zoom level that never
+ * resolves anything.
+ */
+export function pinsAreInseparable<T extends ClusterablePin>(
+  pins: readonly T[],
+  pixelRadius = 60,
+): boolean {
+  if (pins.length < 2) return true;
+  const points = pins.map((pin) => project(pin.longitude, pin.latitude, MAX_USEFUL_ZOOM));
+  for (let i = 0; i < points.length; i += 1) {
+    for (let j = i + 1; j < points.length; j += 1) {
+      const dx = points[i].x - points[j].x;
+      const dy = points[i].y - points[j].y;
+      if (Math.sqrt(dx * dx + dy * dy) > pixelRadius) {
+        return false;
+      }
+    }
+  }
+  return true;
+}

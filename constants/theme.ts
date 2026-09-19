@@ -52,6 +52,12 @@ export const BrandColors = {
   neutral: "#16171A",
   /** Selected fills — now Slime Lime at low opacity instead of periwinkle. */
   primaryMuted: "rgba(199, 242, 58, 0.22)",
+  /** Opaque equivalent of `primaryMuted` (pre-blended over `paper`) — use
+   *  this instead inside StickerCard/StickerShadowBox. Android fakes their
+   *  hard shadow with an ink-colored rectangle sitting almost directly
+   *  behind the fill, which a translucent `rgba` background blends with
+   *  into a dark, muddy cast instead of the intended pale tint. */
+  primaryMutedSolid: "#F0F9CD",
   /** Captions and placeholders on paper surfaces. */
   neutralMuted: "#5C5C54",
   /** Visible edge on sticker/paper surfaces — bold, not soft; same as ink

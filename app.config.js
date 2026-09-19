@@ -74,6 +74,7 @@ module.exports = ({ config }) => ({
     "expo-router",
     "expo-dev-client",
     "expo-secure-store",
+    "expo-audio",
     [
       "expo-camera",
       {

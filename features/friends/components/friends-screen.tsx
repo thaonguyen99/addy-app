@@ -68,17 +68,6 @@ export function FriendsScreen() {
               accessibilityLabel="Add friends"
             >
               <Ionicons
-                name="qr-code-outline"
-                size={22}
-                color={BrandColors.primary}
-              />
-            </Pressable>
-            <Pressable
-              onPress={() => router.push("/(app)/friends/search")}
-              hitSlop={10}
-              accessibilityLabel="Search for friends"
-            >
-              <Ionicons
                 name="person-add-outline"
                 size={22}
                 color={BrandColors.primary}

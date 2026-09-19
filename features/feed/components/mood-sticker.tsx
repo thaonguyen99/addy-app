@@ -1,4 +1,4 @@
-import { StyleSheet, Text } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 
 import { StickerShadowBox } from "@/components/ui/sticker-shadow";
 import { BrandColors } from "@/constants/theme";
@@ -34,18 +34,16 @@ export function MoodSticker({
     <StickerShadowBox
       radius={size / 2}
       shadowOffset={2}
-      style={[
-        styles.sticker,
-        {
-          width: size,
-          height: size,
-          borderRadius: size / 2,
-          backgroundColor,
-          transform: tilted ? [{ rotate: "12deg" }] : undefined,
-        },
-      ]}
+      style={tilted ? { transform: [{ rotate: "12deg" }] } : undefined}
     >
-      <Text style={[styles.emoji, { fontSize: size * 0.5 }]}>{mood.emoji}</Text>
+      <View
+        style={[
+          styles.sticker,
+          { width: size, height: size, borderRadius: size / 2, backgroundColor },
+        ]}
+      >
+        <Text style={[styles.emoji, { fontSize: size * 0.5 }]}>{mood.emoji}</Text>
+      </View>
     </StickerShadowBox>
   );
 }

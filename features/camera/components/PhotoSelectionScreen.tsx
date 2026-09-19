@@ -3,14 +3,8 @@ import { PhotoSelectionPreviewCarousel } from "@/features/camera/components/Phot
 import { PhotoSelectionGalleryButton } from "@/features/camera/components/photo-selection-header";
 import { usePhotoSelectionScreen } from "@/features/camera/hooks/usePhotoSelectionScreen";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
-import {
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from "react-native";
+import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import {
   SafeAreaView,
   useSafeAreaInsets,
@@ -86,11 +80,12 @@ export function PhotoSelectionScreen() {
         />
       </View>
 
-      <ScrollView
+      <KeyboardAwareScrollView
         style={sharedInteractionStyles.flexFill}
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
+        bottomOffset={24}
       >
         {hasPhotos ? (
           <>
@@ -119,7 +114,7 @@ export function PhotoSelectionScreen() {
         ) : (
           <PhotoSelectionEmptyHint />
         )}
-      </ScrollView>
+      </KeyboardAwareScrollView>
 
       <View
         style={[

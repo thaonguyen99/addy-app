@@ -61,7 +61,6 @@ export default function AppLayout() {
           <Stack.Screen name="profile/notifications" />
           <Stack.Screen name="privacy-policy" />
           <Stack.Screen name="friends/index" />
-          <Stack.Screen name="friends/search" />
           <Stack.Screen name="friends/add" />
           <Stack.Screen name="friends/scan" />
           <Stack.Screen name="blocked-accounts" />
