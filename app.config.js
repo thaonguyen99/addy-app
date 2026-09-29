@@ -122,6 +122,9 @@ module.exports = ({ config }) => ({
         color: "#C7F23A",
       },
     ],
+    // CPU-only TFLite delegate for now — no CoreML/Android GPU flags, which
+    // keeps this prebuild low-risk. Revisit if on-device inference is slow.
+    "react-native-fast-tflite",
   ],
   experiments: {
     typedRoutes: true,

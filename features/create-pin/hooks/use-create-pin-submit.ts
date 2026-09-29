@@ -7,6 +7,7 @@ import { navigateAfterCreatePin } from "@/features/create-pin/navigate-after-cre
 import { useCreatePinHandoffStore } from "@/features/create-pin/store/create-pin-handoff-store";
 import { removeDraftImages } from "@/features/drafts/draft-image-storage";
 import { placeSuggestionToPlaceInput } from "@/features/location/place-input";
+import { checkImagesSafety } from "@/features/moderation/check-image-safety";
 import { handleOnboardingPinSaved } from "@/features/onboarding/navigate-after-onboarding-pin";
 import { useOnboardingCaptureStore } from "@/features/onboarding/store/onboarding-capture-store";
 import { toApiClientError } from "@/lib/api/errors";
@@ -43,6 +44,17 @@ export function useCreatePinSubmit(images: readonly AddyMemoryImage[]) {
     const cover = images[0];
 
     try {
+      const safetyResults = await checkImagesSafety(
+        images.map((image) => image.uri),
+      );
+      if (safetyResults.some((result) => !result.safe)) {
+        Alert.alert(
+          "Create pin",
+          "One of these photos looks like it may violate our content guidelines. Remove it and try again.",
+        );
+        return null;
+      }
+
       const uploadedImages = await uploadMutation.mutateAsync(
         images.map((image) => image.uri),
       );

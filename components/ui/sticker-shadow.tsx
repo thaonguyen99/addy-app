@@ -36,15 +36,20 @@ export function StickerShadowBox({
         <View
           style={{
             position: "absolute",
+            // Same footprint as the content, shifted — matches iOS, where the
+            // shadow pokes out past the bottom-right edge instead of hiding
+            // behind the content.
             left: shadowOffset,
             top: shadowOffset,
-            right: 0,
-            bottom: 0,
+            right: -shadowOffset,
+            bottom: -shadowOffset,
             backgroundColor: shadowColor,
             borderRadius: radius,
           }}
         />
-        <View style={{ zIndex: 1 }}>{children}</View>
+        {/* flexGrow so `flex: 1` children fill a fixed-size box (e.g. the
+            camera buttons) instead of collapsing to 0 height. */}
+        <View style={{ flexGrow: 1, zIndex: 1 }}>{children}</View>
       </View>
     );
   }

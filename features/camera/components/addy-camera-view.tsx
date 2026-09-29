@@ -109,6 +109,9 @@ function AddyCameraViewInner({
           ref={cameraRef}
           style={StyleSheet.absoluteFill}
           facing={facing}
+          // The front preview is mirrored; without this the saved selfie
+          // comes out flipped relative to what the user just saw.
+          mirror
           mode="picture"
           animateShutter
           flash={flash}

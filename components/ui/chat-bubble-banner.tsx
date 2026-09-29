@@ -6,6 +6,7 @@ import Animated, {
   withSpring,
   withTiming,
 } from "react-native-reanimated";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { StickerCard } from "@/components/ui/sticker-card";
 
@@ -21,6 +22,9 @@ type ChatBubbleBannerProps = {
  */
 export function ChatBubbleBanner({ visible, onPress, children }: ChatBubbleBannerProps) {
   const progress = useSharedValue(0);
+  // Absolute children ignore a SafeAreaView parent's padding, so the inset
+  // has to be applied here or the banner lands under the status bar.
+  const { top: topInset } = useSafeAreaInsets();
 
   useEffect(() => {
     progress.value = visible
@@ -36,7 +40,7 @@ export function ChatBubbleBanner({ visible, onPress, children }: ChatBubbleBanne
   return (
     <Animated.View
       pointerEvents={visible ? "box-none" : "none"}
-      style={[styles.wrapper, animatedStyle]}
+      style={[styles.wrapper, { top: topInset + BANNER_TOP_GAP }, animatedStyle]}
     >
       <Pressable onPress={onPress} disabled={!onPress}>
         <StickerCard>{children}</StickerCard>
@@ -45,10 +49,11 @@ export function ChatBubbleBanner({ visible, onPress, children }: ChatBubbleBanne
   );
 }
 
+const BANNER_TOP_GAP = 12;
+
 const styles = StyleSheet.create({
   wrapper: {
     position: "absolute",
-    top: 12,
     left: 16,
     right: 16,
     zIndex: 20,

@@ -23,8 +23,8 @@ import {
 import { BrandColors } from "@/constants/theme";
 import { useAuthStore } from "@/features/auth/store/auth-store";
 import { getApiErrorMessage } from "@/lib/api/errors";
-import { useDeleteAccountMutation, useProfileQuery } from "@/lib/query/hooks";
 import { safeBack } from "@/lib/navigation/safe-router";
+import { useDeleteAccountMutation, useProfileQuery } from "@/lib/query/hooks";
 
 const accentYellowDeep = darkenHex(BrandColors.accentYellow, 0.15);
 
@@ -44,10 +44,9 @@ export function ProfileMenuScreen() {
   const signOut = useAuthStore((s) => s.signOut);
   const deleteAccount = useDeleteAccountMutation();
 
-  const initial =
-    (profile?.name || profile?.username || profile?.email || "?")
-      .charAt(0)
-      .toUpperCase();
+  const initial = (profile?.name || profile?.username || profile?.email || "?")
+    .charAt(0)
+    .toUpperCase();
 
   const onSignOut = () => {
     void signOut().then(() => router.replace("/sign-in"));
@@ -152,9 +151,6 @@ export function ProfileMenuScreen() {
         >
           <Ionicons name="chevron-back" size={22} color={BrandColors.ink} />
           <Text style={styles.topBarTitle}>Profile</Text>
-        </Pressable>
-        <Pressable onPress={onSignOut} hitSlop={12}>
-          <Text style={styles.signOutLink}>Sign out</Text>
         </Pressable>
       </View>
 

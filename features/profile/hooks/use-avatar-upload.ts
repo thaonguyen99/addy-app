@@ -3,6 +3,7 @@ import { useCallback, useState } from "react";
 import { Alert } from "react-native";
 
 import { ensureMediaLibraryReadAccess } from "@/features/camera/permissions/media-library-access";
+import { checkImageSafety } from "@/features/moderation/check-image-safety";
 import { getApiErrorMessage } from "@/lib/api/errors";
 import {
   useUpdateProfileMutation,
@@ -43,7 +44,17 @@ export function useAvatarUpload() {
 
     setBusy(true);
     try {
-      const uploaded = await uploadAvatar.mutateAsync(result.assets[0].uri);
+      const localUri = result.assets[0].uri;
+      const safety = await checkImageSafety(localUri);
+      if (!safety.safe) {
+        Alert.alert(
+          "Photo",
+          "This photo looks like it may violate our content guidelines. Please choose a different one.",
+        );
+        return;
+      }
+
+      const uploaded = await uploadAvatar.mutateAsync(localUri);
       await updateProfile.mutateAsync({
         avatarUrl: uploaded.imageUrl,
         avatarPublicId: uploaded.imagePublicId,

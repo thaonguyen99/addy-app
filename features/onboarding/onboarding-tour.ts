@@ -40,7 +40,7 @@ export function useOnboardingTour() {
   const user = useAuthStore((s) => s.user);
   const completeOnboarding = useCompleteOnboardingMutation();
   const tour = useTourPersistence(AsyncStorage);
-  const { nextStep, startTour } = tour;
+  const { nextStep, pauseTour, startTour } = tour;
   const hasStartedRef = useRef(false);
 
   const steps = useMemo<TourStep[]>(
@@ -63,8 +63,10 @@ export function useOnboardingTour() {
         // overlay renders over the spotlight itself, unrelated to whether
         // the real tab button underneath ever receives the touch. This also
         // doesn't call nextStep(), so it can't skip ahead to step 2 early.
+        // Pause before navigating so the overlay is gone before the camera
+        // screen shows, rather than lingering over it until its focus effect.
         onSpotlightPress: () => {
-          console.log("onSpotlightPress");
+          pauseTour();
           router.push("/(app)/(tabs)/camera");
         },
       },
@@ -93,6 +95,8 @@ export function useOnboardingTour() {
         description: "Tap anywhere to continue.",
         hideNextButton: true,
         hidePrevButton: true,
+        // "Tap anywhere" — the backdrop advances too, not just the spotlight.
+        backdropBehavior: "next",
         onSpotlightPress: () => nextStep(),
       },
       {
@@ -100,6 +104,12 @@ export function useOnboardingTour() {
         targetId: ONBOARDING_ADD_FRIEND_TARGET_ID,
         title: "Add a friend",
         description: "See their memories on your map, and share yours.",
+        // Tapping the highlighted Friends button finishes the tour (firing
+        // onTourEnd) and opens it, instead of being swallowed by the overlay.
+        onSpotlightPress: () => {
+          nextStep();
+          router.push("/(app)/friends");
+        },
         before: async () => {
           if (router.canGoBack()) router.back();
           router.replace("/(app)/(tabs)");
@@ -107,7 +117,7 @@ export function useOnboardingTour() {
         },
       },
     ],
-    [nextStep],
+    [nextStep, pauseTour],
   );
 
   useEffect(() => {
@@ -120,6 +130,10 @@ export function useOnboardingTour() {
     void startTour(steps, {
       ...onboardingTourTheme,
       tourId: ONBOARDING_TOUR_ID,
+      // A Modal overlay dismissed mid-navigation (every step here navigates)
+      // can leave an invisible native layer that blocks all touches; an
+      // inline layer at the app root unmounts cleanly.
+      overlayMode: "inline",
       doneButtonText: "Got it",
       onTourEnd: () => {
         useOnboardingCaptureStore.getState().setActive(false);
