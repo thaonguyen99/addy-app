@@ -8,11 +8,13 @@ import { takePendingInviteToken } from "@/features/friends/pending-invite";
 import { AddMemoryTourTarget } from "@/features/onboarding/components/add-memory-tour-target";
 import { useOnboardingTour } from "@/features/onboarding/onboarding-tour";
 import { registerForPush } from "@/features/notifications/push-registration";
+import { usePinQueueRunner } from "@/features/pin-queue/use-pin-queue-runner";
 
 export default function AppLayout() {
   const status = useAuthStore((s) => s.status);
 
   useOnboardingTour();
+  usePinQueueRunner();
 
   useEffect(() => {
     if (status !== "authenticated") return;

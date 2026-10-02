@@ -1,5 +1,5 @@
 import { Redirect, router, useLocalSearchParams } from "expo-router";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import {
   ActivityIndicator,
   Pressable,
@@ -16,6 +16,8 @@ import { useAuthStore } from "@/features/auth/store/auth-store";
 import { friendActionsAlert } from "@/features/friends/components/friends-screen";
 import { ScreenHeader } from "@/features/friends/components/screen-header";
 import { setPendingInviteToken } from "@/features/friends/pending-invite";
+import type { ReportSheetRef } from "@/features/reports/components/report-sheet";
+import { ReportSheet } from "@/features/reports/components/report-sheet";
 import { getApiErrorMessage } from "@/lib/api/errors";
 import {
   useBlockUserMutation,
@@ -46,6 +48,7 @@ export function ConfirmAddScreen() {
   );
   const sendRequest = useSendFriendRequestMutation();
   const block = useBlockUserMutation();
+  const reportSheet = useRef<ReportSheetRef>(null);
 
   if (status === "hydrating" || status === "idle") {
     return <Centered><ActivityIndicator color={BrandColors.primary} /></Centered>;
@@ -120,11 +123,13 @@ export function ConfirmAddScreen() {
               block.mutate(user.id);
               router.replace("/(app)/(tabs)");
             },
+            onReport: () => reportSheet.current?.present({ type: "USER", id: user.id }),
           })
         }
       >
-        <Text style={styles.blockLink}>Block this user</Text>
+        <Text style={styles.blockLink}>Block or report this user</Text>
       </Pressable>
+      <ReportSheet ref={reportSheet} />
     </Screen>
   );
 }

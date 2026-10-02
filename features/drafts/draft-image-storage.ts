@@ -2,6 +2,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as FileSystem from "expo-file-system/legacy";
 
 import { createMemoryImageId } from "@/features/camera/utils/id";
+import { prepareUploadImage } from "@/features/media/prepare-upload-image";
 import type { AddyMemoryImage, MemoryImageSourceType } from "@/types/addy-memory";
 
 const DRAFT_INDEX_KEY = "addy.draftImages";
@@ -75,7 +76,9 @@ export async function persistImageToDrafts(
   const id = createMemoryImageId();
   const dest = `${DRAFT_DIR}${id}.jpg`;
 
-  await FileSystem.copyAsync({ from: sourceUri, to: dest });
+  // Re-encode (strips EXIF/GPS, caps size) so every draft is upload-safe.
+  const prepared = await prepareUploadImage(sourceUri);
+  await FileSystem.moveAsync({ from: prepared.uri, to: dest });
 
   const image: AddyMemoryImage = {
     id,

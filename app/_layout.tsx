@@ -32,6 +32,7 @@ import { useAuthStore } from "@/features/auth/store/auth-store";
 import { configureNotificationHandler } from "@/features/notifications/push-registration";
 import { useNotificationRouter } from "@/features/notifications/use-notification-router";
 import { AnimatedSplashScreen } from "@/features/splash/components/animated-splash-screen";
+import { AppToastHost } from "@/features/toast/app-toast-host";
 import { queryClient } from "@/lib/query/client";
 
 configureNotificationHandler();
@@ -124,6 +125,7 @@ export default function RootLayout() {
                 </Stack>
                 <StatusBar style="dark" />
                 <TourGuideOverlay />
+                <AppToastHost />
               </TourGuideProvider>
             </BottomSheetModalProvider>
           </ThemeProvider>

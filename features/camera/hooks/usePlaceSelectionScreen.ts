@@ -5,7 +5,10 @@ import { router } from "expo-router";
 
 import { continueToCreatePinFlow } from "@/features/create-pin/continue-to-create-pin";
 import { useCreatePinHandoffStore } from "@/features/create-pin/store/create-pin-handoff-store";
-import { createHoChiMinhCityPlace } from "@/features/location/fallback-places";
+import {
+  createHoChiMinhCityPlace,
+  createUnresolvedPlace,
+} from "@/features/location/fallback-places";
 import { useCurrentLocation } from "@/features/location/hooks/use-current-location";
 import { useDebouncedPlaceSearch } from "@/features/location/hooks/use-debounced-place-search";
 import { useReverseGeocodedPlace } from "@/features/location/hooks/use-reverse-geocoded-place";
@@ -89,13 +92,23 @@ export function usePlaceSelectionScreen() {
     if (apiSelectedPlaceRef.current) return;
 
     const name = debouncedVenueName.trim();
+    // No named place for the GPS fix (offline / geocoder down): pin the real
+    // coordinates as an unnamed place rather than the city fallback.
     const base =
       currentLocationPlace ??
-      createHoChiMinhCityPlace({ name: debouncedVenueName });
+      (coords && !currentLocationLoading
+        ? createUnresolvedPlace(coords)
+        : createHoChiMinhCityPlace({ name: debouncedVenueName }));
 
     setSelectedPlace(name ? { ...base, name } : base);
     setHasExplicitSelection(false);
-  }, [debouncedVenueName, isSearchActive, currentLocationPlace]);
+  }, [
+    debouncedVenueName,
+    isSearchActive,
+    currentLocationPlace,
+    coords,
+    currentLocationLoading,
+  ]);
 
   const selectPlace = useCallback((place: PlaceSuggestion) => {
     setHasExplicitSelection(true);

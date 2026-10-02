@@ -2,6 +2,7 @@ import { StyleSheet, Text, View } from "react-native";
 
 import { PhotoPin } from "@/components/ui/photo-pin";
 import { BrandColors } from "@/constants/theme";
+import type { QueuedPinStatus } from "@/features/pin-queue/pin-queue-types";
 
 type MapPhotoPinProps = {
   imageUrl: string;
@@ -9,6 +10,8 @@ type MapPhotoPinProps = {
   count?: number;
   /** Marks this as a friend's memory rather than the user's own. */
   isFriend?: boolean;
+  /** Set for a pin still in the offline queue: "waiting" / "couldn't upload" sticker. */
+  queueStatus?: QueuedPinStatus;
 };
 
 const PIN_SIZE = 72;
@@ -19,10 +22,27 @@ const PIN_SIZE = 72;
  * own badge slot is reserved for category, so these render as separate
  * overlays instead of being passed into it.
  */
-export function MapPhotoPin({ imageUrl, count, isFriend }: MapPhotoPinProps) {
+export function MapPhotoPin({
+  imageUrl,
+  count,
+  isFriend,
+  queueStatus,
+}: MapPhotoPinProps) {
   return (
     <View style={styles.wrapper}>
       <PhotoPin uri={imageUrl} size={PIN_SIZE} />
+      {queueStatus ? (
+        <View
+          style={[
+            styles.queueBadge,
+            queueStatus === "failed" && styles.queueBadgeFailed,
+          ]}
+        >
+          <Text style={styles.queueBadgeText}>
+            {queueStatus === "failed" ? "! retry" : "⏳ waiting"}
+          </Text>
+        </View>
+      ) : null}
       {isFriend ? <View style={styles.friendDot} /> : null}
       {count != null && count > 1 ? (
         <View style={styles.countBadge}>
@@ -57,6 +77,26 @@ const styles = StyleSheet.create({
     color: BrandColors.ink,
     fontSize: 11,
     fontFamily: "VT323-Regular",
+  },
+  queueBadge: {
+    position: "absolute",
+    top: -8,
+    left: -12,
+    paddingHorizontal: 6,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: BrandColors.accentCyan,
+    borderWidth: 2,
+    borderColor: BrandColors.ink,
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 3,
+  },
+  queueBadgeFailed: { backgroundColor: BrandColors.dangerLight },
+  queueBadgeText: {
+    color: BrandColors.ink,
+    fontSize: 11,
+    fontFamily: "Fredoka-SemiBold",
   },
   friendDot: {
     position: "absolute",

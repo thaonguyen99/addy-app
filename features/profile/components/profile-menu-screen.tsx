@@ -5,6 +5,7 @@ import { router } from "expo-router";
 import {
   ActivityIndicator,
   Alert,
+  Linking,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -14,6 +15,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { StickerCard } from "@/components/ui/sticker-card";
+import { SUPPORT_EMAIL } from "@/constants/app-config";
 import {
   StickerRadius,
   accentCyanDeep,
@@ -22,6 +24,7 @@ import {
 } from "@/constants/sticker-style";
 import { BrandColors } from "@/constants/theme";
 import { useAuthStore } from "@/features/auth/store/auth-store";
+import { clearPinQueue, usePinQueueStore } from "@/features/pin-queue/pin-queue-store";
 import { getApiErrorMessage } from "@/lib/api/errors";
 import { safeBack } from "@/lib/navigation/safe-router";
 import { useDeleteAccountMutation, useProfileQuery } from "@/lib/query/hooks";
@@ -48,8 +51,33 @@ export function ProfileMenuScreen() {
     .charAt(0)
     .toUpperCase();
 
+  const pendingPinCount = usePinQueueStore((s) => s.entries.length);
+
   const onSignOut = () => {
-    void signOut().then(() => router.replace("/sign-in"));
+    const doSignOut = () => {
+      void signOut().then(() => router.replace("/sign-in"));
+    };
+    if (pendingPinCount === 0) {
+      doSignOut();
+      return;
+    }
+    // Drafts stay on this phone, scoped to this account — they resume on the
+    // next sign-in as this user and are never uploaded under anyone else.
+    Alert.alert(
+      "Memories not uploaded yet",
+      `${pendingPinCount} ${pendingPinCount === 1 ? "memory is" : "memories are"} still waiting to upload. They'll finish uploading next time you sign in to this account.`,
+      [
+        { text: "Cancel", style: "cancel" },
+        { text: "Sign out", style: "destructive", onPress: doSignOut },
+      ],
+    );
+  };
+
+  const onContactUs = () => {
+    // No mail app configured (common on simulators) — show the address instead.
+    Linking.openURL(`mailto:${SUPPORT_EMAIL}`).catch(() => {
+      Alert.alert("Contact us", `Email us at ${SUPPORT_EMAIL}`);
+    });
   };
 
   const onDeleteAccount = () => {
@@ -62,8 +90,10 @@ export function ProfileMenuScreen() {
           text: "Delete account",
           style: "destructive",
           onPress: () => {
+            const userId = useAuthStore.getState().user?.id;
             void deleteAccount
               .mutateAsync()
+              .then(() => (userId ? clearPinQueue(userId) : undefined))
               .then(() => signOut())
               .then(() => router.replace("/sign-in"))
               .catch((error) => {
@@ -126,6 +156,14 @@ export function ProfileMenuScreen() {
       sublabel: "how we use your data",
       gradient: [BrandColors.accentCyan, accentCyanDeep],
       onPress: () => router.push("/(app)/privacy-policy"),
+    },
+    {
+      key: "contact",
+      icon: "mail",
+      label: "Contact us",
+      sublabel: SUPPORT_EMAIL,
+      gradient: [BrandColors.accentYellow, accentYellowDeep],
+      onPress: onContactUs,
     },
     {
       key: "delete",

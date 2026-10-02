@@ -1,28 +1,21 @@
 import { navigateAfterCreatePin } from "@/features/create-pin/navigate-after-create-pin";
 import { useOnboardingCaptureStore } from "@/features/onboarding/store/onboarding-capture-store";
 
-type OnboardingTourHandle = {
-  resumeTour: () => void;
-};
-
 /**
  * Called instead of navigateAfterCreatePin when a pin is saved while the
- * onboarding tour is active. Resumes the tour (undoing the pause set when the
- * camera screen gained focus) and gives the same map-first payoff as normal
- * capture. The tour itself advances to the "map + pin" step later, once the
- * map screen has settled and the pin's highlight target is positioned (see
- * memories-map-screen.tsx) — not here, since that target isn't ready yet.
+ * onboarding tour is active: gives the same map-first payoff as normal
+ * capture. The tour stays paused here — the map screen resumes it and
+ * advances to the "map + pin" step once the create-flow modals are gone and
+ * the camera has settled (see memories-map-screen.tsx). Resuming now, while a
+ * page-sheet modal still shrinks the screen behind it, would make the overlay
+ * measure its origin off by the card offset for the rest of the tour.
  */
 export function handleOnboardingPinSaved(
-  memory: { id: string; place: { latitude: number; longitude: number } },
-  tour: OnboardingTourHandle,
+  /** Null when the pin is still queued (offline) — the tour then skips opening it. */
+  memoryId: string | null,
+  coords: { latitude: number; longitude: number },
 ) {
   useOnboardingCaptureStore.getState().setActive(false);
-  useOnboardingCaptureStore.getState().setLastCreatedMemoryId(memory.id);
-  tour.resumeTour();
-  navigateAfterCreatePin(
-    memory.id,
-    memory.place.latitude,
-    memory.place.longitude,
-  );
+  useOnboardingCaptureStore.getState().setLastCreatedMemoryId(memoryId);
+  navigateAfterCreatePin(coords.latitude, coords.longitude);
 }

@@ -8,11 +8,7 @@ import { useMapFocusStore } from "@/features/map/store/map-focus-store";
  * (create-pin + place-selection + photo-selection all live on the root (app)
  * stack, so one dismissAll clears them), then land on the explore/map tab.
  */
-export function navigateAfterCreatePin(
-  _memoryId: string,
-  latitude: number,
-  longitude: number,
-) {
+export function navigateAfterCreatePin(latitude: number, longitude: number) {
   useMapFocusStore.getState().setPendingFocus({ latitude, longitude });
   useMapFocusStore.getState().setShowSuccessToast(true);
   void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);

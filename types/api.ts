@@ -264,6 +264,8 @@ export type CreateMemoryInput = {
   feeling?: string;
   capturedAt?: string;
   visibility?: MemoryVisibility;
+  /** UUID v4 from the offline queue; a repeat create returns the stored memory. */
+  clientId?: string;
 };
 
 export type UpdateMemoryInput = {
@@ -318,4 +320,30 @@ export type MapBounds = {
 export type MapPinsResult = {
   pins: MemoryPin[];
   cursor?: string;
+};
+
+export type ReportTargetType = "MEMORY" | "USER";
+
+export type ReportReason =
+  | "INAPPROPRIATE"
+  | "SPAM"
+  | "HARASSMENT"
+  | "PRIVACY"
+  | "OTHER";
+
+export type CreateReportInput = {
+  targetType: ReportTargetType;
+  targetId: string;
+  reason: ReportReason;
+  note?: string;
+};
+
+export type Report = {
+  id: string;
+  targetType: ReportTargetType;
+  targetId: string;
+  reason: ReportReason;
+  note: string | null;
+  status: string;
+  createdAt: string;
 };

@@ -27,16 +27,18 @@ export type MemoryOptionsSheetRef = {
 };
 
 type MemoryOptionsSheetProps = {
+  isOwner: boolean;
   visibility: MemoryVisibility;
   onChangeVisibility: (visibility: MemoryVisibility) => void;
   onDelete: () => void;
+  onReport: () => void;
 };
 
 export const MemoryOptionsSheet = forwardRef<
   MemoryOptionsSheetRef,
   MemoryOptionsSheetProps
 >(function MemoryOptionsSheet(
-  { visibility, onChangeVisibility, onDelete },
+  { isOwner, visibility, onChangeVisibility, onDelete, onReport },
   ref,
 ) {
   const insets = useSafeAreaInsets();
@@ -91,6 +93,11 @@ export const MemoryOptionsSheet = forwardRef<
     );
   }, [onDelete]);
 
+  const openReport = useCallback(() => {
+    sheetRef.current?.dismiss();
+    onReport();
+  }, [onReport]);
+
   const renderBackdrop = useCallback(
     (props: BottomSheetBackdropProps) => (
       <BottomSheetBackdrop
@@ -106,7 +113,7 @@ export const MemoryOptionsSheet = forwardRef<
   return (
     <BottomSheetModal
       ref={sheetRef}
-      snapPoints={["38%"]}
+      snapPoints={[isOwner ? "38%" : "22%"]}
       enableDynamicSizing={false}
       enablePanDownToClose
       topInset={insets.top}
@@ -117,35 +124,51 @@ export const MemoryOptionsSheet = forwardRef<
       <View
         style={[styles.content, { paddingBottom: Math.max(20, insets.bottom) }]}
       >
-        <Text style={styles.sectionLabel}>Visibility</Text>
-        <View style={styles.row}>
-          <Ionicons
-            name={isFriends ? "people-outline" : "lock-closed-outline"}
-            size={20}
-            color={BrandColors.ink}
-          />
-          <Text style={styles.rowLabel}>Visible to friends</Text>
-          <Switch
-            value={isFriends}
-            onValueChange={toggleVisibility}
-            trackColor={{ true: BrandColors.primary }}
-            accessibilityLabel="Visible to friends"
-          />
-        </View>
+        {isOwner ? (
+          <>
+            <Text style={styles.sectionLabel}>Visibility</Text>
+            <View style={styles.row}>
+              <Ionicons
+                name={isFriends ? "people-outline" : "lock-closed-outline"}
+                size={20}
+                color={BrandColors.ink}
+              />
+              <Text style={styles.rowLabel}>Visible to friends</Text>
+              <Switch
+                value={isFriends}
+                onValueChange={toggleVisibility}
+                trackColor={{ true: BrandColors.primary }}
+                accessibilityLabel="Visible to friends"
+              />
+            </View>
 
-        <View style={styles.divider} />
+            <View style={styles.divider} />
 
-        <Pressable
-          onPress={confirmDelete}
-          style={styles.row}
-          accessibilityRole="button"
-          accessibilityLabel="Delete memory"
-        >
-          <Ionicons name="trash-outline" size={20} color={BrandColors.danger} />
-          <Text style={[styles.rowLabel, styles.dangerLabel]}>
-            Delete memory
-          </Text>
-        </Pressable>
+            <Pressable
+              onPress={confirmDelete}
+              style={styles.row}
+              accessibilityRole="button"
+              accessibilityLabel="Delete memory"
+            >
+              <Ionicons name="trash-outline" size={20} color={BrandColors.danger} />
+              <Text style={[styles.rowLabel, styles.dangerLabel]}>
+                Delete memory
+              </Text>
+            </Pressable>
+          </>
+        ) : (
+          <Pressable
+            onPress={openReport}
+            style={styles.row}
+            accessibilityRole="button"
+            accessibilityLabel="Report memory"
+          >
+            <Ionicons name="flag-outline" size={20} color={BrandColors.danger} />
+            <Text style={[styles.rowLabel, styles.dangerLabel]}>
+              Report memory
+            </Text>
+          </Pressable>
+        )}
       </View>
     </BottomSheetModal>
   );

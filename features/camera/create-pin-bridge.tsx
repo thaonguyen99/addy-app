@@ -1,6 +1,7 @@
 /**
  * Optional context wrapper for Create Pin navigation.
- * API calls happen later on CreatePinScreen via useCreatePinSubmit (upload + POST /memories).
+ * Saving happens later on CreatePinScreen via useCreatePinSubmit, which queues
+ * the pin; features/pin-queue uploads it (upload + POST /memories).
  */
 import React, { createContext, useCallback, useContext } from "react";
 

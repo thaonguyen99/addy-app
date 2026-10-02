@@ -3,6 +3,7 @@ import { useCallback, useState } from "react";
 import { Alert } from "react-native";
 
 import { ensureMediaLibraryReadAccess } from "@/features/camera/permissions/media-library-access";
+import { prepareUploadImage } from "@/features/media/prepare-upload-image";
 import { checkImageSafety } from "@/features/moderation/check-image-safety";
 import { getApiErrorMessage } from "@/lib/api/errors";
 import {
@@ -44,7 +45,8 @@ export function useAvatarUpload() {
 
     setBusy(true);
     try {
-      const localUri = result.assets[0].uri;
+      // Re-encode first: strips EXIF/GPS before the photo leaves the device.
+      const { uri: localUri } = await prepareUploadImage(result.assets[0].uri);
       const safety = await checkImageSafety(localUri);
       if (!safety.safe) {
         Alert.alert(

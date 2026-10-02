@@ -9,6 +9,27 @@ export const HCM_COORDINATES: Coordinates = {
   longitude: 106.7009,
 };
 
+const UNRESOLVED_PLACE_PREFIX = "unresolved:";
+export const UNRESOLVED_PLACE_NAME = "Unnamed place";
+
+/**
+ * The user's GPS position when it can't be turned into a named place yet
+ * (offline). The offline pin queue resolves the name when it uploads.
+ */
+export function createUnresolvedPlace(coords: Coordinates): PlaceSuggestion {
+  return {
+    placeId: `${UNRESOLVED_PLACE_PREFIX}${coords.latitude},${coords.longitude}`,
+    name: UNRESOLVED_PLACE_NAME,
+    address: "Place name is filled in once you're back online",
+    latitude: coords.latitude,
+    longitude: coords.longitude,
+  };
+}
+
+export function isUnresolvedPlace(place: PlaceSuggestion): boolean {
+  return place.placeId.startsWith(UNRESOLVED_PLACE_PREFIX);
+}
+
 export function createHoChiMinhCityPlace(options?: {
   name?: string;
   placeId?: string;

@@ -28,6 +28,8 @@ import { MemoryOptionsSheet } from "@/features/memory/components/memory-options-
 import { ONBOARDING_MEMORY_DETAIL_TARGET_ID } from "@/features/onboarding/onboarding-tour";
 import type { ReactorsSheetRef } from "@/features/reactions/components/reactors-sheet";
 import { ReactorsSheet } from "@/features/reactions/components/reactors-sheet";
+import type { ReportSheetRef } from "@/features/reports/components/report-sheet";
+import { ReportSheet } from "@/features/reports/components/report-sheet";
 import { safeBack } from "@/lib/navigation/safe-router";
 import {
   useDeleteMemoryMutation,
@@ -114,6 +116,7 @@ export function MemoryDetailScreen({ id }: MemoryDetailScreenProps) {
   const toggleReaction = useToggleReactionMutation(id);
   const reactorsSheet = useRef<ReactorsSheetRef>(null);
   const optionsSheet = useRef<MemoryOptionsSheetRef>(null);
+  const reportSheet = useRef<ReportSheetRef>(null);
 
   const displayName = data?.isOwner
     ? (profile?.name ?? profile?.email ?? "You")
@@ -184,21 +187,19 @@ export function MemoryDetailScreen({ id }: MemoryDetailScreenProps) {
               <Ionicons name="chevron-back" size={22} color={BrandColors.ink} />
             </Pressable>
             <View style={styles.headerRight}>
-              {data.isOwner ? (
-                <Pressable
-                  onPress={openOptionsMenu}
-                  hitSlop={12}
-                  style={styles.circleButton}
-                  accessibilityRole="button"
-                  accessibilityLabel="Memory options"
-                >
-                  <Ionicons
-                    name="ellipsis-horizontal"
-                    size={20}
-                    color={BrandColors.ink}
-                  />
-                </Pressable>
-              ) : null}
+              <Pressable
+                onPress={openOptionsMenu}
+                hitSlop={12}
+                style={styles.circleButton}
+                accessibilityRole="button"
+                accessibilityLabel="Memory options"
+              >
+                <Ionicons
+                  name="ellipsis-horizontal"
+                  size={20}
+                  color={BrandColors.ink}
+                />
+              </Pressable>
               {data?.author?.avatarUrl ? (
                 <View style={styles.circleButton}>
                   <Image
@@ -326,10 +327,13 @@ export function MemoryDetailScreen({ id }: MemoryDetailScreenProps) {
       <ReactorsSheet ref={reactorsSheet} memoryId={id} />
       <MemoryOptionsSheet
         ref={optionsSheet}
+        isOwner={data?.isOwner ?? false}
         visibility={data?.visibility || "private"}
         onChangeVisibility={onChangeVisibility}
         onDelete={onDeleteMemory}
+        onReport={() => reportSheet.current?.present({ type: "MEMORY", id })}
       />
+      <ReportSheet ref={reportSheet} />
     </SafeAreaView>
   );
 }

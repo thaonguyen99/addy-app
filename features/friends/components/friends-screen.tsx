@@ -1,6 +1,6 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { router, useLocalSearchParams } from "expo-router";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -15,6 +15,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { BrandColors } from "@/constants/theme";
 import { UserRow, userDisplayName } from "@/components/ui/user-row";
 import { ScreenHeader } from "@/features/friends/components/screen-header";
+import type { ReportSheetRef } from "@/features/reports/components/report-sheet";
+import { ReportSheet } from "@/features/reports/components/report-sheet";
 import {
   useAcceptFriendRequestMutation,
   useBlockUserMutation,
@@ -106,7 +108,7 @@ export function FriendsScreen() {
 
 export function friendActionsAlert(
   user: PublicUser,
-  actions: { onRemove?: () => void; onBlock: () => void },
+  actions: { onRemove?: () => void; onBlock: () => void; onReport: () => void },
 ) {
   const name = userDisplayName(user);
   const buttons: {
@@ -117,6 +119,7 @@ export function friendActionsAlert(
   if (actions.onRemove) {
     buttons.push({ text: "Remove friend", onPress: actions.onRemove });
   }
+  buttons.push({ text: `Report ${name}`, onPress: actions.onReport });
   buttons.push({
     text: `Block ${name}`,
     style: "destructive",
@@ -137,44 +140,53 @@ function FriendsList() {
   const query = useFriendsQuery();
   const unfriend = useUnfriendMutation();
   const block = useBlockUserMutation();
+  const reportSheet = useRef<ReportSheetRef>(null);
   const friends = query.data?.pages.flatMap((p) => p.items) ?? [];
 
   if (query.isLoading) return <Loading />;
 
   return (
-    <FlatList
-      data={friends}
-      keyExtractor={(item) => item.user.id}
-      contentContainerStyle={styles.list}
-      renderItem={({ item }) => (
-        <UserRow
-          user={item.user}
-          right={
-            <Pressable
-              hitSlop={10}
-              onPress={() =>
-                friendActionsAlert(item.user, {
-                  onRemove: () => unfriend.mutate(item.user.id),
-                  onBlock: () => block.mutate(item.user.id),
-                })
-              }
-            >
-              <Ionicons
-                name="ellipsis-horizontal"
-                size={20}
-                color={BrandColors.neutralMuted}
-              />
-            </Pressable>
+    <>
+      <FlatList
+        data={friends}
+        keyExtractor={(item) => item.user.id}
+        contentContainerStyle={styles.list}
+        renderItem={({ item }) => (
+          <UserRow
+            user={item.user}
+            right={
+              <Pressable
+                hitSlop={10}
+                onPress={() =>
+                  friendActionsAlert(item.user, {
+                    onRemove: () => unfriend.mutate(item.user.id),
+                    onBlock: () => block.mutate(item.user.id),
+                    onReport: () =>
+                      reportSheet.current?.present({
+                        type: "USER",
+                        id: item.user.id,
+                      }),
+                  })
+                }
+              >
+                <Ionicons
+                  name="ellipsis-horizontal"
+                  size={20}
+                  color={BrandColors.neutralMuted}
+                />
+              </Pressable>
+            }
+          />
+        )}
+        onEndReached={() => {
+          if (query.hasNextPage && !query.isFetchingNextPage) {
+            void query.fetchNextPage();
           }
-        />
-      )}
-      onEndReached={() => {
-        if (query.hasNextPage && !query.isFetchingNextPage) {
-          void query.fetchNextPage();
-        }
-      }}
-      ListEmptyComponent={<Empty text="No friends yet. Add someone!" />}
-    />
+        }}
+        ListEmptyComponent={<Empty text="No friends yet. Add someone!" />}
+      />
+      <ReportSheet ref={reportSheet} />
+    </>
   );
 }
 

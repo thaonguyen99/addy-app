@@ -7,6 +7,7 @@ import { router } from "expo-router";
 import { useEffect, useMemo, useRef } from "react";
 
 import { useAuthStore } from "@/features/auth/store/auth-store";
+import { renderClippedTooltip } from "@/features/onboarding/components/clipped-tooltip";
 import { needsOnboarding } from "@/features/onboarding/needs-onboarding";
 import { onboardingTourTheme } from "@/features/onboarding/onboarding-theme";
 import { useOnboardingCaptureStore } from "@/features/onboarding/store/onboarding-capture-store";
@@ -52,19 +53,7 @@ export function useOnboardingTour() {
         description: "Tap here to snap a photo and pin it to a place.",
         tooltipPosition: "top",
         hidePrevButton: true,
-        // Progression happens once a pin is actually saved (see
-        // navigate-after-onboarding-pin.ts + memories-map-screen.tsx), not
-        // via a Next tap — hide it so it can't skip ahead of a real pin.
         hideNextButton: true,
-        // A custom tabBarButton wrapped in TourTarget isn't a reliable
-        // interactive touch-passthrough target (react-navigation's own
-        // button-slot layout gets in the way of the overlay's press-bands),
-        // so navigate from onSpotlightPress instead — a plain Pressable the
-        // overlay renders over the spotlight itself, unrelated to whether
-        // the real tab button underneath ever receives the touch. This also
-        // doesn't call nextStep(), so it can't skip ahead to step 2 early.
-        // Pause before navigating so the overlay is gone before the camera
-        // screen shows, rather than lingering over it until its focus effect.
         onSpotlightPress: () => {
           pauseTour();
           router.push("/(app)/(tabs)/camera");
@@ -127,18 +116,28 @@ export function useOnboardingTour() {
     hasStartedRef.current = true;
 
     useOnboardingCaptureStore.getState().setActive(true);
-    void startTour(steps, {
-      ...onboardingTourTheme,
-      tourId: ONBOARDING_TOUR_ID,
-      // A Modal overlay dismissed mid-navigation (every step here navigates)
-      // can leave an invisible native layer that blocks all touches; an
-      // inline layer at the app root unmounts cleanly.
-      overlayMode: "inline",
-      doneButtonText: "Got it",
-      onTourEnd: () => {
-        useOnboardingCaptureStore.getState().setActive(false);
-        completeOnboarding.mutate();
+    // `force` (3rd arg): the server's onboardingCompletedAt (needsOnboarding
+    // above) decides who sees the tour. Without it, the library's own
+    // per-device "completed" flag would hide the tour from every later
+    // account on this phone once any account finished it.
+    void startTour(
+      steps,
+      {
+        ...onboardingTourTheme,
+        tourId: ONBOARDING_TOUR_ID,
+        // A Modal overlay dismissed mid-navigation (every step here navigates)
+        // can leave an invisible native layer that blocks all touches; an
+        // inline layer at the app root unmounts cleanly.
+        overlayMode: "inline",
+        // Keeps "top" tooltips from covering (and eating taps on) the spotlight.
+        renderTooltip: renderClippedTooltip,
+        doneButtonText: "Got it",
+        onTourEnd: () => {
+          useOnboardingCaptureStore.getState().setActive(false);
+          completeOnboarding.mutate();
+        },
       },
-    });
+      true,
+    );
   }, [status, user, steps, startTour, completeOnboarding]);
 }

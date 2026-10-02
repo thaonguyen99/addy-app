@@ -8,9 +8,11 @@ import {
 import * as friendsApi from "@/lib/api/friends";
 import * as memoriesApi from "@/lib/api/memories";
 import * as notificationsApi from "@/lib/api/notifications";
+import * as reportsApi from "@/lib/api/reports";
 import * as socialApi from "@/lib/api/social";
 import { mapBoundsKey, queryKeys } from "@/lib/query/keys";
 import type {
+  CreateReportInput,
   DevicePlatform,
   FriendRequestDirection,
   MapBounds,
@@ -302,5 +304,13 @@ export function useRegisterDeviceTokenMutation() {
   return useMutation({
     mutationFn: (input: { token: string; platform: DevicePlatform }) =>
       notificationsApi.registerDeviceToken(input.token, input.platform),
+  });
+}
+
+// --- Reports ----------------------------------------------------------------
+
+export function useCreateReportMutation() {
+  return useMutation({
+    mutationFn: (input: CreateReportInput) => reportsApi.createReport(input),
   });
 }

@@ -43,8 +43,14 @@ export async function uploadAvatar(localUri: string): Promise<MediaUploadResult>
   return parseApiResponse<MediaUploadResult>(response.data);
 }
 
+/**
+ * `idempotency` (offline queue): files are stored under the clientId at
+ * position `index + i`, so re-uploading after a failure replaces instead of
+ * duplicating. Send the same clientId to POST /memories afterwards.
+ */
 export async function uploadImages(
   localUris: readonly string[],
+  idempotency?: { clientId: string; index?: number },
 ): Promise<MediaUploadResult[]> {
   const form = new FormData();
   for (const localUri of localUris.slice(0, MAX_IMAGES_PER_UPLOAD)) {
@@ -53,6 +59,14 @@ export async function uploadImages(
 
   const response = await apiClient.post("/media/upload/multiple", form, {
     headers: { "Content-Type": "multipart/form-data" },
+    ...(idempotency
+      ? {
+          params: {
+            clientId: idempotency.clientId,
+            index: idempotency.index ?? 0,
+          },
+        }
+      : {}),
   });
 
   const result = parseApiResponse<MediaUploadMultipleResult>(response.data);

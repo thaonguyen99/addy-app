@@ -1,33 +1,60 @@
-import { useTourGuide } from "@wrack/react-native-tour-guide";
+import * as Crypto from "expo-crypto";
 import { useState } from "react";
 import { Alert } from "react-native";
 
+import { useAuthStore } from "@/features/auth/store/auth-store";
 import { useCameraSession } from "@/features/camera/context/camera-session-context";
 import { navigateAfterCreatePin } from "@/features/create-pin/navigate-after-create-pin";
 import { useCreatePinHandoffStore } from "@/features/create-pin/store/create-pin-handoff-store";
 import { removeDraftImages } from "@/features/drafts/draft-image-storage";
+import {
+  isUnresolvedPlace,
+  UNRESOLVED_PLACE_NAME,
+} from "@/features/location/fallback-places";
 import { placeSuggestionToPlaceInput } from "@/features/location/place-input";
 import { checkImagesSafety } from "@/features/moderation/check-image-safety";
 import { handleOnboardingPinSaved } from "@/features/onboarding/navigate-after-onboarding-pin";
 import { useOnboardingCaptureStore } from "@/features/onboarding/store/onboarding-capture-store";
-import { toApiClientError } from "@/lib/api/errors";
+import { copyPhotosToPending } from "@/features/pin-queue/pin-queue-storage";
+import { usePinQueueStore } from "@/features/pin-queue/pin-queue-store";
 import {
-  useCreateMemoryMutation,
-  useUploadImagesMutation,
-} from "@/lib/query/hooks";
+  queuedPinCoordinates,
+  type QueuedPin,
+  type QueuedPinPlace,
+} from "@/features/pin-queue/pin-queue-types";
+import {
+  getUploadedMemoryId,
+  processPinQueue,
+} from "@/features/pin-queue/process-pin-queue";
 import type { AddyMemoryImage } from "@/types/addy-memory";
+import type { PlaceSuggestion } from "@/types/api";
 
+function toQueuedPlace(place: PlaceSuggestion): QueuedPinPlace {
+  if (isUnresolvedPlace(place)) {
+    const name = place.name.trim();
+    return {
+      kind: "coords",
+      latitude: place.latitude,
+      longitude: place.longitude,
+      name: name && name !== UNRESOLVED_PLACE_NAME ? name : null,
+    };
+  }
+  return { kind: "resolved", input: placeSuggestionToPlaceInput(place) };
+}
+
+/**
+ * Saving a pin never waits on the network: the photos are copied into the
+ * offline queue and the flow finishes immediately. The queue processor
+ * uploads it (now, or whenever the connection comes back).
+ */
 export function useCreatePinSubmit(images: readonly AddyMemoryImage[]) {
   const [submitting, setSubmitting] = useState(false);
-  const uploadMutation = useUploadImagesMutation();
-  const createMutation = useCreateMemoryMutation();
   const clearHandoff = useCreatePinHandoffStore((s) => s.clear);
   const moodScore = useCreatePinHandoffStore((s) => s.moodScore);
   const handoffFeeling = useCreatePinHandoffStore((s) => s.feeling);
   const selectedPlace = useCreatePinHandoffStore((s) => s.selectedPlace);
   const visibility = useCreatePinHandoffStore((s) => s.visibility);
   const { clearSession, reloadDrafts } = useCameraSession();
-  const { resumeTour } = useTourGuide();
 
   const submit = async () => {
     if (images.length === 0) {
@@ -40,10 +67,13 @@ export function useCreatePinSubmit(images: readonly AddyMemoryImage[]) {
       return null;
     }
 
+    const userId = useAuthStore.getState().user?.id;
+    if (!userId) return null;
+
     setSubmitting(true);
-    const cover = images[0];
 
     try {
+      // On-device check — works offline.
       const safetyResults = await checkImagesSafety(
         images.map((image) => image.uri),
       );
@@ -55,57 +85,56 @@ export function useCreatePinSubmit(images: readonly AddyMemoryImage[]) {
         return null;
       }
 
-      const uploadedImages = await uploadMutation.mutateAsync(
+      const queue = usePinQueueStore.getState();
+      if (!queue.hydrated || queue.userId !== userId) {
+        await queue.hydrate(userId);
+      }
+
+      const clientId = Crypto.randomUUID();
+      const photoPaths = await copyPhotosToPending(
+        clientId,
         images.map((image) => image.uri),
       );
-
-      console.log("submit val", {
-        place: placeSuggestionToPlaceInput(selectedPlace),
-        images: uploadedImages.map((uploaded, index) => ({
-          type: index === 0 ? ("cover" as const) : ("other" as const),
-          imageUrl: uploaded.imageUrl,
-          imagePublicId: uploaded.imagePublicId,
-          sortOrder: index,
-        })),
-        moodScore: moodScore ?? undefined,
-        feeling: handoffFeeling.trim() || undefined,
-        capturedAt: cover.createdAt,
+      const now = new Date().toISOString();
+      const entry: QueuedPin = {
+        clientId,
+        userId,
+        photoPaths,
+        place: toQueuedPlace(selectedPlace),
+        feeling: handoffFeeling.trim() || null,
+        moodScore,
         visibility,
-      });
+        capturedAt: images[0].createdAt,
+        createdAt: now,
+        attempts: 0,
+        nextAttemptAt: 0,
+        status: "pending",
+      };
+      await usePinQueueStore.getState().enqueue(entry);
 
-      const memory = await createMutation.mutateAsync({
-        place: placeSuggestionToPlaceInput(selectedPlace),
-        images: uploadedImages.map((uploaded, index) => ({
-          type: index === 0 ? ("cover" as const) : ("other" as const),
-          imageUrl: uploaded.imageUrl,
-          imagePublicId: uploaded.imagePublicId,
-          sortOrder: index,
-        })),
-        moodScore: moodScore ?? undefined,
-        feeling: handoffFeeling.trim() || undefined,
-        capturedAt: cover.createdAt,
-        visibility,
-      });
-
-      console.log("🚀 ~ submit ~ memory:", memory);
-
+      // The queue owns its own copies now — the drafts can go.
       await removeDraftImages(images.map((img) => img.id));
       clearSession();
       await reloadDrafts();
+
+      const coords = queuedPinCoordinates(entry);
       if (useOnboardingCaptureStore.getState().active) {
-        handleOnboardingPinSaved(memory, { resumeTour });
+        // The tour opens the created memory next, so give the upload a
+        // chance first; offline it just continues without one.
+        await processPinQueue({ ignoreBackoff: true });
+        handleOnboardingPinSaved(getUploadedMemoryId(clientId) ?? null, coords);
       } else {
-        navigateAfterCreatePin(
-          memory.id,
-          memory.place.latitude,
-          memory.place.longitude,
-        );
+        navigateAfterCreatePin(coords.latitude, coords.longitude);
+        void processPinQueue({ ignoreBackoff: true });
       }
       clearHandoff();
-      return memory;
+      return entry;
     } catch (error) {
-      const apiError = toApiClientError(error);
-      Alert.alert("Create pin", apiError.message);
+      console.warn("[create-pin] could not queue pin", error);
+      Alert.alert(
+        "Create pin",
+        "Couldn't save this memory on your phone. Please try again.",
+      );
       return null;
     } finally {
       setSubmitting(false);

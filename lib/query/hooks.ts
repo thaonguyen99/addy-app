@@ -6,14 +6,14 @@ import {
 } from "@tanstack/react-query";
 
 import * as authApi from "@/lib/api/auth";
-import { uploadAvatar, uploadImage, uploadImages } from "@/lib/api/media";
+import { uploadAvatar, uploadImage } from "@/lib/api/media";
 import * as memoriesApi from "@/lib/api/memories";
 import { fetchNearbyPlaces } from "@/lib/api/places";
 import * as usersApi from "@/lib/api/users";
 import { useAuthStore } from "@/features/auth/store/auth-store";
 import type { Coordinates } from "@/features/location/get-current-coordinates";
 import { mapBoundsKey, queryKeys } from "@/lib/query/keys";
-import type { CreateMemoryInput, MapBounds } from "@/types/api";
+import type { MapBounds } from "@/types/api";
 
 export * from "@/lib/query/hooks-social";
 
@@ -47,22 +47,6 @@ export function useGoogleSignInMutation() {
 
 export function useUploadImageMutation() {
   return useMutation({ mutationFn: uploadImage });
-}
-
-export function useUploadImagesMutation() {
-  return useMutation({ mutationFn: uploadImages });
-}
-
-export function useCreateMemoryMutation() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: (input: CreateMemoryInput) => memoriesApi.createMemory(input),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["memories", "map"] });
-      queryClient.invalidateQueries({ queryKey: queryKeys.memoriesFeed });
-      queryClient.invalidateQueries({ queryKey: queryKeys.stats });
-    },
-  });
 }
 
 /** Every memory the user has created, newest first — feeds the map drawer. */

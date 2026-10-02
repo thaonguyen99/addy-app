@@ -58,6 +58,9 @@ import {
   type ClusterGroup,
 } from "@/features/map/utils/cluster-pins";
 import { pinsToTrailGeoJSON } from "@/features/map/utils/pins-to-trail";
+import { usePinQueueStore } from "@/features/pin-queue/pin-queue-store";
+import { queuedPinCoordinates } from "@/features/pin-queue/pin-queue-types";
+import { showQueuedPinActions } from "@/features/pin-queue/queued-pin-actions";
 import {
   ONBOARDING_ADD_MEMORY_STEP_ID,
   ONBOARDING_MAP_PIN_TARGET_ID,
@@ -130,7 +133,6 @@ function SuccessToast({ visible }: { visible: boolean }) {
 
 export function MemoriesMapScreen() {
   const cameraRef = useRef<CameraRef>(null);
-  const mapContainerRef = useRef<View>(null);
   const placeMemoriesSheetRef = useRef<PlaceMemoriesSheetRef>(null);
   const allMemoriesSheetRef = useRef<AllMemoriesSheetRef>(null);
   const clusterPinsSheetRef = useRef<ClusterPinsSheetRef>(null);
@@ -139,13 +141,8 @@ export function MemoriesMapScreen() {
   const showSuccessToast = useMapFocusStore((s) => s.showSuccessToast);
   const setShowSuccessToast = useMapFocusStore((s) => s.setShowSuccessToast);
 
-  const { activeTourId, currentStep, activeSteps, nextStep } = useTourGuide();
-  const [pinHighlight, setPinHighlight] = useState({
-    width: MARKER_VISUAL_WIDTH + HIGHLIGHT_PADDING * 2,
-    height: MARKER_VISUAL_HEIGHT + HIGHLIGHT_PADDING * 2,
-    left: 0,
-    top: 0,
-  });
+  const { activeTourId, currentStep, activeSteps, nextStep, resumeTour } =
+    useTourGuide();
 
   const [debouncedBounds, setDebouncedBounds] = useState<MapBounds | null>(
     DEFAULT_BOUNDS,
@@ -176,22 +173,29 @@ export function MemoriesMapScreen() {
             activeSteps[currentStep]?.id === ONBOARDING_ADD_MEMORY_STEP_ID;
           if (!isOnboardingAddMemoryStep) return;
 
-          mapContainerRef.current?.measure((_x, _y, width, height) => {
-            setPinHighlight({
-              width: MARKER_VISUAL_WIDTH + HIGHLIGHT_PADDING * 2,
-              height: MARKER_VISUAL_HEIGHT + HIGHLIGHT_PADDING * 2,
-              left: width / 2 - (MARKER_VISUAL_WIDTH + HIGHLIGHT_PADDING * 2) / 2,
-              top: height / 2 - MARKER_VISUAL_HEIGHT - HIGHLIGHT_PADDING * 2,
-            });
-            nextStep();
-          });
+          // The tour was paused for the create flow. Resume only now, with the
+          // modals dismissed: the overlay measures its own screen origin when
+          // it re-mounts, and a page-sheet modal still on screen shifts that
+          // by the card offset for every later step. The highlight target is
+          // always centered over the pin (see the TourTarget below), so the
+          // tour can advance right away.
+          resumeTour();
+          nextStep();
         }, 650);
 
         return () => clearTimeout(settleTimer);
       }, 350);
 
       return () => clearTimeout(timer);
-    }, [pendingFocus, setPendingFocus, activeTourId, currentStep, activeSteps, nextStep]),
+    }, [
+      pendingFocus,
+      setPendingFocus,
+      activeTourId,
+      currentStep,
+      activeSteps,
+      nextStep,
+      resumeTour,
+    ]),
   );
 
   // Auto-dismiss the success toast
@@ -223,6 +227,9 @@ export function MemoriesMapScreen() {
   const friendPins = showFriends ? (friendsData?.pins ?? []) : [];
   const showFriendsEmptyHint =
     showFriends && !isFriendsMapLoading && friendPins.length === 0;
+
+  // Not-yet-uploaded pins: drawn on top, never clustered or on the trail.
+  const queuedPins = usePinQueueStore((s) => s.entries);
 
   const { data: stats, isLoading: isStatsLoading } = useStatsQuery();
   const totalMemories = stats?.totalMemories;
@@ -301,7 +308,7 @@ export function MemoriesMapScreen() {
   }
 
   return (
-    <View style={styles.flex} ref={mapContainerRef}>
+    <View style={styles.flex}>
       <Map
         style={styles.map}
         mapStyle={GOONG_STYLE_URL}
@@ -379,16 +386,37 @@ export function MemoriesMapScreen() {
             </Marker>
           ),
         )}
+        {queuedPins.map((pin) => {
+          const { latitude, longitude } = queuedPinCoordinates(pin);
+          return (
+            <Marker
+              key={`queued-${pin.clientId}`}
+              lngLat={[longitude, latitude]}
+              anchor="bottom"
+              onPress={() => showQueuedPinActions(pin)}
+            >
+              <MapPhotoPin
+                imageUrl={pin.photoPaths[0]}
+                queueStatus={pin.status === "failed" ? "failed" : "pending"}
+              />
+            </Marker>
+          );
+        })}
       </Map>
 
-      {/* Invisible target for the onboarding tour's "map + pin" step — see
-          the pendingFocus effect above for how its position is computed. */}
-      <TourTarget id={ONBOARDING_MAP_PIN_TARGET_ID}>
-        <View
-          pointerEvents="none"
-          style={[styles.pinHighlightTarget, pinHighlight]}
-        />
-      </TourTarget>
+      {/* Invisible target for the onboarding tour's "map + pin" step. After
+          flyTo, the new pin's tip sits at the map's center, so the target is
+          laid out around that center by flexbox — in the same container as
+          the map, so it can't drift from it the way a measured offset can.
+          TourTarget measures its own wrapper, so the size lives on it. */}
+      <View pointerEvents="none" style={styles.pinHighlightFrame}>
+        <TourTarget
+          id={ONBOARDING_MAP_PIN_TARGET_ID}
+          style={styles.pinHighlightTarget}
+        >
+          <View style={styles.flex} />
+        </TourTarget>
+      </View>
 
       <SafeAreaView
         style={styles.overlay}
@@ -465,7 +493,19 @@ export function MemoriesMapScreen() {
 const styles = StyleSheet.create({
   flex: { flex: 1 },
   map: { flex: 1 },
-  pinHighlightTarget: { position: "absolute" },
+  pinHighlightFrame: {
+    ...StyleSheet.absoluteFillObject,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  // Centered box, lifted by the marker height (marginBottom shifts a centered
+  // box up by half of it): spans [center - H - pad, center + pad] vertically,
+  // i.e. the pin (which extends up from its tip at the center) plus padding.
+  pinHighlightTarget: {
+    width: MARKER_VISUAL_WIDTH + HIGHLIGHT_PADDING * 2,
+    height: MARKER_VISUAL_HEIGHT + HIGHLIGHT_PADDING * 2,
+    marginBottom: MARKER_VISUAL_HEIGHT,
+  },
   safe: { flex: 1, backgroundColor: BrandColors.paper },
   overlay: { position: "absolute", top: 0, left: 0, right: 0 },
 

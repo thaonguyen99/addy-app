@@ -1,7 +1,7 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { TourTarget } from "@wrack/react-native-tour-guide";
 import { router } from "expo-router";
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import {
   ActivityIndicator,
   FlatList,
@@ -23,11 +23,19 @@ import { MemoryFeedCard } from "@/features/feed/components/memory-feed-card";
 import { useMemoryFeed } from "@/features/feed/hooks/use-memory-feed";
 import { useMapFocusStore } from "@/features/map/store/map-focus-store";
 import { ONBOARDING_ADD_FRIEND_TARGET_ID } from "@/features/onboarding/onboarding-tour";
+import { QueuedPinCard } from "@/features/pin-queue/components/queued-pin-card";
+import { usePinQueueStore } from "@/features/pin-queue/pin-queue-store";
+import type { QueuedPin } from "@/features/pin-queue/pin-queue-types";
 import { useFriendPinNearby } from "@/features/social/hooks/use-friend-pin-nearby";
 import { useStatsQuery } from "@/lib/query/hooks";
 import type { MemoryListItem } from "@/types/api";
 
 const GRID_COLUMNS = 3;
+
+/** Home grid rows: queued (not yet uploaded) pins first, then server memories. */
+type HomeGridItem =
+  | { kind: "queued"; key: string; pin: QueuedPin }
+  | { kind: "memory"; key: string; memory: MemoryListItem };
 const GRID_GAP = 8;
 const GRID_PADDING = 24;
 
@@ -42,6 +50,16 @@ export default function HomeScreen() {
     refetch,
     fetchNextPage,
   } = useMemoryFeed(true);
+  const queuedPins = usePinQueueStore((s) => s.entries);
+  const gridItems = useMemo<HomeGridItem[]>(
+    () => [
+      ...[...queuedPins]
+        .reverse()
+        .map((pin) => ({ kind: "queued" as const, key: `queued-${pin.clientId}`, pin })),
+      ...memories.map((memory) => ({ kind: "memory" as const, key: memory.id, memory })),
+    ],
+    [queuedPins, memories],
+  );
   const { width: screenWidth } = useWindowDimensions();
   const { pin: nearbyFriendPin, dismiss: dismissNearbyPin } =
     useFriendPinNearby();
@@ -68,9 +86,13 @@ export default function HomeScreen() {
   }, []);
 
   const renderItem = useCallback(
-    ({ item }: { item: MemoryListItem }) => (
+    ({ item }: { item: HomeGridItem }) => (
       <View style={{ width: tileSize }}>
-        <MemoryFeedCard memory={item} onPress={openMemory} compact />
+        {item.kind === "queued" ? (
+          <QueuedPinCard pin={item.pin} />
+        ) : (
+          <MemoryFeedCard memory={item.memory} onPress={openMemory} compact />
+        )}
       </View>
     ),
     [openMemory, tileSize],
@@ -143,8 +165,8 @@ export default function HomeScreen() {
         </Text>
       </ChatBubbleBanner>
       <FlatList
-        data={memories}
-        keyExtractor={(item) => item.id}
+        data={gridItems}
+        keyExtractor={(item) => item.key}
         renderItem={renderItem}
         numColumns={GRID_COLUMNS}
         columnWrapperStyle={{ gap: GRID_GAP }}
