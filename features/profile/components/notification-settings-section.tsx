@@ -12,6 +12,7 @@ const ROWS: { key: keyof NotificationPreferences; label: string }[] = [
   { key: "friendRequestReceived", label: "Friend request received" },
   { key: "friendRequestAccepted", label: "Friend request accepted" },
   { key: "reactionReceived", label: "Reactions on my memories" },
+  { key: "messages", label: "Messages on memories" },
 ];
 
 export function NotificationSettingsSection() {

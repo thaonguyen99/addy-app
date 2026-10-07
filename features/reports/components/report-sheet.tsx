@@ -39,7 +39,7 @@ export type ReportSheetRef = {
   dismiss: () => void;
 };
 
-/** Pick a reason (+ optional note) and POST /reports for a memory or user. */
+/** Pick a reason (+ optional note) and POST /reports for a memory, user or message. */
 export const ReportSheet = forwardRef<ReportSheetRef>(function ReportSheet(_props, ref) {
   const insets = useSafeAreaInsets();
   const sheetRef = useRef<BottomSheetModal>(null);
@@ -104,7 +104,12 @@ export const ReportSheet = forwardRef<ReportSheetRef>(function ReportSheet(_prop
     [],
   );
 
-  const title = target?.type === "USER" ? "Report this user" : "Report this memory";
+  const title =
+    target?.type === "USER"
+      ? "Report this user"
+      : target?.type === "MESSAGE"
+        ? "Report this message"
+        : "Report this memory";
 
   return (
     <BottomSheetModal

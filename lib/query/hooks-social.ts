@@ -144,6 +144,24 @@ export function useResolveInviteQuery(token: string | undefined) {
 
 // --- Blocking --------------------------------------------------------------
 
+/**
+ * A block/unblock changes what the server shows everywhere: it ends the
+ * friendship, hides (or restores) the person's messages, likes and reactions,
+ * and flips their relationship back to "none". Refetch all of it so the change
+ * shows up without an app restart.
+ */
+function invalidateAfterBlockChange(
+  queryClient: ReturnType<typeof useQueryClient>,
+) {
+  invalidateSocialLists(queryClient);
+  queryClient.invalidateQueries({ queryKey: ["users", "invite", "resolve"] });
+  queryClient.invalidateQueries({ queryKey: ["memories", "messages"] });
+  queryClient.invalidateQueries({ queryKey: ["memories", "detail"] });
+  queryClient.invalidateQueries({ queryKey: ["memories", "reactions"] });
+  queryClient.invalidateQueries({ queryKey: queryKeys.memoriesFeed });
+  queryClient.invalidateQueries({ queryKey: ["memories", "place"] });
+}
+
 export function useBlockedUsersQuery(enabled = true) {
   return useInfiniteQuery({
     queryKey: queryKeys.blockedUsers,
@@ -158,7 +176,7 @@ export function useBlockUserMutation() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (userId: string) => socialApi.blockUser(userId),
-    onSuccess: () => invalidateSocialLists(queryClient),
+    onSuccess: () => invalidateAfterBlockChange(queryClient),
   });
 }
 
@@ -166,10 +184,7 @@ export function useUnblockUserMutation() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (userId: string) => socialApi.unblockUser(userId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.blockedUsers });
-      queryClient.invalidateQueries({ queryKey: ["users", "search"] });
-    },
+    onSuccess: () => invalidateAfterBlockChange(queryClient),
   });
 }
 

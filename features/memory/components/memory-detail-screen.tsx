@@ -2,11 +2,12 @@ import Ionicons from "@expo/vector-icons/Ionicons";
 import { TourTarget } from "@wrack/react-native-tour-guide";
 import * as Haptics from "expo-haptics";
 import { Image } from "expo-image";
-import { useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
   Dimensions,
+  FlatList,
   NativeScrollEvent,
   NativeSyntheticEvent,
   Pressable,
@@ -15,6 +16,7 @@ import {
   Text,
   View,
 } from "react-native";
+import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { StickerCard } from "@/components/ui/sticker-card";
@@ -23,6 +25,16 @@ import { StickerBorderWidth, StickerRadius } from "@/constants/sticker-style";
 import { BrandColors } from "@/constants/theme";
 import { MoodSticker } from "@/features/feed/components/mood-sticker";
 import { formatCapturedAtLabel } from "@/features/feed/utils/format-relative-time";
+import { useAuthStore } from "@/features/auth/store/auth-store";
+import {
+  MessageBubble,
+  type ThreadItem,
+} from "@/features/memory/components/message-bubble";
+import type { MessageActionsSheetRef } from "@/features/memory/components/message-actions-sheet";
+import { MessageActionsSheet } from "@/features/memory/components/message-actions-sheet";
+import { MessageComposer } from "@/features/memory/components/message-composer";
+import { MessageThreadHeader } from "@/features/memory/components/message-thread-header";
+import { useMessageThread } from "@/features/memory/hooks/use-message-thread";
 import type { MemoryOptionsSheetRef } from "@/features/memory/components/memory-options-sheet";
 import { MemoryOptionsSheet } from "@/features/memory/components/memory-options-sheet";
 import { ONBOARDING_MEMORY_DETAIL_TARGET_ID } from "@/features/onboarding/onboarding-tour";
@@ -30,21 +42,27 @@ import type { ReactorsSheetRef } from "@/features/reactions/components/reactors-
 import { ReactorsSheet } from "@/features/reactions/components/reactors-sheet";
 import type { ReportSheetRef } from "@/features/reports/components/report-sheet";
 import { ReportSheet } from "@/features/reports/components/report-sheet";
+import { showToast } from "@/features/toast/toast-store";
+import { getApiErrorMessage } from "@/lib/api/errors";
 import { safeBack } from "@/lib/navigation/safe-router";
 import {
   useDeleteMemoryMutation,
+  useDeleteMessageMutation,
+  useEditMessageMutation,
   useMemoryQuery,
   useProfileQuery,
   useToggleReactionMutation,
   useUpdateMemoryMutation,
 } from "@/lib/query/hooks";
-import type { MemoryImage, MemoryVisibility } from "@/types/api";
+import type { MemoryImage, MemoryMessage, MemoryVisibility } from "@/types/api";
 
 const SCREEN_WIDTH = Dimensions.get("window").width;
 const HERO_PADDING = 20;
 const STRIP_INSET = 10;
 const HERO_WIDTH = SCREEN_WIDTH - HERO_PADDING * 2 - STRIP_INSET * 2;
 const HERO_HEIGHT = 300;
+/** Start loading older messages when scrolling up within this many px of the thread top. */
+const LOAD_OLDER_THRESHOLD = 160;
 
 type MemoryDetailScreenProps = {
   id: string;
@@ -117,6 +135,98 @@ export function MemoryDetailScreen({ id }: MemoryDetailScreenProps) {
   const reactorsSheet = useRef<ReactorsSheetRef>(null);
   const optionsSheet = useRef<MemoryOptionsSheetRef>(null);
   const reportSheet = useRef<ReportSheetRef>(null);
+  const listRef = useRef<FlatList<ThreadItem>>(null);
+  const viewerId = useAuthStore((s) => s.user?.id);
+
+  // Private memories have no thread at all — don't even fetch it.
+  const showThread = data !== undefined && data.visibility !== "private";
+  const thread = useMessageThread(id, showThread);
+  const [draft, setDraft] = useState("");
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const editMessage = useEditMessageMutation(id);
+  const deleteMessage = useDeleteMessageMutation(id);
+  const messageActions = useRef<MessageActionsSheetRef>(null);
+
+  // Thread top in list coordinates = height of the list header (hero + label).
+  const threadTopRef = useRef(0);
+  const lastScrollYRef = useRef(0);
+
+  const onListScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const y = e.nativeEvent.contentOffset.y;
+    const scrollingUp = y < lastScrollYRef.current;
+    lastScrollYRef.current = y;
+    if (
+      scrollingUp &&
+      thread.hasOlder &&
+      y < threadTopRef.current + LOAD_OLDER_THRESHOLD
+    ) {
+      thread.loadOlder();
+    }
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setDraft("");
+  };
+
+  const onSend = () => {
+    const text = draft.trim();
+    if (!text) return;
+    if (editingId) {
+      editMessage.mutate(
+        { id: editingId, text },
+        {
+          onSuccess: cancelEdit,
+          onError: (error) =>
+            showToast(getApiErrorMessage(error, "Couldn't save your edit.")),
+        },
+      );
+      return;
+    }
+    thread.send(text);
+    setDraft("");
+    requestAnimationFrame(() =>
+      listRef.current?.scrollToEnd({ animated: true }),
+    );
+  };
+
+  const onMessageLongPress = useCallback((message: MemoryMessage) => {
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    messageActions.current?.present(message);
+  }, []);
+
+  const onEditMessage = (message: MemoryMessage) => {
+    setEditingId(message.id);
+    setDraft(message.text);
+  };
+
+  const onDeleteMessage = (message: MemoryMessage) => {
+    if (message.id === editingId) cancelEdit();
+    deleteMessage.mutate(message.id, {
+      onError: (error) =>
+        showToast(getApiErrorMessage(error, "Couldn't delete that message.")),
+    });
+  };
+
+  const renderThreadItem = useCallback(
+    ({ item }: { item: ThreadItem }) => (
+      <MessageBubble
+        item={item}
+        viewerId={viewerId}
+        viewerIsMemoryOwner={data?.isOwner ?? false}
+        onToggleLike={thread.toggleLike}
+        onRetry={thread.retry}
+        onLongPress={onMessageLongPress}
+      />
+    ),
+    [
+      viewerId,
+      data?.isOwner,
+      thread.toggleLike,
+      thread.retry,
+      onMessageLongPress,
+    ],
+  );
 
   const displayName = data?.isOwner
     ? (profile?.name ?? profile?.email ?? "You")
@@ -172,134 +282,158 @@ export function MemoryDetailScreen({ id }: MemoryDetailScreenProps) {
           <Text style={styles.errorText}>Memory not found</Text>
         </View>
       ) : (
-        <ScrollView
-          contentContainerStyle={styles.scroll}
-          showsVerticalScrollIndicator={false}
-        >
-          <View style={styles.headerRow}>
-            <Pressable
-              onPress={() => safeBack("/(app)/(tabs)")}
-              hitSlop={12}
-              style={styles.circleButton}
-              accessibilityRole="button"
-              accessibilityLabel="Back"
-            >
-              <Ionicons name="chevron-back" size={22} color={BrandColors.ink} />
-            </Pressable>
-            <View style={styles.headerRight}>
-              <Pressable
-                onPress={openOptionsMenu}
-                hitSlop={12}
-                style={styles.circleButton}
-                accessibilityRole="button"
-                accessibilityLabel="Memory options"
+        <KeyboardAvoidingView behavior="padding" style={styles.flex}>
+          <FlatList
+            ref={listRef}
+            data={showThread && !thread.isUnavailable ? thread.items : []}
+            keyExtractor={(item) =>
+              item.kind === "message" ? item.message.id : item.clientId
+            }
+            renderItem={renderThreadItem}
+            onScroll={onListScroll}
+            scrollEventThrottle={32}
+            // Keep the visible bubbles still when an older page is prepended.
+            maintainVisibleContentPosition={{ minIndexForVisible: 1 }}
+            keyboardShouldPersistTaps="handled"
+            keyboardDismissMode="interactive"
+            contentContainerStyle={styles.scroll}
+            showsVerticalScrollIndicator={false}
+            ListHeaderComponent={
+              <View
+                onLayout={(e) => {
+                  threadTopRef.current = e.nativeEvent.layout.height;
+                }}
               >
-                <Ionicons
-                  name="ellipsis-horizontal"
-                  size={20}
-                  color={BrandColors.ink}
-                />
-              </Pressable>
-              {data?.author?.avatarUrl ? (
-                <View style={styles.circleButton}>
-                  <Image
-                    source={{ uri: data.author.avatarUrl }}
-                    style={styles.photo}
-                    contentFit="cover"
-                    transition={150}
-                  />
+                <View style={styles.headerRow}>
+                  <Pressable
+                    onPress={() => safeBack("/(app)/(tabs)")}
+                    hitSlop={12}
+                    style={styles.circleButton}
+                    accessibilityRole="button"
+                    accessibilityLabel="Back"
+                  >
+                    <Ionicons
+                      name="chevron-back"
+                      size={22}
+                      color={BrandColors.ink}
+                    />
+                  </Pressable>
+                  <View style={styles.headerRight}>
+                    <Pressable
+                      onPress={openOptionsMenu}
+                      hitSlop={12}
+                      style={styles.circleButton}
+                      accessibilityRole="button"
+                      accessibilityLabel="Memory options"
+                    >
+                      <Ionicons
+                        name="ellipsis-horizontal"
+                        size={20}
+                        color={BrandColors.ink}
+                      />
+                    </Pressable>
+                    {data?.author?.avatarUrl ? (
+                      <View style={styles.circleButton}>
+                        <Image
+                          source={{ uri: data.author.avatarUrl }}
+                          style={styles.photo}
+                          contentFit="cover"
+                          transition={150}
+                        />
+                      </View>
+                    ) : (
+                      <View style={styles.circleButton}>
+                        <Text style={styles.avatarText}>{initials}</Text>
+                      </View>
+                    )}
+                  </View>
                 </View>
-              ) : (
-                <View style={styles.circleButton}>
-                  <Text style={styles.avatarText}>{initials}</Text>
-                </View>
-              )}
-            </View>
-          </View>
 
-          {/* Chat-bubble reveal — matches the "memory reveal" moodboard
+                {/* Chat-bubble reveal — matches the "memory reveal" moodboard
               reference: an incoming-message bubble, then a single photo
               strip card (photo inset, caption + place tag inside it,
               mood sticker hanging off its top-right corner). */}
-          <View style={styles.heroSection}>
-            <View style={styles.chatBubble}>
-              <Text style={styles.chatBubbleText}>{bubbleLabel} ~~</Text>
-            </View>
+                <View style={styles.heroSection}>
+                  <View style={styles.chatBubble}>
+                    <Text style={styles.chatBubbleText}>{bubbleLabel} ~~</Text>
+                  </View>
 
-            <View style={styles.stripWrap}>
-              <TourTarget id={ONBOARDING_MEMORY_DETAIL_TARGET_ID}>
-                {/* Explicit size at every layer — a horizontal ScrollView
+                  <View style={styles.stripWrap}>
+                    <TourTarget id={ONBOARDING_MEMORY_DETAIL_TARGET_ID}>
+                      {/* Explicit size at every layer — a horizontal ScrollView
                     nested in a hug-content StickerCard mismeasures its
                     height, so this bypasses StickerCard's own composition
                     and fixes the box size up front instead of hugging it. */}
-                <StickerShadowBox
-                  radius={StickerRadius.card}
-                  style={styles.stripShadow}
-                >
-                  <View style={styles.stripBorder}>
-                    <View style={styles.photoInset}>
-                      <ImageCarousel images={data.images} />
-                    </View>
-
-                    {data.feeling ? (
-                      <Text style={styles.capLine}>{data.feeling}</Text>
-                    ) : null}
-
-                    <View style={styles.tagRow}>
-                      <StickerCard
-                        radius={StickerRadius.chip}
-                        backgroundColor={BrandColors.accentCyan}
-                        shadowOffset={2}
-                        style={styles.tagSticker}
+                      <StickerShadowBox
+                        radius={StickerRadius.card}
+                        style={styles.stripShadow}
                       >
-                        <Text style={styles.tagText} numberOfLines={1}>
-                          📍 {data.place.name}
-                        </Text>
+                        <View style={styles.stripBorder}>
+                          <View style={styles.photoInset}>
+                            <ImageCarousel images={data.images} />
+                          </View>
+
+                          {data.feeling ? (
+                            <Text style={styles.capLine}>{data.feeling}</Text>
+                          ) : null}
+
+                          <View style={styles.tagRow}>
+                            <StickerCard
+                              radius={StickerRadius.chip}
+                              backgroundColor={BrandColors.accentCyan}
+                              shadowOffset={2}
+                              style={styles.tagSticker}
+                            >
+                              <Text style={styles.tagText} numberOfLines={1}>
+                                📍 {data.place.name}
+                              </Text>
+                            </StickerCard>
+                          </View>
+                        </View>
+                      </StickerShadowBox>
+                    </TourTarget>
+                    <View style={styles.heroSticker}>
+                      <MoodSticker score={data.moodScore} size={42} />
+                    </View>
+                    <View style={styles.heartStickerWrap}>
+                      <StickerCard radius={StickerRadius.pill} shadowOffset={2}>
+                        <View style={styles.heartStickerInner}>
+                          <Pressable
+                            onPress={onToggleLike}
+                            hitSlop={8}
+                            accessibilityRole="button"
+                            accessibilityLabel={
+                              liked ? "Remove reaction" : "React to this memory"
+                            }
+                          >
+                            <Ionicons
+                              name={liked ? "heart" : "heart-outline"}
+                              size={16}
+                              color={BrandColors.accentPink}
+                            />
+                          </Pressable>
+                          <Pressable
+                            onPress={onViewReactors}
+                            hitSlop={8}
+                            disabled={data.reactionCount === 0}
+                            accessibilityRole="button"
+                            accessibilityLabel={
+                              data.reactionCount > 0
+                                ? "See who reacted"
+                                : undefined
+                            }
+                          >
+                            <Text style={styles.heartStickerCount}>
+                              {data.reactionCount}
+                            </Text>
+                          </Pressable>
+                        </View>
                       </StickerCard>
                     </View>
                   </View>
-                </StickerShadowBox>
-              </TourTarget>
-              <View style={styles.heroSticker}>
-                <MoodSticker score={data.moodScore} size={42} />
-              </View>
-              <View style={styles.heartStickerWrap}>
-                <StickerCard radius={StickerRadius.pill} shadowOffset={2}>
-                  <View style={styles.heartStickerInner}>
-                    <Pressable
-                      onPress={onToggleLike}
-                      hitSlop={8}
-                      accessibilityRole="button"
-                      accessibilityLabel={
-                        liked ? "Remove reaction" : "React to this memory"
-                      }
-                    >
-                      <Ionicons
-                        name={liked ? "heart" : "heart-outline"}
-                        size={16}
-                        color={BrandColors.accentPink}
-                      />
-                    </Pressable>
-                    <Pressable
-                      onPress={onViewReactors}
-                      hitSlop={8}
-                      disabled={data.reactionCount === 0}
-                      accessibilityRole="button"
-                      accessibilityLabel={
-                        data.reactionCount > 0 ? "See who reacted" : undefined
-                      }
-                    >
-                      <Text style={styles.heartStickerCount}>
-                        {data.reactionCount}
-                      </Text>
-                    </Pressable>
-                  </View>
-                </StickerCard>
-              </View>
-            </View>
-          </View>
+                </View>
 
-          {/* <View style={styles.content}>
+                {/* <View style={styles.content}>
             <StickerCard borderStyle="dashed" shadowOffset={2}>
               <View style={styles.placeCard}>
                 <MaterialIcons
@@ -322,7 +456,33 @@ export function MemoryDetailScreen({ id }: MemoryDetailScreenProps) {
               </View>
             </StickerCard>
           </View> */}
-        </ScrollView>
+                {showThread ? (
+                  <MessageThreadHeader
+                    messageCount={data.messageCount ?? 0}
+                    isLoading={thread.isLoading}
+                    isError={thread.isError}
+                    isUnavailable={thread.isUnavailable}
+                    isEmpty={thread.items.length === 0}
+                    hasOlder={thread.hasOlder}
+                    isLoadingOlder={thread.isLoadingOlder}
+                    onLoadOlder={thread.loadOlder}
+                    onRetry={() => void thread.refetch()}
+                  />
+                ) : null}
+              </View>
+            }
+          />
+          {showThread && !thread.isUnavailable ? (
+            <MessageComposer
+              value={draft}
+              onChangeText={setDraft}
+              onSend={onSend}
+              sending={editingId ? editMessage.isPending : thread.isSending}
+              editing={editingId !== null}
+              onCancelEdit={cancelEdit}
+            />
+          ) : null}
+        </KeyboardAvoidingView>
       )}
       <ReactorsSheet ref={reactorsSheet} memoryId={id} />
       <MemoryOptionsSheet
@@ -333,6 +493,14 @@ export function MemoryDetailScreen({ id }: MemoryDetailScreenProps) {
         onDelete={onDeleteMemory}
         onReport={() => reportSheet.current?.present({ type: "MEMORY", id })}
       />
+      <MessageActionsSheet
+        ref={messageActions}
+        onEdit={onEditMessage}
+        onDelete={onDeleteMessage}
+        onReport={(message) =>
+          reportSheet.current?.present({ type: "MESSAGE", id: message.id })
+        }
+      />
       <ReportSheet ref={reportSheet} />
     </SafeAreaView>
   );
@@ -340,6 +508,7 @@ export function MemoryDetailScreen({ id }: MemoryDetailScreenProps) {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: BrandColors.paper },
+  flex: { flex: 1 },
 
   center: { flex: 1, alignItems: "center", justifyContent: "center", gap: 12 },
   errorEmoji: { fontSize: 40 },
@@ -349,7 +518,7 @@ const styles = StyleSheet.create({
     fontWeight: "500",
   },
 
-  scroll: { paddingBottom: 40 },
+  scroll: { paddingBottom: 16 },
 
   headerRow: {
     flexDirection: "row",

@@ -16,6 +16,7 @@ import { mapBoundsKey, queryKeys } from "@/lib/query/keys";
 import type { MapBounds } from "@/types/api";
 
 export * from "@/lib/query/hooks-social";
+export * from "@/lib/query/hooks-messages";
 
 export function useRegisterMutation() {
   return useMutation({ mutationFn: authApi.register });

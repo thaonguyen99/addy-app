@@ -107,6 +107,8 @@ export type MemoryDetail = {
   isOwner: boolean;
   reactionCount: number;
   hasReacted: boolean;
+  /** Number of "Psst..." messages visible to the viewer. */
+  messageCount: number;
   capturedAt: string;
   createdAt: string;
   place: PlaceSummary;
@@ -175,6 +177,29 @@ export type ToggleReactionResult = {
   count: number;
 };
 
+/** One message in a memory's "Psst..." thread. */
+export type MemoryMessage = {
+  id: string;
+  /** Null only when the author has blocked the viewer — render unnamed. */
+  author: { id: string; username: string; avatarUrl: string | null } | null;
+  text: string;
+  createdAt: string;
+  editedAt: string | null;
+  /** The author owns the memory. */
+  isOwnerOfMemory: boolean;
+  likeCount: number;
+  likedByMe: boolean;
+  /** The viewer wrote this message. */
+  canEdit: boolean;
+  /** The viewer owns the memory. */
+  canDelete: boolean;
+};
+
+export type MessageLikeResult = {
+  likeCount: number;
+  likedByMe: boolean;
+};
+
 export type FriendMemoryPin = MemoryPin & {
   author: PublicUser;
 };
@@ -183,6 +208,7 @@ export type NotificationPreferences = {
   friendRequestReceived: boolean;
   friendRequestAccepted: boolean;
   reactionReceived: boolean;
+  messages: boolean;
 };
 
 export type DevicePlatform = "ios" | "android";
@@ -226,6 +252,7 @@ export type MemoryListItem = {
   isOwner: boolean;
   reactionCount: number;
   hasReacted: boolean;
+  messageCount: number;
   capturedAt: string;
   createdAt: string;
   place: PlaceSummary;
@@ -322,7 +349,7 @@ export type MapPinsResult = {
   cursor?: string;
 };
 
-export type ReportTargetType = "MEMORY" | "USER";
+export type ReportTargetType = "MEMORY" | "USER" | "MESSAGE";
 
 export type ReportReason =
   | "INAPPROPRIATE"

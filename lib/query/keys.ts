@@ -9,6 +9,7 @@ export const queryKeys = {
   placeMemories: (placeId: string) =>
     ["memories", "place", placeId] as const,
   memoryReactions: (id: string) => ["memories", "reactions", id] as const,
+  memoryMessages: (id: string) => ["memories", "messages", id] as const,
   placesNearby: (lat: number, lng: number) =>
     ["places", "nearby", lat.toFixed(5), lng.toFixed(5)] as const,
   friends: ["friends"] as const,
