@@ -105,8 +105,9 @@ module.exports = ({ config }) => ({
         resizeMode: "contain",
         // Keep in sync with BrandColors.paper in constants/theme.ts — this
         // file can't import that (plain Node config, no RN/TS runtime).
+        // No `dark` variant: it makes this plugin force UIUserInterfaceStyle to
+        // Automatic, overriding the light-only `userInterfaceStyle` above.
         backgroundColor: "#FBFBF6",
-        dark: { backgroundColor: "#FBFBF6" },
       },
     ],
     iosUrlScheme
