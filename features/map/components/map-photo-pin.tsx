@@ -96,7 +96,7 @@ const styles = StyleSheet.create({
   queueBadgeText: {
     color: BrandColors.ink,
     fontSize: 11,
-    fontFamily: "Fredoka-SemiBold",
+    fontFamily: "Baloo2-SemiBold",
   },
   friendDot: {
     position: "absolute",

@@ -294,7 +294,7 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   topBarTitle: {
-    fontFamily: "Fredoka-Bold",
+    fontFamily: "Baloo2-ExtraBold",
     fontSize: 20,
     color: BrandColors.ink,
   },
@@ -350,12 +350,12 @@ const styles = StyleSheet.create({
   },
   avatarImage: { width: "100%", height: "100%" },
   avatarInitial: {
-    fontFamily: "Fredoka-Bold",
+    fontFamily: "Baloo2-ExtraBold",
     fontSize: 32,
     color: BrandColors.ink,
   },
   name: {
-    fontFamily: "Fredoka-SemiBold",
+    fontFamily: "Baloo2-SemiBold",
     fontSize: 17,
     color: BrandColors.ink,
     marginTop: 8,
@@ -399,7 +399,7 @@ const styles = StyleSheet.create({
     opacity: 0.5,
   },
   menuLabel: {
-    fontFamily: "Fredoka-SemiBold",
+    fontFamily: "Baloo2-SemiBold",
     fontSize: 15,
     color: BrandColors.ink,
   },

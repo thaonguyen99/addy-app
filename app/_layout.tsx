@@ -6,9 +6,9 @@ import {
   useFonts,
 } from "@expo-google-fonts/be-vietnam-pro";
 import {
-  Fredoka_600SemiBold,
-  Fredoka_700Bold,
-} from "@expo-google-fonts/fredoka";
+  Baloo2_600SemiBold,
+  Baloo2_800ExtraBold,
+} from "@expo-google-fonts/baloo-2";
 import { PatrickHand_400Regular } from "@expo-google-fonts/patrick-hand";
 import { VT323_400Regular } from "@expo-google-fonts/vt323";
 import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
@@ -80,8 +80,8 @@ export default function RootLayout() {
     "BeVietnam-SemiBold": BeVietnamPro_600SemiBold,
     "BeVietnam-Bold": BeVietnamPro_700Bold,
     "PatrickHand-Regular": PatrickHand_400Regular,
-    "Fredoka-SemiBold": Fredoka_600SemiBold,
-    "Fredoka-Bold": Fredoka_700Bold,
+    "Baloo2-SemiBold": Baloo2_600SemiBold,
+    "Baloo2-ExtraBold": Baloo2_800ExtraBold,
     "VT323-Regular": VT323_400Regular,
   });
 

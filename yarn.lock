@@ -875,15 +875,15 @@
     "@eslint/core" "^0.17.0"
     levn "^0.4.1"
 
+"@expo-google-fonts/baloo-2@^0.4.2":
+  version "0.4.2"
+  resolved "https://registry.yarnpkg.com/@expo-google-fonts/baloo-2/-/baloo-2-0.4.2.tgz#e63212c7ad45e40e57c8b1886b5c2d4cb9cd74fe"
+  integrity sha512-uvrw1I+sP72PY8xROJQ6CMiGHu9+WJCdi72Q+OiWpQ3sKsIRyIEXimDfgUnkk2vpWVej0JX9fLc87iDmjKE86A==
+
 "@expo-google-fonts/be-vietnam-pro@^0.4.1":
   version "0.4.1"
   resolved "https://registry.yarnpkg.com/@expo-google-fonts/be-vietnam-pro/-/be-vietnam-pro-0.4.1.tgz#95a36cd3c94b9b8096e0728e5655d087262a37fa"
   integrity sha512-4o2bsqU1zcC6NZf5FRYB+7gE49waNWYOGc5c5qLfPgrSqqr61hS2Bz4TVPgxudO038tLydSyPxV8e79g8j5DpQ==
-
-"@expo-google-fonts/fredoka@^0.4.1":
-  version "0.4.1"
-  resolved "https://registry.yarnpkg.com/@expo-google-fonts/fredoka/-/fredoka-0.4.1.tgz#3e3875a28421ddf51aaaa99021916cc06bab33a8"
-  integrity sha512-px3uHDidG1RI7mMAjfKQktK9yZoVn/Uvqgp1G/Zkd6ZN9flXFxhUoPDRZdcCj2knFvkKmlvOx96SD3j4fxq7ig==
 
 "@expo-google-fonts/patrick-hand@^0.4.1":
   version "0.4.1"

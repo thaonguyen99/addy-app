@@ -65,7 +65,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   label: {
-    fontFamily: "Fredoka-SemiBold",
+    fontFamily: "Baloo2-SemiBold",
     fontSize: 16,
     color: BrandColors.ink,
   },

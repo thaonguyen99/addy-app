@@ -21,7 +21,7 @@ const styles = StyleSheet.create({
   text: {
     color: BrandColors.ink,
     fontSize: 14,
-    fontFamily: "Fredoka-SemiBold",
+    fontFamily: "Baloo2-SemiBold",
     letterSpacing: 0.2,
     paddingHorizontal: 16,
     paddingVertical: 10,

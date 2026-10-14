@@ -132,7 +132,7 @@ export function CreatePinScreen() {
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: BrandColors.paper },
   scroll: { padding: 24, gap: 14, paddingBottom: 40 },
-  title: { fontSize: 26, fontFamily: "Fredoka-Bold", color: BrandColors.ink },
+  title: { fontSize: 26, fontFamily: "Baloo2-ExtraBold", color: BrandColors.ink },
   subtitle: { fontSize: 15, color: BrandColors.neutralMuted, lineHeight: 22 },
   thumbWrap: { marginRight: 10, position: "relative" },
   thumb: { width: 88, height: 88, borderRadius: 12 },

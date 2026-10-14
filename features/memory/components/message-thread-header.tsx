@@ -84,7 +84,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   label: {
-    fontFamily: "Fredoka-Bold",
+    fontFamily: "Baloo2-ExtraBold",
     fontSize: 22,
     color: BrandColors.ink,
   },
@@ -101,7 +101,7 @@ const styles = StyleSheet.create({
   },
   cardEmoji: { fontSize: 28 },
   cardText: {
-    fontFamily: "Fredoka-SemiBold",
+    fontFamily: "Baloo2-SemiBold",
     fontSize: 15,
     color: BrandColors.ink,
     textAlign: "center",

@@ -333,7 +333,7 @@ const styles = StyleSheet.create({
     borderRadius: 44,
   },
   avatarInitial: {
-    fontFamily: "Fredoka-Bold",
+    fontFamily: "Baloo2-ExtraBold",
     fontSize: 36,
     color: BrandColors.ink,
   },

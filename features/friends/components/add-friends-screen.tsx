@@ -255,7 +255,7 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   tabLabel: {
-    fontFamily: "Fredoka-SemiBold",
+    fontFamily: "Baloo2-SemiBold",
     fontSize: 15,
     color: BrandColors.ink,
   },
@@ -302,7 +302,7 @@ const styles = StyleSheet.create({
   qrCardShadow: { alignSelf: "center" },
   qrCard: { padding: 20, alignItems: "center", gap: 10 },
   qrUsername: {
-    fontFamily: "Fredoka-SemiBold",
+    fontFamily: "Baloo2-SemiBold",
     fontSize: 15,
     color: BrandColors.ink,
   },

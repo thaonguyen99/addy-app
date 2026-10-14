@@ -172,7 +172,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: BrandColors.stroke2,
   },
-  title: { color: BrandColors.ink, fontSize: 15, fontFamily: "Fredoka-SemiBold" },
+  title: { color: BrandColors.ink, fontSize: 15, fontFamily: "Baloo2-SemiBold" },
   center: { padding: 40, alignItems: "center" },
   list: { padding: 16 },
   row: {
@@ -192,7 +192,7 @@ const styles = StyleSheet.create({
   textWrap: { flex: 1, gap: 2 },
   rowTitle: {
     fontSize: 15,
-    fontFamily: "Fredoka-SemiBold",
+    fontFamily: "Baloo2-SemiBold",
     color: BrandColors.ink,
   },
   subtitle: {

@@ -122,7 +122,7 @@ const styles = StyleSheet.create({
   note: {
     fontSize: 13,
     lineHeight: CAPTION_LINE_HEIGHT,
-    fontFamily: "Fredoka-SemiBold",
+    fontFamily: "Baloo2-SemiBold",
     color: BrandColors.ink,
   },
   meta: {

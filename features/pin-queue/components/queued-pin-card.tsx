@@ -80,8 +80,9 @@ const styles = StyleSheet.create({
   badgeWrap: { position: "absolute", left: 4, right: 4, bottom: 4 },
   badgeText: {
     fontSize: 10,
-    lineHeight: 12,
-    fontFamily: "Fredoka-SemiBold",
+    // Baloo 2 needs ~1.6em per line; anything tighter clips glyphs on iOS
+    lineHeight: 16,
+    fontFamily: "Baloo2-SemiBold",
     color: BrandColors.ink,
     textAlign: "center",
     paddingHorizontal: 4,

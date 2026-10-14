@@ -565,7 +565,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   chatBubbleText: {
-    fontFamily: "Fredoka-SemiBold",
+    fontFamily: "Baloo2-SemiBold",
     fontSize: 13,
     color: BrandColors.ink,
   },
@@ -627,7 +627,7 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
   },
   heartStickerCount: {
-    fontFamily: "Fredoka-SemiBold",
+    fontFamily: "Baloo2-SemiBold",
     fontSize: 13,
     color: BrandColors.ink,
   },

@@ -200,13 +200,13 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 20,
-    fontFamily: "Fredoka-SemiBold",
+    fontFamily: "Baloo2-SemiBold",
     color: BrandColors.ink,
     paddingHorizontal: 6,
   },
   sectionLabel: {
     fontSize: 12,
-    fontFamily: "Fredoka-SemiBold",
+    fontFamily: "Baloo2-SemiBold",
     color: BrandColors.inkMuted,
     textTransform: "uppercase",
     letterSpacing: 0.4,
@@ -224,7 +224,7 @@ const styles = StyleSheet.create({
   reasonLabel: {
     flex: 1,
     fontSize: 15,
-    fontFamily: "Fredoka-SemiBold",
+    fontFamily: "Baloo2-SemiBold",
     color: BrandColors.ink,
   },
   noteInput: {
@@ -245,7 +245,7 @@ const styles = StyleSheet.create({
   },
   error: {
     fontSize: 14,
-    fontFamily: "Fredoka-SemiBold",
+    fontFamily: "Baloo2-SemiBold",
     color: BrandColors.danger,
     paddingHorizontal: 6,
   },

@@ -1,4 +1,4 @@
-import { Fredoka_600SemiBold } from "@expo-google-fonts/fredoka";
+import { Baloo2_600SemiBold } from "@expo-google-fonts/baloo-2";
 import { VT323_400Regular } from "@expo-google-fonts/vt323";
 import { useFonts } from "expo-font";
 import { LinearGradient } from "expo-linear-gradient";
@@ -27,7 +27,7 @@ const PIN_SIZE = 150;
 /**
  * JS-rendered splash shown during the fonts/auth loading window, right
  * after the native static splash hands off. The app's other custom fonts
- * (BeVietnam/PatrickHand/Fredoka-Bold) are still loading while this is on
+ * (BeVietnam/PatrickHand/Baloo2-ExtraBold) are still loading while this is on
  * screen, so this component loads its own tiny two-font subset (the only
  * ones it needs) independently — it does not wait on the full app font
  * batch in app/_layout.tsx, and falls back to the system font for the
@@ -38,7 +38,7 @@ export function AnimatedSplashScreen({
   counts,
 }: AnimatedSplashScreenProps) {
   const [splashFontsLoaded] = useFonts({
-    "Fredoka-SemiBold": Fredoka_600SemiBold,
+    "Baloo2-SemiBold": Baloo2_600SemiBold,
     "VT323-Regular": VT323_400Regular,
   });
 
@@ -84,7 +84,7 @@ export function AnimatedSplashScreen({
   }));
 
   const clampedProgress = Math.max(0.08, Math.min(1, progress));
-  const wordmarkFont = splashFontsLoaded ? "Fredoka-SemiBold" : undefined;
+  const wordmarkFont = splashFontsLoaded ? "Baloo2-SemiBold" : undefined;
   const pixelFont = splashFontsLoaded ? "VT323-Regular" : undefined;
 
   return (

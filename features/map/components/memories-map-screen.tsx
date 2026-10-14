@@ -512,7 +512,7 @@ const styles = StyleSheet.create({
   toastText: {
     color: BrandColors.ink,
     fontSize: 14,
-    fontFamily: "Fredoka-SemiBold",
+    fontFamily: "Baloo2-SemiBold",
     letterSpacing: 0.2,
     paddingHorizontal: 16,
     paddingVertical: 10,
@@ -570,7 +570,7 @@ const styles = StyleSheet.create({
   },
   friendsFabText: {
     fontSize: 14,
-    fontFamily: "Fredoka-SemiBold",
+    fontFamily: "Baloo2-SemiBold",
     color: BrandColors.ink,
   },
   friendsFabTextOn: { color: BrandColors.paper },
@@ -590,7 +590,7 @@ const styles = StyleSheet.create({
     overflow: "hidden",
   },
   badgePressed: { opacity: 0.7 },
-  badgeText: { fontSize: 14, fontFamily: "Fredoka-SemiBold", color: BrandColors.paper },
+  badgeText: { fontSize: 14, fontFamily: "Baloo2-SemiBold", color: BrandColors.paper },
   badgeChevron: {
     fontSize: 18,
     lineHeight: 18,

@@ -40,5 +40,5 @@ const styles = StyleSheet.create({
     borderBottomColor: BrandColors.stroke2,
   },
   back: { flexDirection: "row", alignItems: "center", gap: 4 },
-  title: { fontFamily: "Fredoka-SemiBold", fontSize: 18, color: BrandColors.ink },
+  title: { fontFamily: "Baloo2-SemiBold", fontSize: 18, color: BrandColors.ink },
 });

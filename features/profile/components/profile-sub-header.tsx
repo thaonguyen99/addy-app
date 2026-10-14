@@ -39,7 +39,7 @@ const styles = StyleSheet.create({
     marginLeft: -4,
   },
   title: {
-    fontFamily: "Fredoka-SemiBold",
+    fontFamily: "Baloo2-SemiBold",
     fontSize: 19,
     color: BrandColors.ink,
   },

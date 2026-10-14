@@ -177,7 +177,7 @@ const styles = StyleSheet.create({
   },
   avatarImage: { width: "100%", height: "100%" },
   avatarInitial: {
-    fontFamily: "Fredoka-SemiBold",
+    fontFamily: "Baloo2-SemiBold",
     fontSize: 13,
     color: BrandColors.ink,
   },
@@ -189,7 +189,7 @@ const styles = StyleSheet.create({
     color: BrandColors.inkMuted,
   },
   ownerTag: {
-    fontFamily: "Fredoka-SemiBold",
+    fontFamily: "Baloo2-SemiBold",
     fontSize: 11,
     color: BrandColors.ink,
   },

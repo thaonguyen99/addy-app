@@ -1,5 +1,5 @@
 import { ReactNode } from "react";
-import { Platform, StyleProp, View, ViewStyle } from "react-native";
+import { Platform, StyleProp, StyleSheet, View, ViewStyle } from "react-native";
 
 import { BrandColors } from "@/constants/theme";
 import { STICKER_SHADOW_OFFSET } from "@/constants/sticker-style";
@@ -31,6 +31,10 @@ export function StickerShadowBox({
   }
 
   if (Platform.OS === "android") {
+    // Only grow into a fixed-size box. In a hug-content box flexGrow lets the
+    // wrapper (and so the shadow) expand into whatever space the parent
+    // offers, while the visible content stays small.
+    const fixedHeight = StyleSheet.flatten(style)?.height != null;
     return (
       <View style={style}>
         <View
@@ -49,7 +53,9 @@ export function StickerShadowBox({
         />
         {/* flexGrow so `flex: 1` children fill a fixed-size box (e.g. the
             camera buttons) instead of collapsing to 0 height. */}
-        <View style={{ flexGrow: 1, zIndex: 1 }}>{children}</View>
+        <View style={{ flexGrow: fixedHeight ? 1 : 0, zIndex: 1 }}>
+          {children}
+        </View>
       </View>
     );
   }

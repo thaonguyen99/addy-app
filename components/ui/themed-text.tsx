@@ -17,7 +17,10 @@ export function ThemedText({
   ...rest
 }: ThemedTextProps) {
   const color = useThemeColor(
-    { light: lightColor ?? BrandColors.neutral, dark: darkColor ?? BrandColors.neutral },
+    {
+      light: lightColor ?? BrandColors.neutral,
+      dark: darkColor ?? BrandColors.neutral,
+    },
     "text",
   );
 

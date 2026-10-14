@@ -12,8 +12,8 @@
     "prebuild": "expo prebuild --clean"
   },
   "dependencies": {
+    "@expo-google-fonts/baloo-2": "^0.4.2",
     "@expo-google-fonts/be-vietnam-pro": "^0.4.1",
-    "@expo-google-fonts/fredoka": "^0.4.1",
     "@expo-google-fonts/patrick-hand": "^0.4.1",
     "@expo-google-fonts/vt323": "^0.4.1",
     "@expo/vector-icons": "^15.1.1",

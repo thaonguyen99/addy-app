@@ -184,7 +184,7 @@ const styles = StyleSheet.create({
   },
   sectionLabel: {
     fontSize: 12,
-    fontFamily: "Fredoka-SemiBold",
+    fontFamily: "Baloo2-SemiBold",
     color: BrandColors.inkMuted,
     textTransform: "uppercase",
     letterSpacing: 0.4,
@@ -201,7 +201,7 @@ const styles = StyleSheet.create({
   rowLabel: {
     flex: 1,
     fontSize: 15,
-    fontFamily: "Fredoka-SemiBold",
+    fontFamily: "Baloo2-SemiBold",
     color: BrandColors.ink,
   },
   dangerLabel: {

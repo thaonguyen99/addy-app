@@ -214,7 +214,13 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     gap: 12,
   },
-  title: { color: BrandColors.ink, flex: 1, fontFamily: "Fredoka-Bold" },
+  title: {
+    color: BrandColors.ink,
+    flex: 1,
+    fontFamily: "Baloo2-ExtraBold",
+    // Baloo 2 needs ~1.6em per line; anything tighter clips glyphs on iOS
+    lineHeight: 52,
+  },
   headerActions: { flexDirection: "row", alignItems: "center", gap: 8 },
   settingsButton: { padding: 4 },
   sub: {
@@ -226,7 +232,7 @@ const styles = StyleSheet.create({
   statsRow: { flexDirection: "row", gap: 12 },
   gridHeading: {
     color: BrandColors.ink,
-    fontFamily: "Fredoka-SemiBold",
+    fontFamily: "Baloo2-SemiBold",
     marginTop: 4,
   },
   emptyText: {
@@ -239,7 +245,7 @@ const styles = StyleSheet.create({
   nearbyBannerText: {
     color: BrandColors.ink,
     fontSize: 14,
-    fontFamily: "Fredoka-SemiBold",
+    fontFamily: "Baloo2-SemiBold",
     letterSpacing: 0.2,
     paddingHorizontal: 16,
     paddingVertical: 10,

@@ -111,7 +111,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
   },
   bannerText: {
-    fontFamily: "Fredoka-SemiBold",
+    fontFamily: "Baloo2-SemiBold",
     fontSize: 13,
     color: BrandColors.ink,
   },

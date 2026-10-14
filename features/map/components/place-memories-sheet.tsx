@@ -133,7 +133,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: BrandColors.stroke2,
   },
-  title: { color: BrandColors.ink, fontSize: 18, fontFamily: "Fredoka-SemiBold" },
+  title: { color: BrandColors.ink, fontSize: 18, fontFamily: "Baloo2-SemiBold" },
   center: { padding: 40, alignItems: "center" },
   list: { paddingHorizontal: 16, paddingVertical: 16, gap: 14 },
   thumbFrame: {
