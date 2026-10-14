@@ -7,6 +7,14 @@ type OnboardingCaptureState = {
    *  to know which memory to open when the highlighted pin is tapped. */
   lastCreatedMemoryId: string | null;
   setLastCreatedMemoryId: (id: string | null) => void;
+  /** Set once the camera preview is live, so the tour's first step has a
+   *  shutter to spotlight (new users first see the permission prompt). */
+  cameraReady: boolean;
+  setCameraReady: (ready: boolean) => void;
+  /** Bumped when the tour's shutter spotlight is tapped; the camera view
+   *  takes a photo on each change, since the tap never reaches the shutter. */
+  captureRequestId: number;
+  requestCapture: () => void;
 };
 
 /**
@@ -22,5 +30,10 @@ export const useOnboardingCaptureStore = create<OnboardingCaptureState>(
     setActive: (active) => set({ active }),
     lastCreatedMemoryId: null,
     setLastCreatedMemoryId: (id) => set({ lastCreatedMemoryId: id }),
+    cameraReady: false,
+    setCameraReady: (ready) => set({ cameraReady: ready }),
+    captureRequestId: 0,
+    requestCapture: () =>
+      set((s) => ({ captureRequestId: s.captureRequestId + 1 })),
   }),
 );

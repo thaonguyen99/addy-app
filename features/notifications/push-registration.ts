@@ -8,13 +8,16 @@ import type { DevicePlatform } from "@/types/api";
 
 let lastRegisteredToken: string | null = null;
 
-/** Foreground presentation — show the banner + play a sound. */
+/**
+ * Foreground presentation — suppress the OS banner; useInAppNotifications
+ * shows the Addy-styled InAppNotificationBanner instead.
+ */
 export function configureNotificationHandler(): void {
   Notifications.setNotificationHandler({
     handleNotification: async () => ({
-      shouldShowBanner: true,
-      shouldShowList: true,
-      shouldPlaySound: true,
+      shouldShowBanner: false,
+      shouldShowList: false,
+      shouldPlaySound: false,
       shouldSetBadge: false,
     }),
   });

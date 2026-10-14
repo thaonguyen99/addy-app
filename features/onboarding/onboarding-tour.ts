@@ -16,7 +16,7 @@ import { useCompleteOnboardingMutation } from "@/lib/query/hooks";
 export const ONBOARDING_TOUR_ID = "onboarding-v1";
 
 // Step ids (also doubling as TourTarget ids where a step targets exactly one
-// always-mounted element, e.g. the tab icon).
+// element, e.g. the camera shutter).
 export const ONBOARDING_ADD_MEMORY_STEP_ID = "onboarding-add-memory";
 export const ONBOARDING_MAP_PIN_STEP_ID = "onboarding-map-pin";
 export const ONBOARDING_MEMORY_DETAIL_STEP_ID = "onboarding-memory-detail";
@@ -39,6 +39,7 @@ export const ONBOARDING_ADD_FRIEND_TARGET_ID = "onboarding-add-friend-target";
 export function useOnboardingTour() {
   const status = useAuthStore((s) => s.status);
   const user = useAuthStore((s) => s.user);
+  const cameraReady = useOnboardingCaptureStore((s) => s.cameraReady);
   const completeOnboarding = useCompleteOnboardingMutation();
   const tour = useTourPersistence(AsyncStorage);
   const { nextStep, pauseTour, startTour } = tour;
@@ -49,14 +50,17 @@ export function useOnboardingTour() {
       {
         id: ONBOARDING_ADD_MEMORY_STEP_ID,
         targetId: ONBOARDING_ADD_MEMORY_STEP_ID,
-        title: "Add your first memory",
-        description: "Tap here to snap a photo and pin it to a place.",
+        title: "Snap your first memory",
+        description: "Tap to take a photo, then pin it to a place.",
         tooltipPosition: "top",
         hidePrevButton: true,
         hideNextButton: true,
+        // The app opens on the camera, so this spotlights the shutter. The
+        // tap lands on the overlay, not the shutter — ask the camera to
+        // capture instead, and pause until the pin is saved.
         onSpotlightPress: () => {
           pauseTour();
-          router.push("/(app)/(tabs)/camera");
+          useOnboardingCaptureStore.getState().requestCapture();
         },
       },
       {
@@ -112,6 +116,9 @@ export function useOnboardingTour() {
   useEffect(() => {
     if (status !== "authenticated") return;
     if (!needsOnboarding(user)) return;
+    // Step 1 spotlights the shutter, which only exists once camera permission
+    // is granted and the preview is live.
+    if (!cameraReady) return;
     if (hasStartedRef.current) return;
     hasStartedRef.current = true;
 
@@ -139,5 +146,5 @@ export function useOnboardingTour() {
       },
       true,
     );
-  }, [status, user, steps, startTour, completeOnboarding]);
+  }, [status, user, cameraReady, steps, startTour, completeOnboarding]);
 }

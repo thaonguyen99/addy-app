@@ -3,7 +3,7 @@ import { router } from "expo-router";
 import { useEffect } from "react";
 
 /** Turn an addyapp:// notification URL into an in-app route. */
-function toAppPath(raw: unknown): string | null {
+export function toAppPath(raw: unknown): string | null {
   if (typeof raw !== "string") return null;
   const path = raw.replace(/^addyapp:\/\//, "/");
   if (path.startsWith("/memory/")) return path;

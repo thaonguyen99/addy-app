@@ -5,9 +5,9 @@ import { View } from "react-native";
 import { CameraSessionProvider } from "@/features/camera/context/camera-session-context";
 import { useAuthStore } from "@/features/auth/store/auth-store";
 import { takePendingInviteToken } from "@/features/friends/pending-invite";
-import { AddMemoryTourTarget } from "@/features/onboarding/components/add-memory-tour-target";
 import { useOnboardingTour } from "@/features/onboarding/onboarding-tour";
 import { registerForPush } from "@/features/notifications/push-registration";
+import { useInAppNotifications } from "@/features/notifications/use-in-app-notifications";
 import { usePinQueueRunner } from "@/features/pin-queue/use-pin-queue-runner";
 
 export default function AppLayout() {
@@ -15,6 +15,7 @@ export default function AppLayout() {
 
   useOnboardingTour();
   usePinQueueRunner();
+  useInAppNotifications();
 
   useEffect(() => {
     if (status !== "authenticated") return;
@@ -67,10 +68,6 @@ export default function AppLayout() {
           <Stack.Screen name="friends/scan" />
           <Stack.Screen name="blocked-accounts" />
         </Stack>
-        {/* Independently-positioned spotlight target for the onboarding
-            tour's first step — see AddMemoryTourTarget for why this isn't
-            wrapped around the tab bar's own camera button. */}
-        <AddMemoryTourTarget />
       </View>
     </CameraSessionProvider>
   );

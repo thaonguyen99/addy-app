@@ -1,3 +1,4 @@
+import { TourTarget } from "@wrack/react-native-tour-guide";
 import type { CameraType } from "expo-camera";
 import { LinearGradient } from "expo-linear-gradient";
 import { memo } from "react";
@@ -9,6 +10,7 @@ import {
   SNAP_OUTER_DIAMETER,
 } from "@/features/camera/constants/layout";
 import { sharedInteractionStyles } from "@/features/camera/styles/shared-styles";
+import { ONBOARDING_ADD_MEMORY_STEP_ID } from "@/features/onboarding/onboarding-tour";
 import type { AddyMemoryImage } from "@/types/addy-memory";
 
 import { BrandColors } from "@/constants/theme";
@@ -56,27 +58,29 @@ function CameraActionBarInner({
       </View>
 
       <View style={[styles.col, styles.colCenter]}>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Take photo"
-          disabled={captureDisabled}
-          onPress={onCapturePress}
-          style={({ pressed }) => [
-            pressed && styles.snapPressed,
-            captureDisabled && styles.snapDisabled,
-          ]}
-        >
-          <StickerShadowBox radius={SNAP_OUTER_DIAMETER / 2} style={styles.snapShadow}>
-            <View style={styles.snapOuter}>
-              <LinearGradient
-                colors={["#FFFFFF", BrandColors.primaryLight, BrandColors.primary]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={styles.snapInner}
-              />
-            </View>
-          </StickerShadowBox>
-        </Pressable>
+        <TourTarget id={ONBOARDING_ADD_MEMORY_STEP_ID}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Take photo"
+            disabled={captureDisabled}
+            onPress={onCapturePress}
+            style={({ pressed }) => [
+              pressed && styles.snapPressed,
+              captureDisabled && styles.snapDisabled,
+            ]}
+          >
+            <StickerShadowBox radius={SNAP_OUTER_DIAMETER / 2} style={styles.snapShadow}>
+              <View style={styles.snapOuter}>
+                <LinearGradient
+                  colors={["#FFFFFF", BrandColors.primaryLight, BrandColors.primary]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={styles.snapInner}
+                />
+              </View>
+            </StickerShadowBox>
+          </Pressable>
+        </TourTarget>
       </View>
 
       <View style={styles.col}>

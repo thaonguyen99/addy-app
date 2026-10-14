@@ -1,5 +1,6 @@
 import { CAMERA_ZOOM_STEP } from '@/features/camera/constants/layout';
 import { useCameraPermissionGate } from '@/features/camera/permissions/use-camera-permission-gate';
+import { useOnboardingCaptureStore } from '@/features/onboarding/store/onboarding-capture-store';
 import type { CameraType, CameraView, FlashMode } from 'expo-camera';
 import { useCallback, useRef, useState } from 'react';
 
@@ -18,6 +19,7 @@ export function useAddyCamera() {
 
   const onCameraReady = useCallback(() => {
     setIsCameraReady(true);
+    useOnboardingCaptureStore.getState().setCameraReady(true);
   }, []);
 
   const cycleFlash = useCallback(() => {

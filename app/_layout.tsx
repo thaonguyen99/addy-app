@@ -29,6 +29,7 @@ import "react-native-reanimated";
 
 import { BrandColors } from "@/constants/theme";
 import { useAuthStore } from "@/features/auth/store/auth-store";
+import { InAppNotificationBanner } from "@/features/notifications/components/in-app-notification-banner";
 import { configureNotificationHandler } from "@/features/notifications/push-registration";
 import { useNotificationRouter } from "@/features/notifications/use-notification-router";
 import { AnimatedSplashScreen } from "@/features/splash/components/animated-splash-screen";
@@ -126,6 +127,7 @@ export default function RootLayout() {
                 <StatusBar style="dark" />
                 <TourGuideOverlay />
                 <AppToastHost />
+                <InAppNotificationBanner />
               </TourGuideProvider>
             </BottomSheetModalProvider>
           </ThemeProvider>

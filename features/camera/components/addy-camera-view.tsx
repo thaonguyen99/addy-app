@@ -18,6 +18,7 @@ import {
 
 import { CameraUi } from "@/features/camera/constants/layout";
 import { useCameraShutterSound } from "@/features/camera/hooks/useCameraShutterSound";
+import { useOnboardingCaptureStore } from "@/features/onboarding/store/onboarding-capture-store";
 import type { AddyMemoryImage } from "@/types/addy-memory";
 
 import { CameraActionBar } from "./CameraActionBar";
@@ -101,6 +102,16 @@ function AddyCameraViewInner({
     void playShutterSound();
     onCapture();
   }, [onCapture, playShutterSound]);
+
+  // The onboarding tour's shutter spotlight swallows the tap — it asks for
+  // the capture here instead (see onboarding-tour.ts).
+  const captureRequestId = useOnboardingCaptureStore((s) => s.captureRequestId);
+  const handledCaptureRequestRef = useRef(captureRequestId);
+  useEffect(() => {
+    if (captureRequestId === handledCaptureRequestRef.current) return;
+    handledCaptureRequestRef.current = captureRequestId;
+    handleCapturePress();
+  }, [captureRequestId, handleCapturePress]);
 
   return (
     <View style={styles.root}>
