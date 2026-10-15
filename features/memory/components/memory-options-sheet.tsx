@@ -30,6 +30,7 @@ type MemoryOptionsSheetProps = {
   isOwner: boolean;
   visibility: MemoryVisibility;
   onChangeVisibility: (visibility: MemoryVisibility) => void;
+  onEdit: () => void;
   onDelete: () => void;
   onReport: () => void;
 };
@@ -38,7 +39,7 @@ export const MemoryOptionsSheet = forwardRef<
   MemoryOptionsSheetRef,
   MemoryOptionsSheetProps
 >(function MemoryOptionsSheet(
-  { isOwner, visibility, onChangeVisibility, onDelete, onReport },
+  { isOwner, visibility, onChangeVisibility, onEdit, onDelete, onReport },
   ref,
 ) {
   const insets = useSafeAreaInsets();
@@ -80,6 +81,11 @@ export const MemoryOptionsSheet = forwardRef<
     },
     [onChangeVisibility],
   );
+
+  const editMemory = useCallback(() => {
+    sheetRef.current?.dismiss();
+    onEdit();
+  }, [onEdit]);
 
   const confirmDelete = useCallback(() => {
     sheetRef.current?.dismiss();
@@ -143,6 +149,19 @@ export const MemoryOptionsSheet = forwardRef<
             </View>
 
             <View style={styles.divider} />
+            <Pressable
+              onPress={editMemory}
+              style={styles.row}
+              accessibilityRole="button"
+              accessibilityLabel="Edit memory"
+            >
+              <Ionicons
+                name="pencil-outline"
+                size={20}
+                color={BrandColors.ink}
+              />
+              <Text style={[styles.rowLabel]}>Edit memory</Text>
+            </Pressable>
 
             <Pressable
               onPress={confirmDelete}
@@ -150,7 +169,11 @@ export const MemoryOptionsSheet = forwardRef<
               accessibilityRole="button"
               accessibilityLabel="Delete memory"
             >
-              <Ionicons name="trash-outline" size={20} color={BrandColors.danger} />
+              <Ionicons
+                name="trash-outline"
+                size={20}
+                color={BrandColors.danger}
+              />
               <Text style={[styles.rowLabel, styles.dangerLabel]}>
                 Delete memory
               </Text>
@@ -163,7 +186,11 @@ export const MemoryOptionsSheet = forwardRef<
             accessibilityRole="button"
             accessibilityLabel="Report memory"
           >
-            <Ionicons name="flag-outline" size={20} color={BrandColors.danger} />
+            <Ionicons
+              name="flag-outline"
+              size={20}
+              color={BrandColors.danger}
+            />
             <Text style={[styles.rowLabel, styles.dangerLabel]}>
               Report memory
             </Text>
@@ -206,6 +233,9 @@ const styles = StyleSheet.create({
   },
   dangerLabel: {
     color: BrandColors.danger,
+  },
+  grayLabel: {
+    color: BrandColors.gray100,
   },
   divider: {
     height: StyleSheet.hairlineWidth,

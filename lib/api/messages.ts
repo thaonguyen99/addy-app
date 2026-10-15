@@ -1,6 +1,17 @@
-import { apiClient, apiGetPaginated, apiPatch, apiPost } from "@/lib/api/client";
+import {
+  apiClient,
+  apiGet,
+  apiGetPaginated,
+  apiPatch,
+  apiPost,
+} from "@/lib/api/client";
 import { parseApiResponse } from "@/lib/api/errors";
-import type { MemoryMessage, MessageLikeResult, Paginated } from "@/types/api";
+import type {
+  MemoryMessage,
+  MessageLikeResult,
+  Paginated,
+  PublicUser,
+} from "@/types/api";
 
 export const MESSAGES_PAGE_SIZE = 30;
 
@@ -13,6 +24,13 @@ export async function listMessages(
   return apiGetPaginated<MemoryMessage>(`/memories/${memoryId}/messages`, {
     limit: MESSAGES_PAGE_SIZE,
     cursor,
+  });
+}
+
+/** Friends the viewer can tag in this memory's thread. */
+export async function listMentionable(memoryId: string) {
+  return apiGet<PublicUser[]>(`/memories/${memoryId}/mentionable`, {
+    limit: 100,
   });
 }
 

@@ -6,6 +6,7 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 import { StickerBorderWidth } from "@/constants/sticker-style";
 import { BrandColors } from "@/constants/theme";
 import { formatRelativeTime } from "@/features/feed/utils/format-relative-time";
+import { splitMentions } from "@/features/memory/utils/mentions";
 import type { MemoryMessage } from "@/types/api";
 
 /** Light cyan for the viewer's own messages on someone else's memory. */
@@ -102,7 +103,19 @@ export const MessageBubble = memo(function MessageBubble({
       ]}
     >
       <Text style={styles.text}>
-        {message?.text ?? (item.kind === "pending" ? item.text : "")}
+        {message ? (
+          splitMentions(message.text, message.mentions ?? []).map((segment, i) =>
+            segment.mention ? (
+              <Text key={i} style={styles.mention}>
+                {segment.text}
+              </Text>
+            ) : (
+              segment.text
+            ),
+          )
+        ) : item.kind === "pending" ? (
+          item.text
+        ) : null}
       </Text>
     </Pressable>
   );
@@ -220,6 +233,10 @@ const styles = StyleSheet.create({
     fontSize: 15,
     lineHeight: 20,
     color: BrandColors.ink,
+  },
+  mention: {
+    fontFamily: "BeVietnam-SemiBold",
+    color: BrandColors.accentPink,
   },
 
   likeRow: { flexDirection: "row", alignItems: "center", gap: 4 },

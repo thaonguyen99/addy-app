@@ -58,6 +58,14 @@ export default function AppLayout() {
             options={{ presentation: "modal", animation: "slide_from_bottom" }}
           />
           <Stack.Screen name="memory/[id]" />
+          <Stack.Screen
+            name="edit-memory/[id]"
+            options={{ presentation: "modal", animation: "slide_from_bottom" }}
+          />
+          <Stack.Screen
+            name="edit-memory/place"
+            options={{ presentation: "modal", animation: "slide_from_right" }}
+          />
           <Stack.Screen name="profile/index" />
           <Stack.Screen name="profile/account" />
           <Stack.Screen name="profile/security" />

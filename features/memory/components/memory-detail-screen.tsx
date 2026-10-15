@@ -2,6 +2,7 @@ import Ionicons from "@expo/vector-icons/Ionicons";
 import { TourTarget } from "@wrack/react-native-tour-guide";
 import * as Haptics from "expo-haptics";
 import { Image } from "expo-image";
+import { router } from "expo-router";
 import { useCallback, useRef, useState } from "react";
 import {
   ActivityIndicator,
@@ -49,6 +50,7 @@ import {
   useDeleteMemoryMutation,
   useDeleteMessageMutation,
   useEditMessageMutation,
+  useMentionableQuery,
   useMemoryQuery,
   useProfileQuery,
   useToggleReactionMutation,
@@ -141,6 +143,7 @@ export function MemoryDetailScreen({ id }: MemoryDetailScreenProps) {
   // Private memories have no thread at all — don't even fetch it.
   const showThread = data !== undefined && data.visibility !== "private";
   const thread = useMessageThread(id, showThread);
+  const { data: mentionable } = useMentionableQuery(id, showThread);
   const [draft, setDraft] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const editMessage = useEditMessageMutation(id);
@@ -480,6 +483,7 @@ export function MemoryDetailScreen({ id }: MemoryDetailScreenProps) {
               sending={editingId ? editMessage.isPending : thread.isSending}
               editing={editingId !== null}
               onCancelEdit={cancelEdit}
+              mentionable={mentionable}
             />
           ) : null}
         </KeyboardAvoidingView>
@@ -490,6 +494,9 @@ export function MemoryDetailScreen({ id }: MemoryDetailScreenProps) {
         isOwner={data?.isOwner ?? false}
         visibility={data?.visibility || "private"}
         onChangeVisibility={onChangeVisibility}
+        onEdit={() =>
+          router.push({ pathname: "/edit-memory/[id]", params: { id } })
+        }
         onDelete={onDeleteMemory}
         onReport={() => reportSheet.current?.present({ type: "MEMORY", id })}
       />

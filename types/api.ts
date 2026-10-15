@@ -177,6 +177,12 @@ export type ToggleReactionResult = {
   count: number;
 };
 
+/** A friend tagged in a message's text as `@username`. */
+export type MessageMention = {
+  id: string;
+  username: string;
+};
+
 /** One message in a memory's "Psst..." thread. */
 export type MemoryMessage = {
   id: string;
@@ -193,6 +199,8 @@ export type MemoryMessage = {
   canEdit: boolean;
   /** The viewer owns the memory. */
   canDelete: boolean;
+  /** Friends tagged in `text` (each appears there as `@username`). */
+  mentions: MessageMention[];
 };
 
 export type MessageLikeResult = {
@@ -295,8 +303,13 @@ export type CreateMemoryInput = {
   clientId?: string;
 };
 
+/** PATCH /memories/:id — send only what changed. `images` replaces the full set. */
 export type UpdateMemoryInput = {
-  visibility: MemoryVisibility;
+  visibility?: MemoryVisibility;
+  place?: PlaceInput;
+  images?: CreateMemoryImageInput[];
+  moodScore?: number | null;
+  feeling?: string | null;
 };
 
 export type MediaUploadResult = {

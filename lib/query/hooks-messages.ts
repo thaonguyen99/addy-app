@@ -3,6 +3,7 @@ import {
   type QueryClient,
   useInfiniteQuery,
   useMutation,
+  useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
 
@@ -26,6 +27,17 @@ export function useMemoryMessagesQuery(memoryId: string, enabled = true) {
     getNextPageParam: (last) => last.nextCursor,
     // A 404 means the thread is gone for this viewer (private, unfriended,
     // blocked) — retrying won't change that.
+    retry: (count, error) => !isNotFoundError(error) && count < 1,
+    enabled,
+  });
+}
+
+/** Friends the viewer can tag on this memory — fetched once, filtered locally. */
+export function useMentionableQuery(memoryId: string, enabled: boolean) {
+  return useQuery({
+    queryKey: queryKeys.memoryMentionable(memoryId),
+    queryFn: () => messagesApi.listMentionable(memoryId),
+    staleTime: 60_000,
     retry: (count, error) => !isNotFoundError(error) && count < 1,
     enabled,
   });

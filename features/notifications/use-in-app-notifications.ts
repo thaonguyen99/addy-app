@@ -42,6 +42,7 @@ export function useInAppNotifications(): void {
         case "reaction_received":
         case "message_received":
         case "message_liked":
+        case "message_mentioned":
           if (memoryId) {
             queryClient.invalidateQueries({ queryKey: queryKeys.memory(memoryId) });
             queryClient.invalidateQueries({ queryKey: queryKeys.memoryReactions(memoryId) });

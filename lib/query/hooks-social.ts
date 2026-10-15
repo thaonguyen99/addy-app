@@ -257,7 +257,7 @@ export function useFriendsMapQuery(bounds: MapBounds | null) {
   });
 }
 
-// --- Memory visibility ---------------------------------------------------
+// --- Memory edits (visibility, photos, place, mood, feeling) ------------
 
 export function useUpdateMemoryMutation(id: string) {
   const queryClient = useQueryClient();
@@ -269,6 +269,8 @@ export function useUpdateMemoryMutation(id: string) {
       queryClient.invalidateQueries({ queryKey: queryKeys.memoriesFeed });
       queryClient.invalidateQueries({ queryKey: ["memories", "map"] });
       queryClient.invalidateQueries({ queryKey: ["memories", "friends-map"] });
+      // The place or cover photo may have changed.
+      queryClient.invalidateQueries({ queryKey: ["memories", "place"] });
     },
   });
 }
