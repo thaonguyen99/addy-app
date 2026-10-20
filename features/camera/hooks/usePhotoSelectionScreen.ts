@@ -8,7 +8,7 @@ import { Alert } from 'react-native';
 
 export function usePhotoSelectionScreen() {
   const setHandoff = useCreatePinHandoffStore((s) => s.setHandoff);
-  const { capturedPhotos } = useCameraSession();
+  const { capturedPhotos, removeCapturedPhoto } = useCameraSession();
   const {
     allPhotos,
     selectedIds,
@@ -16,7 +16,8 @@ export function usePhotoSelectionScreen() {
     toggleSelection,
     selectedPhotos,
     pickFromGallery,
-  } = usePhotoSelection(capturedPhotos);
+    removePhoto,
+  } = usePhotoSelection(capturedPhotos, removeCapturedPhoto);
 
   const [picking, setPicking] = useState(false);
   const [moodScore, setMoodScore] = useState<number | null>(null);
@@ -71,5 +72,6 @@ export function usePhotoSelectionScreen() {
     feeling,
     setFeeling,
     canConfirm,
+    removePhoto,
   };
 }

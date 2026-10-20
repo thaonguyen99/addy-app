@@ -6,7 +6,6 @@ import { useAuthStore } from "@/features/auth/store/auth-store";
 import { useCameraSession } from "@/features/camera/context/camera-session-context";
 import { navigateAfterCreatePin } from "@/features/create-pin/navigate-after-create-pin";
 import { useCreatePinHandoffStore } from "@/features/create-pin/store/create-pin-handoff-store";
-import { removeDraftImages } from "@/features/drafts/draft-image-storage";
 import {
   isUnresolvedPlace,
   UNRESOLVED_PLACE_NAME,
@@ -54,7 +53,7 @@ export function useCreatePinSubmit(images: readonly AddyMemoryImage[]) {
   const handoffFeeling = useCreatePinHandoffStore((s) => s.feeling);
   const selectedPlace = useCreatePinHandoffStore((s) => s.selectedPlace);
   const visibility = useCreatePinHandoffStore((s) => s.visibility);
-  const { clearSession, reloadDrafts } = useCameraSession();
+  const { clearAllDrafts, reloadDrafts } = useCameraSession();
 
   const submit = async () => {
     if (images.length === 0) {
@@ -112,9 +111,9 @@ export function useCreatePinSubmit(images: readonly AddyMemoryImage[]) {
       };
       await usePinQueueStore.getState().enqueue(entry);
 
-      // The queue owns its own copies now — the drafts can go.
-      await removeDraftImages(images.map((img) => img.id));
-      clearSession();
+      // The queue owns its own copies now — every draft from this session
+      // (including shots that weren't picked for this memory) can go.
+      await clearAllDrafts();
       await reloadDrafts();
 
       const coords = queuedPinCoordinates(entry);

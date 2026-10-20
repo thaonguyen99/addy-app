@@ -11,10 +11,20 @@ import {
   useWindowDimensions,
   View,
 } from "react-native";
+import { Gesture, GestureDetector } from "react-native-gesture-handler";
+import Animated, {
+  runOnJS,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from "react-native-reanimated";
 
 import { BrandColors } from "@/constants/theme";
 import { sharedInteractionStyles } from "@/features/camera/styles/shared-styles";
 import type { AddyMemoryImage } from "@/types/addy-memory";
+
+const REMOVE_SWIPE_THRESHOLD = -70;
+const REMOVE_SWIPE_VELOCITY = -800;
 
 type PhotoSelectionPreviewCarouselProps = Readonly<{
   photos: readonly AddyMemoryImage[];
@@ -22,6 +32,7 @@ type PhotoSelectionPreviewCarouselProps = Readonly<{
   /** Bumps FlatList row updates when selection changes. */
   selectionKey: string;
   onToggle: (id: string) => void;
+  onRemove: (id: string) => void;
 }>;
 
 type SlideProps = Readonly<{
@@ -30,6 +41,7 @@ type SlideProps = Readonly<{
   height: number;
   selected: boolean;
   onToggle: (id: string) => void;
+  onRemove: (id: string) => void;
 }>;
 
 const CarouselSlide = memo(function CarouselSlide({
@@ -38,50 +50,109 @@ const CarouselSlide = memo(function CarouselSlide({
   height,
   selected,
   onToggle,
+  onRemove,
 }: SlideProps) {
-  return (
-    <Pressable
-      onPress={() => onToggle(item.id)}
-      style={({ pressed }) => [
-        styles.slide,
-        { width, height },
-        pressed && sharedInteractionStyles.pressedSubtle,
-      ]}
-      accessibilityRole="checkbox"
-      accessibilityState={{ checked: selected }}
-    >
-      <Image
-        source={{ uri: item.uri }}
-        style={styles.slideImage}
-        contentFit="cover"
-      />
-      <View
-        style={[
-          styles.badge,
-          item.sourceType === "quick_snap"
-            ? styles.badgeSnap
-            : styles.badgeUpload,
-        ]}
-      >
-        <MaterialIcons
-          name={
-            item.sourceType === "quick_snap" ? "photo-camera" : "folder-open"
+  const translateY = useSharedValue(0);
+  const opacity = useSharedValue(1);
+
+  const triggerRemove = useCallback(() => {
+    onRemove(item.id);
+  }, [item.id, onRemove]);
+
+  const panGesture = Gesture.Pan()
+    .activeOffsetY([-12, 12])
+    .failOffsetX([-10, 10])
+    .onChange((e) => {
+      if (e.translationY < 0) {
+        translateY.value = e.translationY;
+        opacity.value = Math.max(0.4, 1 + e.translationY / height);
+      }
+    })
+    .onEnd((e) => {
+      const shouldRemove =
+        e.translationY < REMOVE_SWIPE_THRESHOLD ||
+        e.velocityY < REMOVE_SWIPE_VELOCITY;
+      if (shouldRemove) {
+        translateY.value = withTiming(-height);
+        opacity.value = withTiming(0, undefined, (finished) => {
+          if (finished) {
+            runOnJS(triggerRemove)();
           }
-          size={12}
-          color={BrandColors.neutral}
-        />
-      </View>
-      <View
-        style={[
-          styles.selectionControl,
-          selected && styles.selectionControlSelected,
-        ]}
-      >
-        {selected ? (
-          <MaterialIcons name="check" size={16} color={BrandColors.neutral} />
-        ) : null}
-      </View>
-    </Pressable>
+        });
+      } else {
+        translateY.value = withTiming(0);
+        opacity.value = withTiming(1);
+      }
+    });
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: translateY.value }],
+    opacity: opacity.value,
+  }));
+
+  return (
+    <GestureDetector gesture={panGesture}>
+      <Animated.View style={[{ width, height }, animatedStyle]}>
+        <Pressable
+          onPress={() => onToggle(item.id)}
+          style={({ pressed }) => [
+            styles.slide,
+            { width, height },
+            pressed && sharedInteractionStyles.pressedSubtle,
+          ]}
+          accessibilityRole="checkbox"
+          accessibilityState={{ checked: selected }}
+        >
+          <Image
+            source={{ uri: item.uri }}
+            style={styles.slideImage}
+            contentFit="cover"
+          />
+          <View
+            style={[
+              styles.badge,
+              item.sourceType === "quick_snap"
+                ? styles.badgeSnap
+                : styles.badgeUpload,
+            ]}
+          >
+            <MaterialIcons
+              name={
+                item.sourceType === "quick_snap"
+                  ? "photo-camera"
+                  : "folder-open"
+              }
+              size={12}
+              color={BrandColors.neutral}
+            />
+          </View>
+          <View
+            style={[
+              styles.selectionControl,
+              selected && styles.selectionControlSelected,
+            ]}
+          >
+            {selected ? (
+              <MaterialIcons
+                name="check"
+                size={16}
+                color={BrandColors.neutral}
+              />
+            ) : null}
+          </View>
+          <View
+            style={styles.removeHint}
+            importantForAccessibility="no-hide-descendants"
+          >
+            <MaterialIcons
+              name="keyboard-arrow-up"
+              size={14}
+              color={BrandColors.paper}
+            />
+          </View>
+        </Pressable>
+      </Animated.View>
+    </GestureDetector>
   );
 });
 
@@ -91,6 +162,7 @@ export const PhotoSelectionPreviewCarousel = memo(
     selectedIds,
     selectionKey,
     onToggle,
+    onRemove,
   }: PhotoSelectionPreviewCarouselProps) {
     const { width: screenWidth } = useWindowDimensions();
     const data = photos as AddyMemoryImage[];
@@ -127,9 +199,10 @@ export const PhotoSelectionPreviewCarousel = memo(
           height={previewHeight}
           selected={selectedIds.has(item.id)}
           onToggle={onToggle}
+          onRemove={onRemove}
         />
       ),
-      [onToggle, previewHeight, previewWidth, selectedIds],
+      [onRemove, onToggle, previewHeight, previewWidth, selectedIds],
     );
 
     const getItemLayout = useCallback(
@@ -261,5 +334,16 @@ const styles = StyleSheet.create({
     width: 6,
     height: 6,
     backgroundColor: BrandColors.gray300,
+  },
+  removeHint: {
+    position: "absolute",
+    bottom: 10,
+    alignSelf: "center",
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: "rgba(0,0,0,0.3)",
+    alignItems: "center",
+    justifyContent: "center",
   },
 });

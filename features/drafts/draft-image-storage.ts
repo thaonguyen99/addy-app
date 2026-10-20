@@ -111,3 +111,13 @@ export async function removeDraftImage(id: string) {
 export async function removeDraftImages(ids: readonly string[]) {
   await Promise.all(ids.map((id) => removeDraftImage(id)));
 }
+
+export async function clearAllDraftImages() {
+  const index = await readIndex();
+  await Promise.all(
+    index.map((entry) =>
+      FileSystem.deleteAsync(entry.uri, { idempotent: true })
+    )
+  );
+  await writeIndex([]);
+}

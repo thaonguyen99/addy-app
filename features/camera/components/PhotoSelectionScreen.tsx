@@ -49,6 +49,7 @@ export function PhotoSelectionScreen() {
     feeling,
     setFeeling,
     canConfirm,
+    removePhoto,
   } = usePhotoSelectionScreen();
 
   const selectedCount = selectedPhotos.length;
@@ -94,6 +95,7 @@ export function PhotoSelectionScreen() {
               selectedIds={selectedIds}
               selectionKey={selectionKey}
               onToggle={toggleSelection}
+              onRemove={removePhoto}
             />
             <MoodScorePicker value={moodScore} onChange={setMoodScore} />
             <View style={styles.feelingBlock}>

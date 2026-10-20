@@ -2,7 +2,10 @@ import * as ImagePicker from "expo-image-picker";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { ensureMediaLibraryReadAccess } from "@/features/camera/permissions/media-library-access";
-import { persistImageToDrafts } from "@/features/drafts/draft-image-storage";
+import {
+  persistImageToDrafts,
+  removeDraftImage,
+} from "@/features/drafts/draft-image-storage";
 import type { AddyMemoryImage } from "@/types/addy-memory";
 
 export type PickFromGalleryResult =
@@ -16,7 +19,10 @@ const IMAGE_PICKER_OPTIONS: ImagePicker.ImagePickerOptions = {
   quality: 0.9,
 };
 
-export function usePhotoSelection(sessionPhotos: readonly AddyMemoryImage[]) {
+export function usePhotoSelection(
+  sessionPhotos: readonly AddyMemoryImage[],
+  removeSessionPhoto: (id: string) => Promise<void>
+) {
   const [galleryPhotos, setGalleryPhotos] = useState<AddyMemoryImage[]>([]);
   const [selectedIds, setSelectedIds] = useState<ReadonlySet<string>>(
     () => new Set()
@@ -99,6 +105,18 @@ export function usePhotoSelection(sessionPhotos: readonly AddyMemoryImage[]) {
     return { ok: true };
   }, []);
 
+  const removePhoto = useCallback(
+    async (id: string) => {
+      if (sessionPhotos.some((p) => p.id === id)) {
+        await removeSessionPhoto(id);
+        return;
+      }
+      await removeDraftImage(id);
+      setGalleryPhotos((prev) => prev.filter((p) => p.id !== id));
+    },
+    [sessionPhotos, removeSessionPhoto]
+  );
+
   return {
     allPhotos,
     selectedIds,
@@ -106,5 +124,6 @@ export function usePhotoSelection(sessionPhotos: readonly AddyMemoryImage[]) {
     toggleSelection,
     selectedPhotos,
     pickFromGallery,
+    removePhoto,
   };
 }

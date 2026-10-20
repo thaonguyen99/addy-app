@@ -8,6 +8,7 @@ import React, {
 } from "react";
 
 import {
+  clearAllDraftImages,
   loadDraftImages,
   persistImageToDrafts,
   removeDraftImage,
@@ -20,6 +21,7 @@ export type CameraSessionContextValue = {
   addCapturedPhotoFromUri: (uri: string) => Promise<AddyMemoryImage>;
   removeCapturedPhoto: (id: string) => Promise<void>;
   clearSession: () => void;
+  clearAllDrafts: () => Promise<void>;
   reloadDrafts: () => Promise<void>;
 };
 
@@ -65,6 +67,11 @@ export function CameraSessionProvider({
     setCapturedPhotos([]);
   }, []);
 
+  const clearAllDrafts = useCallback(async () => {
+    await clearAllDraftImages();
+    setCapturedPhotos([]);
+  }, []);
+
   const value = useMemo(
     () => ({
       capturedPhotos,
@@ -72,6 +79,7 @@ export function CameraSessionProvider({
       addCapturedPhotoFromUri,
       removeCapturedPhoto,
       clearSession,
+      clearAllDrafts,
       reloadDrafts,
     }),
     [
@@ -80,6 +88,7 @@ export function CameraSessionProvider({
       addCapturedPhotoFromUri,
       removeCapturedPhoto,
       clearSession,
+      clearAllDrafts,
       reloadDrafts,
     ]
   );
