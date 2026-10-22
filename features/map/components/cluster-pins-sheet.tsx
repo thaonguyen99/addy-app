@@ -18,6 +18,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { StickerCard } from "@/components/ui/sticker-card";
 import { BrandColors } from "@/constants/theme";
 import { StickerBorderWidth, StickerRadius } from "@/constants/sticker-style";
+import { PinCountBadge } from "@/features/map/components/map-photo-pin";
 import type { FriendMemoryPin, MemoryPin } from "@/types/api";
 
 type ClusterPin = MemoryPin | FriendMemoryPin;
@@ -32,9 +33,8 @@ type ClusterPinsSheetProps = {
 };
 
 /**
- * Picker shown when several pins sit at (or effectively at) the same spot
- * on the map — zooming in further would never visually separate them, so
- * this lets the user pick which one they meant instead of tapping forever.
+ * Picker shown when a grouped pin is tapped: one tile per pin in the group.
+ * A tile holding several memories at one place opens that place's list.
  */
 export const ClusterPinsSheet = forwardRef<ClusterPinsSheetRef, ClusterPinsSheetProps>(
   function ClusterPinsSheet({ onSelectPin }, ref) {
@@ -111,9 +111,7 @@ export const ClusterPinsSheet = forwardRef<ClusterPinsSheetRef, ClusterPinsSheet
                   contentFit="cover"
                 />
                 {item.memoryCount > 1 ? (
-                  <View style={styles.countBadge}>
-                    <Text style={styles.countBadgeText}>{item.memoryCount}</Text>
-                  </View>
+                  <PinCountBadge count={item.memoryCount} style={styles.countBadge} />
                 ) : null}
               </StickerCard>
             </Pressable>
@@ -146,21 +144,5 @@ const styles = StyleSheet.create({
     height: THUMB_SIZE,
     backgroundColor: BrandColors.gray200,
   },
-  countBadge: {
-    position: "absolute",
-    top: 6,
-    right: 6,
-    minWidth: 22,
-    height: 22,
-    borderRadius: 11,
-    paddingHorizontal: 5,
-    backgroundColor: BrandColors.ink,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  countBadgeText: {
-    color: BrandColors.paper,
-    fontSize: 12,
-    fontFamily: "Baloo2-SemiBold",
-  },
+  countBadge: { position: "absolute", top: 6, right: 6 },
 });

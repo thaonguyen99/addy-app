@@ -3,7 +3,7 @@ import Svg, { Path } from "react-native-svg";
 
 import { SoftShadowBox } from "@/components/ui/soft-shadow";
 import { MAP_LABEL_NAVY } from "@/constants/map-style";
-import { BrandColors } from "@/constants/theme";
+import { AddyFonts, BrandColors } from "@/constants/theme";
 
 const TAIL_WIDTH = 10;
 const TAIL_HEIGHT = 6;
@@ -45,7 +45,7 @@ export function PlaceLabelBubble({
             d="M0,0 L5,6 L10,0"
             fill="none"
             stroke={MAP_LABEL_NAVY}
-            strokeWidth={1}
+            strokeWidth={1.5}
           />
         </Svg>
       </View>
@@ -56,15 +56,15 @@ export function PlaceLabelBubble({
 const styles = StyleSheet.create({
   bubble: {
     backgroundColor: BrandColors.white,
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: MAP_LABEL_NAVY,
     paddingHorizontal: 12,
     paddingVertical: 6,
   },
   text: {
     maxWidth: MAX_WIDTH,
-    fontSize: 13,
-    fontFamily: "Baloo2-SemiBold",
+    fontSize: 12,
+    fontFamily: AddyFonts.bodySemiBold,
     color: MAP_LABEL_NAVY,
   },
   tailWrap: {

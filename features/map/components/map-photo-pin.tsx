@@ -1,10 +1,10 @@
 import { memo } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { StyleProp, StyleSheet, Text, View, ViewStyle } from "react-native";
 
 import { SoftShadowBox } from "@/components/ui/soft-shadow";
 import { PhotoPin } from "@/components/ui/photo-pin";
 import { MAP_LABEL_NAVY } from "@/constants/map-style";
-import { BrandColors } from "@/constants/theme";
+import { AddyColors, AddyFonts, AddyShadow, BrandColors } from "@/constants/theme";
 import { MapMoodSticker } from "@/features/map/components/map-mood-sticker";
 import { PlaceLabelBubble } from "@/features/map/components/place-label-bubble";
 import type { QueuedPinStatus } from "@/features/pin-queue/pin-queue-types";
@@ -105,10 +105,31 @@ export const MapPhotoPin = memo(function MapPhotoPin({
       ) : null}
 
       {placeMemoryCount != null && placeMemoryCount > 1 ? (
-        <SoftShadowBox radius={12} style={styles.placeCountBadge}>
-          <Text style={styles.placeCountBadgeText}>+{placeMemoryCount}</Text>
-        </SoftShadowBox>
+        <PinCountBadge count={placeMemoryCount} style={styles.countBadge} />
       ) : null}
+    </View>
+  );
+});
+
+type PinCountBadgeProps = {
+  count: number;
+  style?: StyleProp<ViewStyle>;
+};
+
+/**
+ * How many memories a pin stands for (several at one place, or a cluster).
+ * Navy so it never reads as the white "+N photos" pill.
+ */
+export const PinCountBadge = memo(function PinCountBadge({
+  count,
+  style,
+}: PinCountBadgeProps) {
+  return (
+    <View
+      style={[styles.countBadgeBase, style]}
+      accessibilityLabel={`${count} memories`}
+    >
+      <Text style={styles.countBadgeText}>{count > 99 ? "99+" : count}</Text>
     </View>
   );
 });
@@ -142,26 +163,34 @@ const styles = StyleSheet.create({
   },
   extraPhotoBadgeText: {
     color: MAP_LABEL_NAVY,
-    fontSize: 11,
-    fontFamily: "Baloo2-SemiBold",
+    fontSize: 17,
+    lineHeight: 18,
+    fontFamily: AddyFonts.tech,
   },
   // Top-right: memories sharing this place (real data, drives navigation).
-  placeCountBadge: {
+  countBadge: {
     position: "absolute",
-    top: -4,
-    right: -4,
-    minWidth: 24,
-    height: 24,
-    paddingHorizontal: 6,
-    backgroundColor: BrandColors.white,
-    alignItems: "center",
-    justifyContent: "center",
+    top: -6,
+    right: -6,
     zIndex: 3,
   },
-  placeCountBadgeText: {
-    color: MAP_LABEL_NAVY,
-    fontSize: 11,
-    fontFamily: "Baloo2-SemiBold",
+  countBadgeBase: {
+    minWidth: 24,
+    height: 22,
+    paddingHorizontal: 6,
+    borderRadius: 11,
+    borderWidth: 1.5,
+    borderColor: AddyColors.white,
+    backgroundColor: AddyColors.navy,
+    alignItems: "center",
+    justifyContent: "center",
+    ...AddyShadow.soft,
+  },
+  countBadgeText: {
+    color: AddyColors.white,
+    fontSize: 17,
+    lineHeight: 18,
+    fontFamily: AddyFonts.tech,
   },
   queueBadge: {
     position: "absolute",
@@ -177,8 +206,9 @@ const styles = StyleSheet.create({
   queueBadgeFailed: { backgroundColor: BrandColors.dangerLight },
   queueBadgeText: {
     color: BrandColors.ink,
-    fontSize: 11,
-    fontFamily: "Baloo2-SemiBold",
+    fontSize: 16,
+    lineHeight: 18,
+    fontFamily: AddyFonts.tech,
   },
   friendDot: {
     position: "absolute",

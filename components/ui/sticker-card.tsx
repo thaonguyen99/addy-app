@@ -2,13 +2,13 @@ import { LinearGradient } from "expo-linear-gradient";
 import { ReactNode } from "react";
 import { StyleProp, View, ViewStyle } from "react-native";
 
-import { StickerShadowBox } from "@/components/ui/sticker-shadow";
-import { BrandColors } from "@/constants/theme";
+import { StickerRadius } from "@/constants/sticker-style";
 import {
-  STICKER_SHADOW_OFFSET,
-  StickerBorderWidth,
-  StickerRadius,
-} from "@/constants/sticker-style";
+  ADDY_BORDER_WIDTH,
+  AddyColors,
+  AddyShadow,
+  BrandColors,
+} from "@/constants/theme";
 
 type StickerCardProps = {
   children?: ReactNode;
@@ -21,36 +21,37 @@ type StickerCardProps = {
   /** Renders a vertical two-stop gradient fill instead of `backgroundColor`. */
   gradientColors?: [string, string];
   shadow?: boolean;
+  /** Ignored — kept so older call sites compile. Shadows are soft now. */
   shadowOffset?: number;
 };
 
 /**
- * Base "sticker" building block: rounded rect, ink outline, hard shadow,
- * paper (or gradient) fill. Composes StickerShadowBox for the shadow.
+ * Base card surface: rounded rect, 1.5px hairline border, soft shadow, paper
+ * (or gradient) fill. The old thick ink outline + hard offset shadow is gone.
  */
 export function StickerCard({
   children,
   style,
   radius = StickerRadius.card,
-  borderWidth = StickerBorderWidth.standard,
-  borderColor = BrandColors.ink,
+  borderWidth = ADDY_BORDER_WIDTH,
+  borderColor,
   borderStyle = "solid",
   backgroundColor = BrandColors.paper,
   gradientColors,
   shadow = true,
-  shadowOffset = STICKER_SHADOW_OFFSET,
 }: StickerCardProps) {
+  // Older call sites pass the ink color explicitly; map it to the hairline.
+  const resolvedBorder =
+    !borderColor || borderColor === BrandColors.ink
+      ? AddyColors.line
+      : borderColor;
+
   return (
-    <StickerShadowBox
-      radius={radius}
-      shadowOffset={shadowOffset}
-      enabled={shadow}
-      style={style}
-    >
+    <View style={[{ borderRadius: radius }, shadow && AddyShadow.soft, style]}>
       <View
         style={{
-          borderWidth,
-          borderColor,
+          borderWidth: Math.min(borderWidth, ADDY_BORDER_WIDTH),
+          borderColor: resolvedBorder,
           borderStyle,
           borderRadius: radius,
           overflow: "hidden",
@@ -67,6 +68,6 @@ export function StickerCard({
         ) : null}
         {children}
       </View>
-    </StickerShadowBox>
+    </View>
   );
 }

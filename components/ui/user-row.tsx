@@ -1,7 +1,14 @@
 import { Image } from "expo-image";
 import { StyleSheet, Text, View } from "react-native";
 
-import { BrandColors } from "@/constants/theme";
+import {
+  ADDY_BORDER_WIDTH,
+  AddyColors,
+  AddyFonts,
+  AddyRadius,
+  AddyShadow,
+} from "@/constants/theme";
+import { cloudinaryThumb } from "@/lib/image/cloudinary-thumb";
 import type { PublicUser } from "@/types/api";
 
 export function userDisplayName(user: PublicUser): string {
@@ -25,7 +32,7 @@ export function UserAvatar({
     >
       {user.avatarUrl ? (
         <Image
-          source={{ uri: user.avatarUrl }}
+          source={{ uri: cloudinaryThumb(user.avatarUrl, size) }}
           style={styles.avatarImage}
           contentFit="cover"
         />
@@ -38,6 +45,7 @@ export function UserAvatar({
   );
 }
 
+/** Person row as a soft white card: avatar, name, @handle, trailing actions. */
 export function UserRow({
   user,
   subtitle,
@@ -48,7 +56,7 @@ export function UserRow({
   right?: React.ReactNode;
 }) {
   return (
-    <View style={styles.row}>
+    <View style={[styles.row, AddyShadow.soft]}>
       <UserAvatar user={user} />
       <View style={styles.text}>
         <Text style={styles.name} numberOfLines={1}>
@@ -75,18 +83,32 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
+    minHeight: 64,
+    paddingHorizontal: 12,
     paddingVertical: 10,
+    marginBottom: 10,
+    borderRadius: AddyRadius.card,
+    borderWidth: ADDY_BORDER_WIDTH,
+    borderColor: AddyColors.line,
+    backgroundColor: AddyColors.white,
   },
   avatar: {
-    backgroundColor: BrandColors.elevated,
+    backgroundColor: AddyColors.paperDim,
+    borderWidth: ADDY_BORDER_WIDTH,
+    borderColor: AddyColors.line,
     alignItems: "center",
     justifyContent: "center",
     overflow: "hidden",
   },
   avatarImage: { width: "100%", height: "100%" },
-  avatarInitial: { fontWeight: "700", color: BrandColors.neutral },
-  text: { flex: 1, gap: 2 },
-  name: { fontSize: 15, fontWeight: "600", color: BrandColors.neutral },
-  handle: { fontSize: 13, color: BrandColors.neutralMuted },
+  avatarInitial: { fontFamily: AddyFonts.title, color: AddyColors.ink },
+  text: { flex: 1, gap: 1 },
+  name: {
+    fontFamily: AddyFonts.title,
+    fontSize: 15,
+    lineHeight: 21,
+    color: AddyColors.ink,
+  },
+  handle: { fontFamily: AddyFonts.tech, fontSize: 16, color: AddyColors.inkMuted },
   right: { marginLeft: "auto" },
 });

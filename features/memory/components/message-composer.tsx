@@ -2,8 +2,12 @@ import Ionicons from "@expo/vector-icons/Ionicons";
 import { useEffect, useRef, useState } from "react";
 import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 
-import { StickerBorderWidth, StickerRadius } from "@/constants/sticker-style";
-import { BrandColors } from "@/constants/theme";
+import {
+  ADDY_BORDER_WIDTH,
+  AddyColors,
+  AddyFonts,
+  AddyRadius,
+} from "@/constants/theme";
 import { MentionSuggestions } from "@/features/memory/components/mention-suggestions";
 import { getActiveMention, insertMention } from "@/features/memory/utils/mentions";
 import type { PublicUser } from "@/types/api";
@@ -25,7 +29,7 @@ type MessageComposerProps = {
 
 type Selection = { start: number; end: number };
 
-/** Docked input + pink send button under the "Psst..." thread. */
+/** Docked chat input + pink send button, pinned above the keyboard. */
 export function MessageComposer({
   value,
   onChangeText,
@@ -73,7 +77,7 @@ export function MessageComposer({
     <View style={styles.container}>
       {editing ? (
         <View style={styles.banner}>
-          <Ionicons name="pencil" size={14} color={BrandColors.ink} />
+          <Ionicons name="pencil" size={14} color={AddyColors.ink} />
           <Text style={styles.bannerText}>Editing message</Text>
           <Text style={styles.bannerText}>·</Text>
           <Pressable
@@ -116,8 +120,8 @@ export function MessageComposer({
             }}
             maxLength={MESSAGE_MAX_LENGTH}
             multiline
-            placeholder="psst… say something"
-            placeholderTextColor={BrandColors.inkMuted}
+            placeholder="say something sweet…"
+            placeholderTextColor={AddyColors.inkMuted}
             style={styles.input}
             accessibilityLabel="Message"
           />
@@ -138,7 +142,7 @@ export function MessageComposer({
           <Ionicons
             name={editing ? "checkmark" : "arrow-up"}
             size={20}
-            color={BrandColors.ink}
+            color={AddyColors.white}
           />
         </Pressable>
       </View>
@@ -149,12 +153,12 @@ export function MessageComposer({
 const styles = StyleSheet.create({
   container: {
     gap: 6,
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
     paddingTop: 8,
     paddingBottom: 8,
-    borderTopWidth: StickerBorderWidth.thin,
-    borderTopColor: BrandColors.ink,
-    backgroundColor: BrandColors.paper,
+    borderTopWidth: ADDY_BORDER_WIDTH,
+    borderTopColor: AddyColors.line,
+    backgroundColor: AddyColors.paperDim,
   },
   inputRow: {
     flexDirection: "row",
@@ -168,37 +172,39 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
   },
   bannerText: {
-    fontFamily: "Baloo2-SemiBold",
+    fontFamily: AddyFonts.titleSemiBold,
     fontSize: 13,
-    color: BrandColors.ink,
+    color: AddyColors.ink,
   },
   bannerCancel: {
-    color: BrandColors.accentPink,
+    color: AddyColors.pink,
     textDecorationLine: "underline",
   },
   inputWrap: {
     flex: 1,
-    borderWidth: StickerBorderWidth.thin,
-    borderColor: BrandColors.ink,
-    borderRadius: StickerRadius.button,
-    backgroundColor: BrandColors.white,
-    paddingHorizontal: 12,
+    minHeight: 44,
+    justifyContent: "center",
+    borderWidth: ADDY_BORDER_WIDTH,
+    borderColor: AddyColors.line,
+    borderRadius: 22,
+    backgroundColor: AddyColors.white,
+    paddingHorizontal: 14,
     paddingVertical: 6,
   },
   input: {
     minHeight: 28,
     maxHeight: 110,
-    fontFamily: "BeVietnam-Regular",
+    fontFamily: AddyFonts.body,
     fontSize: 15,
-    color: BrandColors.ink,
+    color: AddyColors.ink,
     paddingVertical: 4,
     textAlignVertical: "top",
   },
   counter: {
     alignSelf: "flex-end",
-    fontFamily: "VT323-Regular",
-    fontSize: 13,
-    color: BrandColors.inkMuted,
+    fontFamily: AddyFonts.tech,
+    fontSize: 14,
+    color: AddyColors.inkMuted,
   },
   tag: {
     width: 36,
@@ -207,17 +213,15 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   tagText: {
-    fontFamily: "Baloo2-SemiBold",
-    fontSize: 24,
-    color: BrandColors.ink,
+    fontFamily: AddyFonts.title,
+    fontSize: 22,
+    color: AddyColors.ink,
   },
   send: {
     width: 44,
     height: 44,
-    borderRadius: 22,
-    borderWidth: StickerBorderWidth.thin,
-    borderColor: BrandColors.ink,
-    backgroundColor: BrandColors.accentPink,
+    borderRadius: AddyRadius.pill,
+    backgroundColor: AddyColors.pink,
     alignItems: "center",
     justifyContent: "center",
   },

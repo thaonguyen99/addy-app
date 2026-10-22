@@ -1,64 +1,81 @@
+import { IconCircleButton } from '@/components/ui/icon-circle-button';
 import { AddyCameraView } from '@/features/camera/components/addy-camera-view';
 import { CameraPermissionGatePanel } from '@/features/camera/components/camera-permission-gate-ui';
 import { useAddyCameraScreen } from '@/features/camera/hooks/useAddyCameraScreen';
-import { Platform } from 'react-native';
+import { safeBack } from '@/lib/navigation/safe-router';
+import type { ReactNode } from 'react';
+import { Platform, StyleSheet, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
+const closeCamera = () => safeBack('/(app)/(tabs)/explore');
+
+/** Full-screen quick-snap route: one shutter press goes straight to create. */
 export function AddyCameraScreen() {
-  const {
-    cameraRef,
-    gate,
-    requestCameraAccess,
-    openAppSettings,
-    onCameraReady,
-    capturedPhotos,
-    isCapturing,
-    openPhotoSelection,
-    captureAndStore,
-    flash,
-    zoom,
-    cycleFlash,
-    zoomOut,
-    zoomIn,
-    setZoomNormalized,
-    facing,
-    flipCamera,
-  } = useAddyCameraScreen();
+  const camera = useAddyCameraScreen();
+  const { gate } = camera;
 
+  let gatePanel: ReactNode = null;
   if (Platform.OS === 'web') {
-    return <CameraPermissionGatePanel variant="web" />;
-  }
-
-  if (gate.kind === 'pending') {
-    return <CameraPermissionGatePanel variant="pending" />;
-  }
-
-  if (gate.kind === 'ready' && !gate.granted) {
-    return (
+    gatePanel = <CameraPermissionGatePanel variant="web" />;
+  } else if (gate.kind === 'pending') {
+    gatePanel = <CameraPermissionGatePanel variant="pending" />;
+  } else if (gate.kind === 'ready' && !gate.granted) {
+    gatePanel = (
       <CameraPermissionGatePanel
         variant="denied"
         canAskAgain={gate.canAskAgain}
-        onRequestAccess={requestCameraAccess}
-        onOpenSettings={openAppSettings}
+        onRequestAccess={camera.requestCameraAccess}
+        onOpenSettings={camera.openAppSettings}
       />
+    );
+  }
+
+  if (gatePanel) {
+    // The live view draws its own close button; the gate panels need one too.
+    return (
+      <View style={styles.root}>
+        {gatePanel}
+        <SafeAreaView edges={['top']} style={styles.closeRow} pointerEvents="box-none">
+          <IconCircleButton
+            icon="close"
+            size={36}
+            accessibilityLabel="Close camera"
+            onPress={closeCamera}
+          />
+        </SafeAreaView>
+      </View>
     );
   }
 
   return (
     <AddyCameraView
-      cameraRef={cameraRef}
-      capturedPhotos={capturedPhotos}
-      isCapturing={isCapturing}
-      onCameraReady={onCameraReady}
-      onCapture={captureAndStore}
-      onOpenSelection={openPhotoSelection}
-      flash={flash}
-      facing={facing}
-      onFlipCamera={flipCamera}
-      zoom={zoom}
-      onCycleFlash={cycleFlash}
-      onZoomOut={zoomOut}
-      onZoomIn={zoomIn}
-      onZoomSet={setZoomNormalized}
+      cameraRef={camera.cameraRef}
+      isBusy={camera.isBusy}
+      onCameraReady={camera.onCameraReady}
+      onCapture={() => void camera.captureAndCreate()}
+      onOpenGallery={() => void camera.pickFromGalleryAndCreate()}
+      onClose={closeCamera}
+      flash={camera.flash}
+      onCycleFlash={camera.cycleFlash}
+      facing={camera.facing}
+      onFlipCamera={camera.flipCamera}
+      zoom={camera.zoom}
+      onZoomSet={camera.setZoomNormalized}
+      availableLenses={camera.availableLenses}
+      selectedLens={camera.selectedLens}
+      onSelectLens={camera.setSelectedLens}
+      onAvailableLensesChanged={camera.onAvailableLensesChanged}
     />
   );
 }
+
+const styles = StyleSheet.create({
+  root: { flex: 1 },
+  closeRow: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    paddingLeft: 16,
+    paddingTop: 8,
+  },
+});

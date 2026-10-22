@@ -1,37 +1,26 @@
 import { useCameraSession } from '@/features/camera/context/camera-session-context';
 import { useAddyCamera } from '@/features/camera/hooks/useAddyCamera';
+import { useGalleryPick } from '@/features/camera/hooks/use-gallery-pick';
+import { cropCenterSquare } from '@/features/camera/utils/crop-square';
+import { startCreateFlow } from '@/features/create-pin/start-create-flow';
 import { ONBOARDING_TOUR_ID } from '@/features/onboarding/onboarding-tour';
 import { useFocusEffect } from '@react-navigation/native';
 import { useTourGuide } from '@wrack/react-native-tour-guide';
-import { router } from 'expo-router';
-import { useCallback } from 'react';
-import { Linking } from 'react-native';
+import { useCallback, useState } from 'react';
+import { Alert, Linking } from 'react-native';
 
 export function useAddyCameraScreen() {
-  const { addCapturedPhotoFromUri, capturedPhotos } = useCameraSession();
-  const {
-    cameraRef,
-    gate,
-    requestPermission,
-    refreshPermission,
-    onCameraReady,
-    capturePhoto,
-    isCapturing,
-    flash,
-    facing,
-    flipCamera,
-    zoom,
-    cycleFlash,
-    zoomOut,
-    zoomIn,
-    setZoomNormalized,
-  } = useAddyCamera();
+  const { addCapturedPhotoFromUri } = useCameraSession();
+  const camera = useAddyCamera();
+  const { capturePhoto, requestPermission, refreshPermission } = camera;
+  const { pick, picking } = useGalleryPick();
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const { pauseTour, activeTourId } = useTourGuide();
 
-  // Hide the onboarding spotlight while the user goes through the capture
-  // flow (photo-selection, place-selection, create-pin) — it resumes and
-  // advances once a pin is actually saved (see navigate-after-onboarding-pin).
+  // Hide the onboarding spotlight while the user goes through the create
+  // flow — it resumes and advances once a pin is actually saved (see
+  // navigate-after-onboarding-pin).
   useFocusEffect(
     useCallback(() => {
       if (activeTourId === ONBOARDING_TOUR_ID) {
@@ -40,18 +29,27 @@ export function useAddyCameraScreen() {
     }, [activeTourId, pauseTour])
   );
 
-  const openPhotoSelection = useCallback(() => {
-    // photo-selection / place-selection / create-pin all live on the root (app)
-    // stack so one dismissAll() after save closes the whole flow at once.
-    router.push('/photo-selection');
-  }, []);
-
-  const captureAndStore = useCallback(async () => {
+  /** One press = one square photo = straight into create. */
+  const captureAndCreate = useCallback(async () => {
     const uri = await capturePhoto();
-    if (uri) {
-      await addCapturedPhotoFromUri(uri);
+    if (!uri) return;
+    setIsProcessing(true);
+    try {
+      const image = await addCapturedPhotoFromUri(await cropCenterSquare(uri));
+      startCreateFlow([image]);
+    } catch (error) {
+      console.warn('[camera] could not prepare photo', error);
+      Alert.alert('Camera', "Couldn't save that photo. Please try again.");
+    } finally {
+      setIsProcessing(false);
     }
   }, [capturePhoto, addCapturedPhotoFromUri]);
+
+  // Quick snap is one photo; uploading from the gallery can bring several.
+  const pickFromGalleryAndCreate = useCallback(async () => {
+    const images = await pick();
+    startCreateFlow(images);
+  }, [pick]);
 
   // Keep the gate fresh when returning to the screen — e.g. after the user
   // toggled the permission in the OS settings app.
@@ -76,22 +74,11 @@ export function useAddyCameraScreen() {
   }, []);
 
   return {
-    cameraRef,
-    gate,
+    ...camera,
+    isBusy: camera.isCapturing || isProcessing || picking,
     requestCameraAccess,
     openAppSettings,
-    onCameraReady,
-    capturedPhotos,
-    isCapturing,
-    openPhotoSelection,
-    captureAndStore,
-    flash,
-    facing,
-    flipCamera,
-    zoom,
-    cycleFlash,
-    zoomOut,
-    zoomIn,
-    setZoomNormalized,
+    captureAndCreate,
+    pickFromGalleryAndCreate,
   };
 }

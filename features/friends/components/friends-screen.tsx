@@ -1,20 +1,26 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { router, useLocalSearchParams } from "expo-router";
-import { useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
   FlatList,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import { BrandColors } from "@/constants/theme";
+import { useFloatingTabBarInset } from "@/components/navigation/floating-tab-bar";
+import { GlossyOrb } from "@/components/ui/glossy-orb";
+import { IconCircleButton } from "@/components/ui/icon-circle-button";
+import { SegmentedControl } from "@/components/ui/segmented-control";
+import { SkyBackground } from "@/components/ui/sky-background";
 import { UserRow, userDisplayName } from "@/components/ui/user-row";
-import { ScreenHeader } from "@/features/friends/components/screen-header";
+import { AddyColors, AddyFonts, AddyRadius } from "@/constants/theme";
+import { MyQrCard } from "@/features/friends/components/my-qr-card";
 import type { ReportSheetRef } from "@/features/reports/components/report-sheet";
 import { ReportSheet } from "@/features/reports/components/report-sheet";
 import {
@@ -26,83 +32,78 @@ import {
   useFriendsQuery,
   useUnfriendMutation,
 } from "@/lib/query/hooks";
-import type { PublicUser } from "@/types/api";
+import type { FriendRequest, PublicUser } from "@/types/api";
 
-type Tab = "friends" | "incoming" | "outgoing";
+type Segment = "friends" | "qr" | "requests";
 
-const TABS: { key: Tab; label: string }[] = [
-  { key: "friends", label: "Friends" },
-  { key: "incoming", label: "Requests" },
-  { key: "outgoing", label: "Sent" },
-];
+function segmentFromParam(tab: string | undefined): Segment {
+  if (tab === "incoming" || tab === "outgoing" || tab === "requests") return "requests";
+  if (tab === "qr") return "qr";
+  return "friends";
+}
 
 export function FriendsScreen() {
   const params = useLocalSearchParams<{ tab?: string }>();
-  const initialTab: Tab =
-    params.tab === "incoming" || params.tab === "outgoing"
-      ? params.tab
-      : "friends";
-  const [tab, setTab] = useState<Tab>(initialTab);
-  const incomingRequests = useFriendRequestsQuery("incoming");
-  const hasIncomingRequests =
-    (incomingRequests.data?.pages[0]?.items.length ?? 0) > 0;
+  const initialSegment = segmentFromParam(params.tab);
+  const [segment, setSegment] = useState<Segment>(initialSegment);
+  // The tab screen stays mounted, so a later deep link (?tab=incoming) has
+  // to update the selection too.
+  useEffect(() => {
+    setSegment(initialSegment);
+  }, [initialSegment]);
+
+  const incoming = useFriendRequestsQuery("incoming");
+  const incomingCount =
+    incoming.data?.pages.reduce((sum, page) => sum + page.items.length, 0) ?? 0;
+
+  const options = useMemo(
+    () =>
+      [
+        { value: "friends", label: "Friends" },
+        { value: "qr", label: "My QR" },
+        {
+          value: "requests",
+          label: incomingCount > 0 ? `Requests (${incomingCount})` : "Requests",
+        },
+      ] as const,
+    [incomingCount],
+  );
 
   return (
-    <SafeAreaView style={styles.safe} edges={["top", "bottom"]}>
-      <ScreenHeader
-        title="Friends"
-        right={
-          <View style={styles.headerActions}>
-            <Pressable
-              onPress={() => router.push("/(app)/friends/scan")}
-              hitSlop={10}
-              accessibilityLabel="Scan invite QR"
-            >
-              <Ionicons
-                name="scan-outline"
-                size={22}
-                color={BrandColors.primary}
-              />
-            </Pressable>
-            <Pressable
-              onPress={() => router.push("/(app)/friends/add")}
-              hitSlop={10}
-              accessibilityLabel="Add friends"
-            >
-              <Ionicons
-                name="person-add-outline"
-                size={22}
-                color={BrandColors.primary}
-              />
-            </Pressable>
-          </View>
-        }
-      />
+    <SkyBackground>
+      <SafeAreaView style={styles.safe} edges={["top"]}>
+        <View style={styles.header}>
+          <Text style={styles.title}>Friends</Text>
+          <IconCircleButton
+            icon="scan-outline"
+            size={36}
+            accessibilityLabel="Scan invite QR"
+            onPress={() => router.push("/(app)/friends/scan")}
+          />
+          <IconCircleButton
+            icon="person-add-outline"
+            size={36}
+            accessibilityLabel="Find friends by username"
+            onPress={() => router.push("/(app)/friends/add")}
+          />
+        </View>
 
-      <View style={styles.tabs}>
-        {TABS.map((t) => (
-          <Pressable
-            key={t.key}
-            onPress={() => setTab(t.key)}
-            style={[styles.tab, tab === t.key && styles.tabActive]}
-          >
-            <Text
-              style={[
-                styles.tabLabel,
-                tab === t.key && styles.tabLabelActive,
-              ]}
-            >
-              {t.label}
-            </Text>
-            {t.key === "incoming" && hasIncomingRequests ? (
-              <View style={styles.tabBadgeDot} />
-            ) : null}
-          </Pressable>
-        ))}
-      </View>
+        <SegmentedControl
+          options={options}
+          value={segment}
+          onChange={setSegment}
+          style={styles.segments}
+        />
 
-      {tab === "friends" ? <FriendsList /> : <RequestsList direction={tab} />}
-    </SafeAreaView>
+        {segment === "friends" ? (
+          <FriendsList />
+        ) : segment === "qr" ? (
+          <QrSegment />
+        ) : (
+          <RequestsList />
+        )}
+      </SafeAreaView>
+    </SkyBackground>
   );
 }
 
@@ -136,7 +137,20 @@ export function friendActionsAlert(
   Alert.alert(name, undefined, buttons);
 }
 
+function QrSegment() {
+  const tabBarInset = useFloatingTabBarInset();
+  return (
+    <ScrollView
+      contentContainerStyle={[styles.qrScroll, { paddingBottom: tabBarInset }]}
+      showsVerticalScrollIndicator={false}
+    >
+      <MyQrCard />
+    </ScrollView>
+  );
+}
+
 function FriendsList() {
+  const tabBarInset = useFloatingTabBarInset();
   const query = useFriendsQuery();
   const unfriend = useUnfriendMutation();
   const block = useBlockUserMutation();
@@ -150,13 +164,14 @@ function FriendsList() {
       <FlatList
         data={friends}
         keyExtractor={(item) => item.user.id}
-        contentContainerStyle={styles.list}
+        contentContainerStyle={[styles.list, { paddingBottom: tabBarInset }]}
         renderItem={({ item }) => (
           <UserRow
             user={item.user}
             right={
-              <Pressable
-                hitSlop={10}
+              <IconCircleButton
+                icon="ellipsis-horizontal"
+                accessibilityLabel={`Options for ${userDisplayName(item.user)}`}
                 onPress={() =>
                   friendActionsAlert(item.user, {
                     onRemove: () => unfriend.mutate(item.user.id),
@@ -168,13 +183,7 @@ function FriendsList() {
                       }),
                   })
                 }
-              >
-                <Ionicons
-                  name="ellipsis-horizontal"
-                  size={20}
-                  color={BrandColors.neutralMuted}
-                />
-              </Pressable>
+              />
             }
           />
         )}
@@ -183,73 +192,105 @@ function FriendsList() {
             void query.fetchNextPage();
           }
         }}
-        ListEmptyComponent={<Empty text="No friends yet. Add someone!" />}
+        ListEmptyComponent={<Empty text="No friends yet. Share your QR!" />}
       />
       <ReportSheet ref={reportSheet} />
     </>
   );
 }
 
-function RequestsList({ direction }: { direction: "incoming" | "outgoing" }) {
-  const query = useFriendRequestsQuery(direction);
+type RequestRow =
+  | { kind: "section"; key: string; label: string }
+  | { kind: "request"; key: string; request: FriendRequest };
+
+/** Incoming requests first (accept / decline), then the ones you sent. */
+function RequestsList() {
+  const tabBarInset = useFloatingTabBarInset();
+  const incoming = useFriendRequestsQuery("incoming");
+  const outgoing = useFriendRequestsQuery("outgoing");
   const accept = useAcceptFriendRequestMutation();
   const decline = useDeclineFriendRequestMutation();
   const cancel = useCancelFriendRequestMutation();
-  const requests = query.data?.pages.flatMap((p) => p.items) ?? [];
 
-  if (query.isLoading) return <Loading />;
+  const rows = useMemo<RequestRow[]>(() => {
+    const received = incoming.data?.pages.flatMap((p) => p.items) ?? [];
+    const sent = outgoing.data?.pages.flatMap((p) => p.items) ?? [];
+    const out: RequestRow[] = received.map((request) => ({
+      kind: "request",
+      key: request.id,
+      request,
+    }));
+    if (sent.length > 0) {
+      out.push({ kind: "section", key: "sent", label: "Sent" });
+      for (const request of sent) {
+        out.push({ kind: "request", key: request.id, request });
+      }
+    }
+    return out;
+  }, [incoming.data, outgoing.data]);
+
+  if (incoming.isLoading || outgoing.isLoading) return <Loading />;
 
   return (
     <FlatList
-      data={requests}
-      keyExtractor={(item) => item.id}
-      contentContainerStyle={styles.list}
-      renderItem={({ item }) => (
-        <UserRow
-          user={item.user}
-          right={
-            direction === "incoming" ? (
-              <View style={styles.rowActions}>
+      data={rows}
+      keyExtractor={(row) => row.key}
+      contentContainerStyle={[styles.list, { paddingBottom: tabBarInset }]}
+      renderItem={({ item }) => {
+        if (item.kind === "section") {
+          return <Text style={styles.section}>{item.label}</Text>;
+        }
+        const { request } = item;
+        const name = userDisplayName(request.user);
+        return (
+          <UserRow
+            user={request.user}
+            right={
+              request.direction === "incoming" ? (
+                <View style={styles.rowActions}>
+                  <Pressable
+                    onPress={() => accept.mutate(request.id)}
+                    hitSlop={6}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Accept ${name}`}
+                  >
+                    <GlossyOrb size={34}>
+                      <Ionicons name="checkmark" size={18} color={AddyColors.ink} />
+                    </GlossyOrb>
+                  </Pressable>
+                  <Pressable
+                    onPress={() => decline.mutate(request.id)}
+                    hitSlop={6}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Decline ${name}`}
+                    style={styles.declineOrb}
+                  >
+                    <Ionicons name="close" size={18} color={AddyColors.white} />
+                  </Pressable>
+                </View>
+              ) : (
                 <Pressable
-                  onPress={() => accept.mutate(item.id)}
-                  style={styles.acceptBtn}
-                  accessibilityLabel="Accept request"
+                  onPress={() => cancel.mutate(request.id)}
+                  hitSlop={8}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Cancel request to ${name}`}
+                  style={styles.cancelPill}
                 >
-                  <Text style={styles.acceptBtnText}>✓</Text>
+                  <Text style={styles.cancelText}>cancel</Text>
                 </Pressable>
-                <Pressable
-                  onPress={() => decline.mutate(item.id)}
-                  style={styles.declineBtn}
-                  accessibilityLabel="Decline request"
-                >
-                  <Text style={styles.declineBtnText}>✕</Text>
-                </Pressable>
-              </View>
-            ) : (
-              <Pressable
-                onPress={() => cancel.mutate(item.id)}
-                style={styles.secondaryBtn}
-              >
-                <Text style={styles.secondaryBtnText}>Cancel</Text>
-              </Pressable>
-            )
-          }
-        />
-      )}
+              )
+            }
+          />
+        );
+      }}
       onEndReached={() => {
-        if (query.hasNextPage && !query.isFetchingNextPage) {
-          void query.fetchNextPage();
+        if (incoming.hasNextPage && !incoming.isFetchingNextPage) {
+          void incoming.fetchNextPage();
+        } else if (outgoing.hasNextPage && !outgoing.isFetchingNextPage) {
+          void outgoing.fetchNextPage();
         }
       }}
-      ListEmptyComponent={
-        <Empty
-          text={
-            direction === "incoming"
-              ? "No incoming requests."
-              : "No pending sent requests."
-          }
-        />
-      }
+      ListEmptyComponent={<Empty text="No friend requests right now." />}
     />
   );
 }
@@ -257,7 +298,7 @@ function RequestsList({ direction }: { direction: "incoming" | "outgoing" }) {
 function Loading() {
   return (
     <View style={styles.center}>
-      <ActivityIndicator color={BrandColors.primary} size="large" />
+      <ActivityIndicator color={AddyColors.ink} size="large" />
     </View>
   );
 }
@@ -271,75 +312,54 @@ function Empty({ text }: { text: string }) {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: BrandColors.paper },
-  headerActions: { flexDirection: "row", gap: 18 },
-  tabs: {
+  safe: { flex: 1 },
+  header: {
     flexDirection: "row",
-    gap: 8,
+    alignItems: "center",
+    gap: 10,
     paddingHorizontal: 16,
-    paddingVertical: 12,
-  },
-  tab: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 5,
     paddingVertical: 8,
-    paddingHorizontal: 14,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: BrandColors.ink,
-    backgroundColor: BrandColors.paper,
   },
-  tabActive: {
-    backgroundColor: BrandColors.primaryLight,
+  title: {
+    flex: 1,
+    fontFamily: AddyFonts.title,
+    fontSize: 24,
+    lineHeight: 34,
+    color: AddyColors.ink,
   },
-  tabLabel: { color: BrandColors.inkMuted, fontWeight: "600", fontSize: 13 },
-  tabLabelActive: { color: BrandColors.ink },
-  tabBadgeDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: BrandColors.accentPink,
-    borderWidth: 1,
-    borderColor: BrandColors.ink,
+  segments: { marginHorizontal: 16, marginBottom: 12 },
+  qrScroll: { paddingHorizontal: 16, paddingTop: 12 },
+  list: { paddingHorizontal: 16, paddingTop: 2, flexGrow: 1 },
+  section: {
+    fontFamily: AddyFonts.titleSemiBold,
+    fontSize: 14,
+    color: AddyColors.inkMuted,
+    marginTop: 8,
+    marginBottom: 8,
   },
-  list: { paddingHorizontal: 16, paddingBottom: 40, flexGrow: 1 },
   center: { flex: 1, alignItems: "center", justifyContent: "center", padding: 40 },
-  emptyText: { color: BrandColors.inkMuted, fontSize: 14, textAlign: "center" },
-  rowActions: { flexDirection: "row", gap: 8 },
-  acceptBtn: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    borderWidth: 1,
-    borderColor: BrandColors.ink,
-    backgroundColor: BrandColors.primary,
+  emptyText: {
+    fontFamily: AddyFonts.body,
+    color: AddyColors.inkMuted,
+    fontSize: 14,
+    textAlign: "center",
+  },
+  rowActions: { flexDirection: "row", alignItems: "center", gap: 10 },
+  declineOrb: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: AddyColors.pink,
     alignItems: "center",
     justifyContent: "center",
   },
-  acceptBtnText: { color: BrandColors.ink, fontWeight: "700", fontSize: 14 },
-  declineBtn: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    borderWidth: 1,
-    borderColor: BrandColors.ink,
-    backgroundColor: BrandColors.dangerLight,
-    alignItems: "center",
-    justifyContent: "center",
+  cancelPill: {
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: AddyRadius.pill,
+    borderWidth: 1.5,
+    borderColor: AddyColors.line,
+    backgroundColor: AddyColors.paperDim,
   },
-  declineBtnText: { color: BrandColors.ink, fontWeight: "700", fontSize: 14 },
-  secondaryBtn: {
-    paddingHorizontal: 14,
-    paddingVertical: 7,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: BrandColors.ink,
-    backgroundColor: BrandColors.paper,
-  },
-  secondaryBtnText: {
-    color: BrandColors.ink,
-    fontWeight: "600",
-    fontSize: 13,
-  },
+  cancelText: { fontFamily: AddyFonts.tech, fontSize: 17, color: AddyColors.ink },
 });

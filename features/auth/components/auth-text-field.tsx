@@ -9,7 +9,12 @@ import {
   View,
 } from "react-native";
 
-import { BrandColors } from "@/constants/theme";
+import {
+  ADDY_BORDER_WIDTH,
+  AddyColors,
+  AddyFonts,
+  AddyRadius,
+} from "@/constants/theme";
 
 type AuthTextFieldProps = TextInputProps & {
   label: string;
@@ -31,7 +36,7 @@ export function AuthTextField({
       <Text style={styles.label}>{label}</Text>
       <View style={[styles.inputRow, error ? styles.inputError : null]}>
         <TextInput
-          placeholderTextColor={BrandColors.neutralMuted}
+          placeholderTextColor={AddyColors.inkMuted}
           style={[styles.input, style]}
           autoCapitalize="none"
           secureTextEntry={isPassword ? hidden : false}
@@ -46,7 +51,7 @@ export function AuthTextField({
             <Ionicons
               name={hidden ? "eye-outline" : "eye-off-outline"}
               size={20}
-              color={BrandColors.neutralMuted}
+              color={AddyColors.inkMuted}
             />
           </Pressable>
         )}
@@ -59,26 +64,28 @@ export function AuthTextField({
 const styles = StyleSheet.create({
   wrap: { gap: 6 },
   label: {
+    fontFamily: AddyFonts.titleSemiBold,
     fontSize: 14,
-    fontWeight: "600",
-    color: BrandColors.neutralMuted,
+    color: AddyColors.inkMuted,
   },
   inputRow: {
     flexDirection: "row",
     alignItems: "center",
-    borderWidth: 1,
-    borderColor: BrandColors.neutralBorder,
-    borderRadius: 12,
-    backgroundColor: BrandColors.placeHolder,
+    minHeight: 50,
+    borderWidth: ADDY_BORDER_WIDTH,
+    borderColor: AddyColors.line,
+    borderRadius: AddyRadius.input,
+    backgroundColor: AddyColors.white,
   },
   input: {
     flex: 1,
     paddingHorizontal: 14,
     paddingVertical: 12,
-    fontSize: 16,
-    color: BrandColors.neutral,
+    fontFamily: AddyFonts.body,
+    fontSize: 15,
+    color: AddyColors.ink,
   },
-  eyeButton: { paddingHorizontal: 12 },
-  inputError: { borderColor: BrandColors.danger },
-  error: { fontSize: 13, color: BrandColors.danger },
+  eyeButton: { paddingHorizontal: 12, minHeight: 44, justifyContent: "center" },
+  inputError: { borderColor: AddyColors.danger },
+  error: { fontFamily: AddyFonts.body, fontSize: 13, color: AddyColors.danger },
 });

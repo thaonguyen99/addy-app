@@ -2,6 +2,7 @@ import { Redirect, router, Stack } from "expo-router";
 import { useEffect } from "react";
 import { View } from "react-native";
 
+import { AddyColors } from "@/constants/theme";
 import { CameraSessionProvider } from "@/features/camera/context/camera-session-context";
 import { useAuthStore } from "@/features/auth/store/auth-store";
 import { takePendingInviteToken } from "@/features/friends/pending-invite";
@@ -9,6 +10,10 @@ import { useOnboardingTour } from "@/features/onboarding/onboarding-tour";
 import { registerForPush } from "@/features/notifications/push-registration";
 import { useInAppNotifications } from "@/features/notifications/use-in-app-notifications";
 import { usePinQueueRunner } from "@/features/pin-queue/use-pin-queue-runner";
+
+// Deep links and the launch redirect to /capture keep the tabs underneath,
+// so closing the camera lands on the map instead of an empty stack.
+export const unstable_settings = { initialRouteName: "(tabs)" };
 
 export default function AppLayout() {
   const status = useAuthStore((s) => s.status);
@@ -42,8 +47,11 @@ export default function AppLayout() {
         <Stack screenOptions={{ headerShown: false }}>
           <Stack.Screen name="(tabs)" />
           <Stack.Screen
-            name="photo-selection"
-            options={{ presentation: "modal", animation: "slide_from_bottom" }}
+            name="capture"
+            options={{
+              animation: "slide_from_bottom",
+              contentStyle: { backgroundColor: AddyColors.captureBg },
+            }}
           />
           <Stack.Screen
             name="place-selection"
@@ -71,10 +79,11 @@ export default function AppLayout() {
           <Stack.Screen name="profile/security" />
           <Stack.Screen name="profile/notifications" />
           <Stack.Screen name="privacy-policy" />
-          <Stack.Screen name="friends/index" />
           <Stack.Screen name="friends/add" />
+          <Stack.Screen name="invite" />
           <Stack.Screen name="friends/scan" />
           <Stack.Screen name="blocked-accounts" />
+          <Stack.Screen name="dev-primitives" />
         </Stack>
       </View>
     </CameraSessionProvider>

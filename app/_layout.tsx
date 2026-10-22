@@ -1,5 +1,6 @@
 import {
   Baloo2_600SemiBold,
+  Baloo2_700Bold,
   Baloo2_800ExtraBold,
 } from "@expo-google-fonts/baloo-2";
 import {
@@ -80,6 +81,7 @@ export default function RootLayout() {
     "BeVietnam-SemiBold": BeVietnamPro_600SemiBold,
     "BeVietnam-Bold": BeVietnamPro_700Bold,
     "Baloo2-SemiBold": Baloo2_600SemiBold,
+    "Baloo2-Bold": Baloo2_700Bold,
     "Baloo2-ExtraBold": Baloo2_800ExtraBold,
     "VT323-Regular": VT323_400Regular,
   });

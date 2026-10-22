@@ -1,220 +1,259 @@
-import { Image } from "expo-image";
-import MaterialIcons from "@expo/vector-icons/MaterialIcons";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import {
+  type NavigationAction,
+  useNavigation,
+  usePreventRemove,
+} from "@react-navigation/native";
+import { router } from "expo-router";
+import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  useWindowDimensions,
+  View,
+} from "react-native";
+import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import { BrandColors } from "@/constants/theme";
+import { ConfirmSheet } from "@/components/ui/confirm-sheet";
 import { GlossyButton } from "@/components/ui/glossy-button";
-import { StickerCard } from "@/components/ui/sticker-card";
-import { ToggleRow } from "@/components/ui/toggle-row";
-import { MOOD_SCORE_OPTIONS } from "@/features/camera/constants/mood-score";
+import { IconCircleButton } from "@/components/ui/icon-circle-button";
+import { SegmentedControl } from "@/components/ui/segmented-control";
+import { SkyBackground } from "@/components/ui/sky-background";
+import {
+  ADDY_BORDER_WIDTH,
+  AddyColors,
+  AddyFonts,
+  AddyRadius,
+} from "@/constants/theme";
+import { useCameraSession } from "@/features/camera/context/camera-session-context";
+import { useGalleryPick } from "@/features/camera/hooks/use-gallery-pick";
+import { AddressBar } from "@/features/create-pin/components/address-bar";
+import { DraftPhoto } from "@/features/create-pin/components/draft-photo";
+import { MoodRow } from "@/features/create-pin/components/mood-row";
+import { useAutoPlace } from "@/features/create-pin/hooks/use-auto-place";
 import { useCreatePinSubmit } from "@/features/create-pin/hooks/use-create-pin-submit";
 import { useCreatePinHandoffStore } from "@/features/create-pin/store/create-pin-handoff-store";
 import { safeBack } from "@/lib/navigation/safe-router";
+import type { MemoryVisibility } from "@/types/api";
 
-function moodEmoji(score: number | null): string | null {
-  if (score === null) return null;
-  return MOOD_SCORE_OPTIONS.find((o) => o.score === score)?.emoji ?? null;
-}
+const SIDE_PADDING = 16;
 
+const VISIBILITY_OPTIONS = [
+  { value: "private", label: "only me" },
+  { value: "friends", label: "friends" },
+] as const satisfies readonly { value: MemoryVisibility; label: string }[];
+
+/** One-screen create flow: photo, place, mood, caption, who can see, Pin it. */
 export function CreatePinScreen() {
+  const navigation = useNavigation();
+  const { width } = useWindowDimensions();
+  const photoSize = width - SIDE_PADDING * 2;
+
   const images = useCreatePinHandoffStore((s) => s.images);
   const selectedPlace = useCreatePinHandoffStore((s) => s.selectedPlace);
+  const placeSource = useCreatePinHandoffStore((s) => s.placeSource);
   const moodScore = useCreatePinHandoffStore((s) => s.moodScore);
   const feeling = useCreatePinHandoffStore((s) => s.feeling);
   const visibility = useCreatePinHandoffStore((s) => s.visibility);
-  const setVisibility = useCreatePinHandoffStore((s) => s.setVisibility);
+  const {
+    addImages,
+    removeImage,
+    reorderImages,
+    setMoodScore,
+    setFeeling,
+    setVisibility,
+    clear,
+  } = useCreatePinHandoffStore.getState();
+
+  const { removeCapturedPhoto, clearAllDrafts } = useCameraSession();
+  const { pick, picking } = useGalleryPick();
+  const { resolving } = useAutoPlace();
   const { submit, submitting } = useCreatePinSubmit(images);
 
-  const onSubmit = async () => {
-    await submit();
+  // Leaving with a photo in the draft asks first — the close button, the
+  // Android back button and the iOS swipe-down all land here.
+  const [allowLeave, setAllowLeave] = useState(false);
+  const [confirmVisible, setConfirmVisible] = useState(false);
+  const pendingActionRef = useRef<NavigationAction | null>(null);
+
+  usePreventRemove(!allowLeave && images.length > 0, ({ data }) => {
+    pendingActionRef.current = data.action;
+    setConfirmVisible(true);
+  });
+
+  useEffect(() => {
+    if (allowLeave && pendingActionRef.current) {
+      navigation.dispatch(pendingActionRef.current);
+      pendingActionRef.current = null;
+    }
+  }, [allowLeave, navigation]);
+
+  const onDiscard = useCallback(async () => {
+    setConfirmVisible(false);
+    await clearAllDrafts();
+    clear();
+    setAllowLeave(true);
+  }, [clearAllDrafts, clear]);
+
+  const onAddPhotos = useCallback(async () => {
+    addImages(await pick());
+  }, [addImages, pick]);
+
+  const onRemovePhoto = useCallback(
+    (id: string) => {
+      removeImage(id);
+      void removeCapturedPhoto(id);
+    },
+    [removeImage, removeCapturedPhoto],
+  );
+
+  const onPinIt = async () => {
+    // The save closes the whole flow itself; don't intercept that.
+    setAllowLeave(true);
+    const entry = await submit();
+    if (!entry) setAllowLeave(false);
   };
 
-  if (images.length === 0 || !selectedPlace) {
-    return (
-      <SafeAreaView style={styles.safe}>
-        <View style={styles.empty}>
-          <Text style={styles.emptyTitle}>
-            {!images.length ? "No photos selected" : "No place selected"}
-          </Text>
-          <GlossyButton
-            label="Go back"
-            onPress={() => safeBack("/place-selection")}
-          />
-        </View>
-      </SafeAreaView>
-    );
-  }
-
-  const emoji = moodEmoji(moodScore);
+  // The draft is cleared as the flow closes after a save — render nothing
+  // for that last frame instead of an empty form.
+  if (images.length === 0) return <SkyBackground />;
 
   return (
-    <SafeAreaView style={styles.safe} edges={["top", "bottom"]}>
-      <ScrollView contentContainerStyle={styles.scroll}>
-        <Text style={styles.title}>Review your pin</Text>
-        <Text style={styles.subtitle}>
-          All selected photos upload when you save. The first photo is your
-          cover on the map.
-        </Text>
+    <SkyBackground>
+      <SafeAreaView style={styles.flex} edges={["top", "bottom"]}>
+        <View style={styles.header}>
+          <IconCircleButton
+            icon="close"
+            accessibilityLabel="Close"
+            onPress={() => safeBack("/capture")}
+          />
+          <Text style={styles.title}>New memory</Text>
+          <View style={styles.headerSpacer} />
+        </View>
 
-        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-          {images.map((img, index) => (
-            <View key={img.id} style={styles.thumbWrap}>
-              <Image source={{ uri: img.uri }} style={styles.thumb} />
-              {index === 0 ? (
-                <Text style={styles.coverBadge}>Cover</Text>
-              ) : null}
-            </View>
-          ))}
-        </ScrollView>
-
-        <StickerCard style={styles.placeCardShadow}>
-          <View style={styles.placeCard}>
-            <MaterialIcons
-              name="place"
-              size={22}
-              color={BrandColors.primary}
+        <KeyboardAvoidingView behavior="padding" style={styles.flex}>
+          <ScrollView
+            contentContainerStyle={styles.content}
+            keyboardShouldPersistTaps="handled"
+            keyboardDismissMode="interactive"
+            showsVerticalScrollIndicator={false}
+          >
+            <DraftPhoto
+              images={images}
+              size={photoSize}
+              adding={picking}
+              onReorder={reorderImages}
+              onRemove={onRemovePhoto}
+              onAdd={() => void onAddPhotos()}
             />
-            <View style={styles.placeTextWrap}>
-              <Text style={styles.placeName}>{selectedPlace.name}</Text>
-              <Text style={styles.placeAddress}>{selectedPlace.address}</Text>
+
+            <AddressBar
+              place={selectedPlace}
+              source={placeSource}
+              resolving={resolving}
+              onPress={() => router.push("/place-selection")}
+            />
+
+            <View style={styles.section}>
+              <Text style={styles.label}>Mood</Text>
+              <MoodRow value={moodScore} onChange={setMoodScore} />
             </View>
-          </View>
-        </StickerCard>
 
-        <Pressable
-          onPress={() => safeBack("/place-selection")}
-          style={styles.changePlaceBtn}
-        >
-          <Text style={styles.changePlaceText}>change place</Text>
-        </Pressable>
+            <TextInput
+              value={feeling}
+              onChangeText={setFeeling}
+              placeholder="add a caption…"
+              placeholderTextColor={AddyColors.inkMuted}
+              maxLength={500}
+              style={styles.input}
+              accessibilityLabel="Caption"
+              returnKeyType="done"
+              submitBehavior="blurAndSubmit"
+            />
 
-        {(emoji || feeling.trim()) ? (
-          <StickerCard borderStyle="dashed" style={styles.metaSectionShadow}>
-            <View style={styles.metaSection}>
-              <Text style={styles.metaLabel}>Your moment</Text>
-              {emoji ? (
-                <Text style={styles.moodEmoji}>{emoji}</Text>
-              ) : null}
-              {feeling.trim() ? (
-                <Text style={styles.feelingText}>{feeling.trim()}</Text>
-              ) : null}
+            <View style={styles.section}>
+              <Text style={styles.label}>Who can see</Text>
+              <SegmentedControl
+                options={VISIBILITY_OPTIONS}
+                value={visibility}
+                onChange={setVisibility}
+              />
             </View>
-          </StickerCard>
-        ) : null}
+          </ScrollView>
 
-        <StickerCard style={styles.visibilityCardShadow}>
-          <View style={styles.visibilityCard}>
-            <ToggleRow
-              label="Share with friends"
-              description="Friends can see this memory on their map. Off = only you."
-              value={visibility === "friends"}
-              onValueChange={(next) =>
-                setVisibility(next ? "friends" : "private")
-              }
+          <View style={styles.footer}>
+            <GlossyButton
+              label="📍 Pin it"
+              onPress={() => void onPinIt()}
+              loading={submitting}
+              disabled={!selectedPlace}
             />
           </View>
-        </StickerCard>
+        </KeyboardAvoidingView>
+      </SafeAreaView>
 
-        <GlossyButton
-          label={submitting ? "Saving…" : "💾 Save memory"}
-          loading={submitting}
-          onPress={onSubmit}
-        />
-        <Pressable onPress={() => safeBack("/place-selection")}>
-          <Text style={styles.cancel}>cancel</Text>
-        </Pressable>
-      </ScrollView>
-    </SafeAreaView>
+      <ConfirmSheet
+        visible={confirmVisible}
+        title="Discard this memory?"
+        message="Your photo and anything you wrote will be gone."
+        confirmLabel="Discard"
+        cancelLabel="Keep editing"
+        destructive
+        onConfirm={() => void onDiscard()}
+        onCancel={() => {
+          pendingActionRef.current = null;
+          setConfirmVisible(false);
+        }}
+      />
+    </SkyBackground>
   );
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: BrandColors.paper },
-  scroll: { padding: 24, gap: 14, paddingBottom: 40 },
-  title: { fontSize: 26, fontFamily: "Baloo2-ExtraBold", color: BrandColors.ink },
-  subtitle: { fontSize: 15, color: BrandColors.neutralMuted, lineHeight: 22 },
-  thumbWrap: { marginRight: 10, position: "relative" },
-  thumb: { width: 88, height: 88, borderRadius: 12 },
-  coverBadge: {
-    position: "absolute",
-    bottom: 6,
-    left: 6,
-    backgroundColor: BrandColors.accentPink,
-    color: BrandColors.white,
-    fontSize: 11,
-    fontWeight: "600",
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 6,
-    overflow: "hidden",
-  },
-  placeCardShadow: {
-    alignSelf: "stretch",
-  },
-  placeCard: {
+  flex: { flex: 1 },
+  header: {
     flexDirection: "row",
-    alignItems: "flex-start",
-    gap: 12,
-    padding: 14,
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: SIDE_PADDING,
+    paddingVertical: 8,
   },
-  placeTextWrap: {
-    flex: 1,
-    gap: 4,
+  title: {
+    fontFamily: AddyFonts.title,
+    fontSize: 20,
+    lineHeight: 30,
+    color: AddyColors.ink,
   },
-  placeName: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: BrandColors.ink,
+  headerSpacer: { width: 30 },
+  content: {
+    paddingHorizontal: SIDE_PADDING,
+    paddingTop: 4,
+    paddingBottom: 24,
+    gap: 16,
   },
-  placeAddress: {
+  section: { gap: 8 },
+  label: {
+    fontFamily: AddyFonts.titleSemiBold,
     fontSize: 14,
-    color: BrandColors.inkMuted,
-    lineHeight: 20,
+    color: AddyColors.inkMuted,
   },
-  changePlaceBtn: {
-    alignSelf: "flex-start",
-    marginTop: -6,
-  },
-  changePlaceText: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: BrandColors.link,
-  },
-  metaSectionShadow: {
-    alignSelf: "stretch",
-  },
-  metaSection: {
-    gap: 6,
-    padding: 14,
-  },
-  visibilityCardShadow: {
-    alignSelf: "stretch",
-  },
-  visibilityCard: {
+  input: {
+    minHeight: 48,
     paddingHorizontal: 14,
-  },
-  metaLabel: {
-    fontSize: 13,
-    fontWeight: "600",
-    color: BrandColors.inkMuted,
-    textTransform: "uppercase",
-    letterSpacing: 0.4,
-  },
-  moodEmoji: {
-    fontSize: 32,
-  },
-  feelingText: {
+    paddingVertical: 12,
+    borderRadius: AddyRadius.input,
+    borderWidth: ADDY_BORDER_WIDTH,
+    borderColor: AddyColors.line,
+    backgroundColor: AddyColors.white,
+    fontFamily: AddyFonts.body,
     fontSize: 15,
-    color: BrandColors.ink,
-    lineHeight: 22,
+    color: AddyColors.ink,
   },
-  cancel: {
-    textAlign: "center",
-    color: BrandColors.inkMuted,
-    fontSize: 15,
-    marginTop: 4,
+  footer: {
+    paddingHorizontal: SIDE_PADDING,
+    paddingTop: 8,
+    paddingBottom: 8,
   },
-  empty: { flex: 1, justifyContent: "center", padding: 24, gap: 16 },
-  emptyTitle: { fontSize: 18, fontWeight: "600", color: BrandColors.ink },
 });

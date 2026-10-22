@@ -1,29 +1,34 @@
-import Ionicons from "@expo/vector-icons/Ionicons";
 import type { Href } from "expo-router";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 
-import { BrandColors } from "@/constants/theme";
+import { IconCircleButton } from "@/components/ui/icon-circle-button";
+import { AddyColors, AddyFonts } from "@/constants/theme";
 import { safeBack } from "@/lib/navigation/safe-router";
 
 export function ScreenHeader({
   title,
   fallback = "/(app)/(tabs)",
   right,
+  showBack = true,
 }: {
   title: string;
   fallback?: Href;
   right?: React.ReactNode;
+  /** False for tab roots, which have nothing to go back to. */
+  showBack?: boolean;
 }) {
   return (
     <View style={styles.bar}>
-      <Pressable
-        onPress={() => safeBack(fallback)}
-        hitSlop={12}
-        style={styles.back}
-      >
-        <Ionicons name="chevron-back" size={22} color={BrandColors.ink} />
-        <Text style={styles.title}>{title}</Text>
-      </Pressable>
+      {showBack ? (
+        <IconCircleButton
+          icon="chevron-back"
+          accessibilityLabel="Back"
+          onPress={() => safeBack(fallback)}
+        />
+      ) : null}
+      <Text style={styles.title} numberOfLines={1}>
+        {title}
+      </Text>
       {right ? <View>{right}</View> : null}
     </View>
   );
@@ -33,12 +38,15 @@ const styles = StyleSheet.create({
   bar: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 12,
-    paddingVertical: 14,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: BrandColors.stroke2,
+    gap: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
   },
-  back: { flexDirection: "row", alignItems: "center", gap: 4 },
-  title: { fontFamily: "Baloo2-SemiBold", fontSize: 18, color: BrandColors.ink },
+  title: {
+    flex: 1,
+    fontFamily: AddyFonts.title,
+    fontSize: 20,
+    lineHeight: 30,
+    color: AddyColors.ink,
+  },
 });

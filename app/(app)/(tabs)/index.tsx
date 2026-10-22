@@ -1,5 +1,3 @@
-import Ionicons from "@expo/vector-icons/Ionicons";
-import { TourTarget } from "@wrack/react-native-tour-guide";
 import { router } from "expo-router";
 import { useCallback, useMemo } from "react";
 import {
@@ -14,16 +12,20 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { useFloatingTabBarInset } from "@/components/navigation/floating-tab-bar";
 import { ChatBubbleBanner } from "@/components/ui/chat-bubble-banner";
-import { StatChip } from "@/components/ui/stat-chip";
-import { ThemedText } from "@/components/ui/themed-text";
-import { BrandColors } from "@/constants/theme";
+import { IconCircleButton } from "@/components/ui/icon-circle-button";
+import { SkyBackground } from "@/components/ui/sky-background";
+import { TechChip } from "@/components/ui/tech-chip";
+import { AddyColors, AddyFonts } from "@/constants/theme";
 import { useAuthStore } from "@/features/auth/store/auth-store";
-import { MemoryFeedCard } from "@/features/feed/components/memory-feed-card";
+import {
+  MemoryGridTile,
+  QueuedGridTile,
+} from "@/features/feed/components/memory-grid-tile";
 import { useMemoryFeed } from "@/features/feed/hooks/use-memory-feed";
 import { useMapFocusStore } from "@/features/map/store/map-focus-store";
-import { ONBOARDING_ADD_FRIEND_TARGET_ID } from "@/features/onboarding/onboarding-tour";
-import { QueuedPinCard } from "@/features/pin-queue/components/queued-pin-card";
+import { ChatAvatar } from "@/features/memory/components/chat-avatar";
 import { usePinQueueStore } from "@/features/pin-queue/pin-queue-store";
 import type { QueuedPin } from "@/features/pin-queue/pin-queue-types";
 import { useFriendPinNearby } from "@/features/social/hooks/use-friend-pin-nearby";
@@ -31,17 +33,18 @@ import { useStatsQuery } from "@/lib/query/hooks";
 import type { MemoryListItem } from "@/types/api";
 
 const GRID_COLUMNS = 3;
+const GRID_GAP = 3;
+const SIDE_PADDING = 16;
 
-/** Home grid rows: queued (not yet uploaded) pins first, then server memories. */
-type HomeGridItem =
+/** Grid rows: queued (not yet uploaded) pins first, then server memories. */
+type GridItem =
   | { kind: "queued"; key: string; pin: QueuedPin }
   | { kind: "memory"; key: string; memory: MemoryListItem };
-const GRID_GAP = 8;
-const GRID_PADDING = 24;
 
-export default function HomeScreen() {
+/** The You tab: your profile header and a grid of every memory you've pinned. */
+export default function YouScreen() {
   const user = useAuthStore((s) => s.user);
-  const { data: stats, isLoading: statsLoading } = useStatsQuery();
+  const { data: stats } = useStatsQuery();
   const {
     items: memories,
     isLoading: memoriesLoading,
@@ -51,7 +54,7 @@ export default function HomeScreen() {
     fetchNextPage,
   } = useMemoryFeed(true);
   const queuedPins = usePinQueueStore((s) => s.entries);
-  const gridItems = useMemo<HomeGridItem[]>(
+  const gridItems = useMemo<GridItem[]>(
     () => [
       ...[...queuedPins]
         .reverse()
@@ -61,11 +64,12 @@ export default function HomeScreen() {
     [queuedPins, memories],
   );
   const { width: screenWidth } = useWindowDimensions();
+  const tabBarInset = useFloatingTabBarInset();
   const { pin: nearbyFriendPin, dismiss: dismissNearbyPin } =
     useFriendPinNearby();
   const setPendingFocus = useMapFocusStore((s) => s.setPendingFocus);
 
-  const name = user?.name || user?.username || user?.email?.split("@")[0] || "";
+  const username = user?.username ?? user?.email?.split("@")[0] ?? "";
 
   const onOpenNearbyPin = () => {
     if (!nearbyFriendPin) return;
@@ -74,178 +78,187 @@ export default function HomeScreen() {
       latitude: nearbyFriendPin.latitude,
       longitude: nearbyFriendPin.longitude,
     });
-    router.push("/(app)/(tabs)/explore");
+    router.navigate("/(app)/(tabs)/explore");
   };
 
-  const tileSize =
-    (screenWidth - GRID_PADDING * 2 - GRID_GAP * (GRID_COLUMNS - 1)) /
-    GRID_COLUMNS;
+  const tileSize = Math.floor(
+    (screenWidth - SIDE_PADDING * 2 - GRID_GAP * (GRID_COLUMNS - 1)) /
+      GRID_COLUMNS,
+  );
 
   const openMemory = useCallback((id: string) => {
     router.push(`/memory/${id}`);
   }, []);
 
   const renderItem = useCallback(
-    ({ item }: { item: HomeGridItem }) => (
-      <View style={{ width: tileSize }}>
-        {item.kind === "queued" ? (
-          <QueuedPinCard pin={item.pin} />
-        ) : (
-          <MemoryFeedCard memory={item.memory} onPress={openMemory} compact />
-        )}
-      </View>
-    ),
+    ({ item }: { item: GridItem }) =>
+      item.kind === "queued" ? (
+        <QueuedGridTile pin={item.pin} size={tileSize} />
+      ) : (
+        <MemoryGridTile memory={item.memory} size={tileSize} onPress={openMemory} />
+      ),
     [openMemory, tileSize],
   );
 
   const header = (
     <View style={styles.headerContent}>
-      <View style={styles.titleRow}>
-        <ThemedText type="title" style={styles.title}>
-          Hi{name ? `, ${name}` : ""} ✨
-        </ThemedText>
-        <View style={styles.headerActions}>
-          <TourTarget id={ONBOARDING_ADD_FRIEND_TARGET_ID}>
-            <Pressable
-              onPress={() => router.push("/(app)/friends")}
-              hitSlop={12}
-              style={styles.settingsButton}
-              accessibilityRole="button"
-              accessibilityLabel="Friends"
-            >
-              <Ionicons
-                name="people-outline"
-                size={24}
-                color={BrandColors.inkMuted}
-              />
-            </Pressable>
-          </TourTarget>
-          <Pressable
-            onPress={() => router.push("/profile")}
-            hitSlop={12}
-            style={styles.settingsButton}
-            accessibilityRole="button"
-            accessibilityLabel="Open profile and settings"
-          >
-            <Ionicons
-              name="settings-outline"
-              size={24}
-              color={BrandColors.inkMuted}
-            />
-          </Pressable>
+      <View style={styles.profileRow}>
+        <ChatAvatar user={user ? { username, avatarUrl: user.avatarUrl } : null} size={52} />
+        <View style={styles.profileText}>
+          <Text style={styles.username} numberOfLines={1}>
+            {username}
+          </Text>
+          {user?.bio ? (
+            <Text style={styles.bio} numberOfLines={2}>
+              {user.bio}
+            </Text>
+          ) : null}
         </View>
+        <IconCircleButton
+          accessibilityLabel="Invite friends"
+          size={36}
+          onPress={() => router.push("/invite")}
+        >
+          <Text style={styles.headerEmoji}>💌</Text>
+        </IconCircleButton>
+        <IconCircleButton
+          accessibilityLabel="Profile settings"
+          size={36}
+          onPress={() => router.push("/profile")}
+        >
+          <Text style={styles.headerEmoji}>⚙️</Text>
+        </IconCircleButton>
       </View>
-      {user?.bio && <ThemedText style={styles.sub}>{user.bio}</ThemedText>}
 
-      {statsLoading ? (
-        <ActivityIndicator color={BrandColors.primary} />
-      ) : (
-        <View style={styles.statsRow}>
-          <StatChip value={stats?.totalMemories ?? 0} label="memories" />
-          <StatChip value={stats?.placesVisited ?? 0} label="places" />
-        </View>
-      )}
+      <View style={styles.statsRow}>
+        <TechChip label={`${stats?.totalMemories ?? "–"} memories`} />
+        <TechChip label={`${stats?.placesVisited ?? "–"} places`} />
+      </View>
 
-      {/* <ThemedText type="subtitle" style={styles.gridHeading}>
-        Your memories
-      </ThemedText> */}
+      <View style={styles.sectionRow}>
+        <Text style={styles.sectionTitle}>Your memories</Text>
+        <Pressable
+          onPress={() => router.navigate("/(app)/(tabs)/explore")}
+          hitSlop={12}
+          accessibilityRole="button"
+          accessibilityLabel="Open the map"
+        >
+          <Text style={styles.sectionLink}>map ›</Text>
+        </Pressable>
+      </View>
     </View>
   );
 
   return (
-    <SafeAreaView style={styles.safe} edges={["top"]}>
-      <ChatBubbleBanner
-        visible={nearbyFriendPin !== null}
-        onPress={onOpenNearbyPin}
-      >
-        <Text style={styles.nearbyBannerText} numberOfLines={2}>
-          {nearbyFriendPin
-            ? `${nearbyFriendPin.author.name || nearbyFriendPin.author.username} pinned a memory nearby ›`
-            : ""}
-        </Text>
-      </ChatBubbleBanner>
-      <FlatList
-        data={gridItems}
-        keyExtractor={(item) => item.key}
-        renderItem={renderItem}
-        numColumns={GRID_COLUMNS}
-        columnWrapperStyle={{ gap: GRID_GAP }}
-        contentContainerStyle={styles.content}
-        showsVerticalScrollIndicator={false}
-        ListHeaderComponent={header}
-        ItemSeparatorComponent={() => <View style={{ height: GRID_GAP }} />}
-        onEndReachedThreshold={0.4}
-        onEndReached={fetchNextPage}
-        refreshControl={
-          <RefreshControl
-            refreshing={isRefetching}
-            onRefresh={refetch}
-            tintColor={BrandColors.inkMuted}
-          />
-        }
-        ListEmptyComponent={
-          memoriesLoading ? (
-            <ActivityIndicator color={BrandColors.primary} />
-          ) : (
-            <Text style={styles.emptyText}>
-              No memories yet. Capture your first one from the camera tab.
-            </Text>
-          )
-        }
-        ListFooterComponent={
-          isFetchingNextPage ? (
-            <View style={styles.footer}>
-              <ActivityIndicator color={BrandColors.inkMuted} />
-            </View>
-          ) : null
-        }
-      />
-    </SafeAreaView>
+    <SkyBackground>
+      <SafeAreaView style={styles.safe} edges={["top"]}>
+        <ChatBubbleBanner
+          visible={nearbyFriendPin !== null}
+          onPress={onOpenNearbyPin}
+        >
+          <Text style={styles.nearbyBannerText} numberOfLines={2}>
+            {nearbyFriendPin
+              ? `${nearbyFriendPin.author.name || nearbyFriendPin.author.username} pinned a memory nearby ›`
+              : ""}
+          </Text>
+        </ChatBubbleBanner>
+        <FlatList
+          data={gridItems}
+          keyExtractor={(item) => item.key}
+          renderItem={renderItem}
+          numColumns={GRID_COLUMNS}
+          columnWrapperStyle={styles.column}
+          contentContainerStyle={[styles.content, { paddingBottom: tabBarInset }]}
+          showsVerticalScrollIndicator={false}
+          ListHeaderComponent={header}
+          ItemSeparatorComponent={GridSeparator}
+          onEndReachedThreshold={0.4}
+          onEndReached={fetchNextPage}
+          removeClippedSubviews
+          refreshControl={
+            <RefreshControl
+              refreshing={isRefetching}
+              onRefresh={refetch}
+              tintColor={AddyColors.inkMuted}
+            />
+          }
+          ListEmptyComponent={
+            memoriesLoading ? (
+              <ActivityIndicator color={AddyColors.ink} />
+            ) : (
+              <Text style={styles.emptyText}>
+                No memories yet. Tap the camera to pin your first one.
+              </Text>
+            )
+          }
+          ListFooterComponent={
+            isFetchingNextPage ? (
+              <View style={styles.footer}>
+                <ActivityIndicator color={AddyColors.inkMuted} />
+              </View>
+            ) : null
+          }
+        />
+      </SafeAreaView>
+    </SkyBackground>
   );
 }
 
+function GridSeparator() {
+  return <View style={styles.separator} />;
+}
+
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: BrandColors.paper },
-  content: { padding: GRID_PADDING, paddingBottom: 40 },
-  headerContent: { gap: 16, marginBottom: 16 },
-  titleRow: {
+  safe: { flex: 1 },
+  content: { paddingHorizontal: SIDE_PADDING, paddingTop: 8 },
+  column: { gap: GRID_GAP },
+  separator: { height: GRID_GAP },
+  headerContent: { gap: 14, marginBottom: 12 },
+  profileRow: { flexDirection: "row", alignItems: "center", gap: 10 },
+  profileText: { flex: 1, gap: 2 },
+  username: {
+    fontFamily: AddyFonts.title,
+    fontSize: 22,
+    lineHeight: 32,
+    color: AddyColors.ink,
+  },
+  bio: {
+    fontFamily: AddyFonts.body,
+    fontSize: 13,
+    lineHeight: 18,
+    color: AddyColors.inkMuted,
+  },
+  headerEmoji: { fontSize: 17 },
+  statsRow: { flexDirection: "row", gap: 8 },
+  sectionRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    gap: 12,
-  },
-  title: {
-    color: BrandColors.ink,
-    flex: 1,
-    fontFamily: "Baloo2-ExtraBold",
-    // Baloo 2 needs ~1.6em per line; anything tighter clips glyphs on iOS
-    lineHeight: 52,
-  },
-  headerActions: { flexDirection: "row", alignItems: "center", gap: 8 },
-  settingsButton: { padding: 4 },
-  sub: {
-    color: BrandColors.inkMuted,
-    fontSize: 16,
-    lineHeight: 24,
-    fontFamily: "VT323-Regular",
-  },
-  statsRow: { flexDirection: "row", gap: 12 },
-  gridHeading: {
-    color: BrandColors.ink,
-    fontFamily: "Baloo2-SemiBold",
     marginTop: 4,
   },
+  sectionTitle: {
+    fontFamily: AddyFonts.title,
+    fontSize: 17,
+    lineHeight: 24,
+    color: AddyColors.ink,
+  },
+  sectionLink: {
+    fontFamily: AddyFonts.tech,
+    fontSize: 19,
+    color: AddyColors.ink,
+  },
   emptyText: {
-    color: BrandColors.inkMuted,
+    fontFamily: AddyFonts.body,
+    color: AddyColors.inkMuted,
     fontSize: 14,
     textAlign: "center",
     paddingVertical: 24,
   },
   footer: { paddingVertical: 20 },
   nearbyBannerText: {
-    color: BrandColors.ink,
+    color: AddyColors.ink,
     fontSize: 14,
-    fontFamily: "Baloo2-SemiBold",
+    fontFamily: AddyFonts.titleSemiBold,
     letterSpacing: 0.2,
     paddingHorizontal: 16,
     paddingVertical: 10,

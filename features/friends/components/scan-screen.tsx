@@ -39,7 +39,7 @@ export function ScanScreen() {
 
   return (
     <SafeAreaView style={styles.safe} edges={["top", "bottom"]}>
-      <ScreenHeader title="Scan invite" fallback="/(app)/friends" />
+      <ScreenHeader title="Scan invite" fallback="/(app)/(tabs)/friends" />
       <View style={styles.body}>
         {!permission ? null : !permission.granted ? (
           <View style={styles.denied}>

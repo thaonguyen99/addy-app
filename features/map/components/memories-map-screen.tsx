@@ -1,13 +1,3 @@
-import { useFocusEffect } from "@react-navigation/native";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withDelay,
-  withSequence,
-  withTiming,
-} from "react-native-reanimated";
 import {
   Camera,
   GeoJSONSource,
@@ -18,49 +8,63 @@ import {
   type LngLatBounds,
   type ViewStateChangeEvent,
 } from "@maplibre/maplibre-react-native";
-import type { NativeSyntheticEvent } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { router } from "expo-router";
+import { useFocusEffect } from "@react-navigation/native";
 import { TourTarget, useTourGuide } from "@wrack/react-native-tour-guide";
+import { router } from "expo-router";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { NativeSyntheticEvent } from "react-native";
+import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withDelay,
+  withSequence,
+  withTiming,
+} from "react-native-reanimated";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 import { ChatBubbleBanner } from "@/components/ui/chat-bubble-banner";
-import { SoftShadowBox } from "@/components/ui/soft-shadow";
-import { StickerRadius } from "@/constants/sticker-style";
+import { TechChip } from "@/components/ui/tech-chip";
 import { LABEL_VISIBLE_ZOOM } from "@/constants/map-style";
-import { GOONG_MAP_API_KEY } from "@/lib/env";
 import {
-  useFriendsMapQuery,
-  useMemoriesMapQuery,
-  useStatsQuery,
-} from "@/lib/query/hooks";
-import type { FriendMemoryPin, MapBounds, MemoryPin } from "@/types/api";
-import { BrandColors } from "@/constants/theme";
-import { ClusterMarker } from "@/features/map/components/cluster-marker";
+  AddyColors,
+  AddyFonts,
+  AddyRadius,
+  BrandColors,
+} from "@/constants/theme";
+import {
+  AllMemoriesSheet,
+  type AllMemoriesSheetRef,
+} from "@/features/map/components/all-memories-sheet";
+import {
+  ClusterPhotoPin,
+  latestPin,
+} from "@/features/map/components/cluster-marker";
+import {
+  ClusterPinsSheet,
+  type ClusterPinsSheetRef,
+} from "@/features/map/components/cluster-pins-sheet";
 import {
   MAP_PHOTO_PIN_HEIGHT,
   MAP_PHOTO_PIN_WIDTH,
   MapPhotoPin,
 } from "@/features/map/components/map-photo-pin";
 import {
-  AllMemoriesSheet,
-  type AllMemoriesSheetRef,
-} from "@/features/map/components/all-memories-sheet";
-import {
-  ClusterPinsSheet,
-  type ClusterPinsSheetRef,
-} from "@/features/map/components/cluster-pins-sheet";
-import {
   PlaceMemoriesSheet,
   type PlaceMemoriesSheetRef,
 } from "@/features/map/components/place-memories-sheet";
 import { useMapFocusStore } from "@/features/map/store/map-focus-store";
+import { useAddyMapStyle } from "@/features/map/utils/addy-map-style";
 import {
   clusterPins,
-  pinsAreInseparable,
   type ClusterGroup,
 } from "@/features/map/utils/cluster-pins";
-import { getPinColor } from "@/features/map/utils/pin-color";
 import { pinsToTrailGeoJSON } from "@/features/map/utils/pins-to-trail";
+import {
+  ONBOARDING_ADD_MEMORY_STEP_ID,
+  ONBOARDING_MAP_PIN_TARGET_ID,
+  ONBOARDING_TOUR_ID,
+} from "@/features/onboarding/onboarding-tour";
 import { usePinQueueStore } from "@/features/pin-queue/pin-queue-store";
 import {
   queuedPinCoordinates,
@@ -68,18 +72,17 @@ import {
 } from "@/features/pin-queue/pin-queue-types";
 import { showQueuedPinActions } from "@/features/pin-queue/queued-pin-actions";
 import {
-  ONBOARDING_ADD_MEMORY_STEP_ID,
-  ONBOARDING_MAP_PIN_TARGET_ID,
-  ONBOARDING_TOUR_ID,
-} from "@/features/onboarding/onboarding-tour";
+  useFriendsMapQuery,
+  useMemoriesMapQuery,
+  useStatsQuery,
+} from "@/lib/query/hooks";
+import type { FriendMemoryPin, MapBounds, MemoryPin } from "@/types/api";
 
 // MapPhotoPin's visual footprint (features/map/components/map-photo-pin.tsx),
 // extending UPWARD from the marker's anchor="bottom" point.
 const MARKER_VISUAL_WIDTH = MAP_PHOTO_PIN_WIDTH;
 const MARKER_VISUAL_HEIGHT = MAP_PHOTO_PIN_HEIGHT;
 const HIGHLIGHT_PADDING = 12;
-
-const GOONG_STYLE_URL = `https://tiles.goong.io/assets/goong_map_web.json?api_key=${GOONG_MAP_API_KEY}`;
 
 const DEFAULT_CENTER: [number, number] = [106.660172, 10.762622];
 const DEFAULT_ZOOM = 13;
@@ -94,7 +97,12 @@ const DEFAULT_BOUNDS: MapBounds = {
 
 const TOAST_VISIBLE_MS = 3000;
 
-function boundsToMapBounds([west, south, east, north]: LngLatBounds): MapBounds {
+function boundsToMapBounds([
+  west,
+  south,
+  east,
+  north,
+]: LngLatBounds): MapBounds {
   return { north, south, east, west, limit: 50 };
 }
 
@@ -124,7 +132,10 @@ function ToastSparkle({
     opacity.value = visible
       ? withDelay(
           delayMs,
-          withSequence(withTiming(1, { duration: 150 }), withTiming(0, { duration: 400 })),
+          withSequence(
+            withTiming(1, { duration: 150 }),
+            withTiming(0, { duration: 400 }),
+          ),
         )
       : withTiming(0, { duration: 0 });
   }, [visible, delayMs, opacity]);
@@ -142,13 +153,22 @@ function SuccessToast({ visible }: { visible: boolean }) {
   return (
     <ChatBubbleBanner visible={visible}>
       <Text style={styles.toastText}>📍 Memory pinned!</Text>
-      <ToastSparkle visible={visible} delayMs={200} style={styles.toastSparkleLeft} />
-      <ToastSparkle visible={visible} delayMs={320} style={styles.toastSparkleRight} />
+      <ToastSparkle
+        visible={visible}
+        delayMs={200}
+        style={styles.toastSparkleLeft}
+      />
+      <ToastSparkle
+        visible={visible}
+        delayMs={320}
+        style={styles.toastSparkleRight}
+      />
     </ChatBubbleBanner>
   );
 }
 
 export function MemoriesMapScreen() {
+  const mapStyle = useAddyMapStyle();
   const cameraRef = useRef<CameraRef>(null);
   const placeMemoriesSheetRef = useRef<PlaceMemoriesSheetRef>(null);
   const allMemoriesSheetRef = useRef<AllMemoriesSheetRef>(null);
@@ -218,7 +238,10 @@ export function MemoriesMapScreen() {
   // Auto-dismiss the success toast
   useEffect(() => {
     if (!showSuccessToast) return;
-    const timer = setTimeout(() => setShowSuccessToast(false), TOAST_VISIBLE_MS);
+    const timer = setTimeout(
+      () => setShowSuccessToast(false),
+      TOAST_VISIBLE_MS,
+    );
     return () => clearTimeout(timer);
   }, [showSuccessToast, setShowSuccessToast]);
 
@@ -239,11 +262,16 @@ export function MemoriesMapScreen() {
   const showLabels = zoom >= LABEL_VISIBLE_ZOOM;
 
   const { data, isError } = useMemoriesMapQuery(debouncedBounds);
-  const pins = data?.pins ?? [];
+  // Stable references so clustering (now heavier, with photo pins) only
+  // reruns when the data or zoom actually changes.
+  const pins = useMemo(() => data?.pins ?? [], [data?.pins]);
 
   const { data: friendsData, isLoading: isFriendsMapLoading } =
     useFriendsMapQuery(showFriends ? debouncedBounds : null);
-  const friendPins = showFriends ? (friendsData?.pins ?? []) : [];
+  const friendPins = useMemo(
+    () => (showFriends ? (friendsData?.pins ?? []) : []),
+    [showFriends, friendsData?.pins],
+  );
   const showFriendsEmptyHint =
     showFriends && !isFriendsMapLoading && friendPins.length === 0;
 
@@ -263,17 +291,6 @@ export function MemoriesMapScreen() {
   const friendClusters = useMemo(
     () => clusterPins(friendPins, zoom),
     [friendPins, zoom],
-  );
-
-  const flyIntoCluster = useCallback(
-    (latitude: number, longitude: number) => {
-      cameraRef.current?.flyTo({
-        center: [longitude, latitude],
-        zoom: zoom + 2,
-        duration: 400,
-      });
-    },
-    [zoom],
   );
 
   const openFeed = useCallback(() => {
@@ -298,18 +315,15 @@ export function MemoriesMapScreen() {
     [],
   );
 
-  // Pins piled at (or effectively at) the same spot never separate no
-  // matter how far in the camera zooms — offer a picker instead of flying
-  // to a zoom level that changes nothing.
+  // A grouped pin opens a picker of the memories inside it, newest first.
   const onClusterPress = useCallback(
     (group: ClusterGroup<MemoryPin | FriendMemoryPin>) => {
-      if (pinsAreInseparable(group.pins)) {
-        clusterPinsSheetRef.current?.present(group.pins);
-      } else {
-        flyIntoCluster(group.latitude, group.longitude);
-      }
+      const newestFirst = [...group.pins].sort((a, b) =>
+        b.capturedAt.localeCompare(a.capturedAt),
+      );
+      clusterPinsSheetRef.current?.present(newestFirst);
     },
-    [flyIntoCluster],
+    [],
   );
 
   if (Platform.OS === "web") {
@@ -328,110 +342,122 @@ export function MemoriesMapScreen() {
 
   return (
     <View style={styles.flex}>
-      <Map
-        style={styles.map}
-        mapStyle={GOONG_STYLE_URL}
-        onRegionDidChange={onRegionDidChange}
-      >
-        <Camera
-          ref={cameraRef}
-          initialViewState={{ center: DEFAULT_CENTER, zoom: DEFAULT_ZOOM }}
-        />
-        <GeoJSONSource id="memory-trail" data={trailGeoJSON}>
-          <Layer
-            type="line"
-            id="memory-trail-line"
-            paint={{
-              "line-color": BrandColors.ink,
-              "line-width": 1.5,
-              "line-dasharray": [2, 3],
-              "line-opacity": 0.2,
-            }}
+      {/* Hold the map until the restyled base loads, so the stock Goong
+          style never flashes first. */}
+      {mapStyle ? (
+        <Map
+          style={styles.map}
+          mapStyle={mapStyle}
+          onRegionDidChange={onRegionDidChange}
+        >
+          <Camera
+            ref={cameraRef}
+            initialViewState={{ center: DEFAULT_CENTER, zoom: DEFAULT_ZOOM }}
           />
-        </GeoJSONSource>
-        {friendClusters.map((group) =>
-          group.pins.length > 1 ? (
-            <Marker
-              key={`friend-cluster-${group.latitude}-${group.longitude}`}
-              lngLat={[group.pins[0].longitude, group.pins[0].latitude]}
-              anchor="bottom"
-              onPress={() => onClusterPress(group)}
-            >
-              <ClusterMarker count={group.pins.length} />
-            </Marker>
-          ) : (
-            <Marker
-              key={`friend-${group.pins[0].id}`}
-              lngLat={[group.pins[0].longitude, group.pins[0].latitude]}
-              anchor="bottom"
-              onPress={() => openPin(group.pins[0])}
-            >
-              <MapPhotoPin
-                imageUrl={group.pins[0].imageUrl}
-                pinColor={getPinColor(group.pins[0])}
-                placeMemoryCount={group.pins[0].memoryCount}
-                extraPhotoCount={group.pins[0].extraPhotoCount}
-                placeName={group.pins[0].placeName}
-                moodScore={group.pins[0].moodScore}
-                showLabel={showLabels}
-                flipped={isNearRightEdge(group.pins[0].longitude, bounds)}
-                isFriend
-              />
-            </Marker>
-          ),
-        )}
-        {ownClusters.map((group) =>
-          group.pins.length > 1 ? (
-            <Marker
-              key={`cluster-${group.latitude}-${group.longitude}`}
-              lngLat={[group.pins[0].longitude, group.pins[0].latitude]}
-              anchor="bottom"
-              onPress={() => onClusterPress(group)}
-            >
-              <ClusterMarker count={group.pins.length} />
-            </Marker>
-          ) : (
-            <Marker
-              key={group.pins[0].id}
-              lngLat={[group.pins[0].longitude, group.pins[0].latitude]}
-              anchor="bottom"
-              onPress={() => openPin(group.pins[0])}
-            >
-              <MapPhotoPin
-                imageUrl={group.pins[0].imageUrl}
-                pinColor={getPinColor(group.pins[0])}
-                placeMemoryCount={group.pins[0].memoryCount}
-                extraPhotoCount={group.pins[0].extraPhotoCount}
-                placeName={group.pins[0].placeName}
-                moodScore={group.pins[0].moodScore}
-                showLabel={showLabels}
-                flipped={isNearRightEdge(group.pins[0].longitude, bounds)}
-              />
-            </Marker>
-          ),
-        )}
-        {queuedPins.map((pin) => {
-          const { latitude, longitude } = queuedPinCoordinates(pin);
-          return (
-            <Marker
-              key={`queued-${pin.clientId}`}
-              lngLat={[longitude, latitude]}
-              anchor="bottom"
-              onPress={() => showQueuedPinActions(pin)}
-            >
-              <MapPhotoPin
-                imageUrl={pin.photoPaths[0]}
-                pinColor={getPinColor({ id: pin.clientId })}
-                placeName={queuedPinPlaceName(pin)}
-                moodScore={pin.moodScore}
-                showLabel={showLabels}
-                flipped={isNearRightEdge(longitude, bounds)}
-                queueStatus={pin.status === "failed" ? "failed" : "pending"}
-              />
-            </Marker>
-          );
-        })}
-      </Map>
+          <GeoJSONSource id="memory-trail" data={trailGeoJSON}>
+            <Layer
+              type="line"
+              id="memory-trail-line"
+              paint={{
+                "line-color": BrandColors.ink,
+                "line-width": 1.5,
+                "line-dasharray": [2, 3],
+                "line-opacity": 0.2,
+              }}
+            />
+          </GeoJSONSource>
+          {friendClusters.map((group) =>
+            group.pins.length > 1 ? (
+              <Marker
+                key={`friend-cluster-${latestPin(group.pins).id}`}
+                lngLat={[
+                  latestPin(group.pins).longitude,
+                  latestPin(group.pins).latitude,
+                ]}
+                anchor="bottom"
+                onPress={() => onClusterPress(group)}
+              >
+                <ClusterPhotoPin pins={group.pins} />
+              </Marker>
+            ) : (
+              <Marker
+                key={`friend-${group.pins[0].id}`}
+                lngLat={[group.pins[0].longitude, group.pins[0].latitude]}
+                anchor="bottom"
+                onPress={() => openPin(group.pins[0])}
+              >
+                <MapPhotoPin
+                  imageUrl={group.pins[0].imageUrl}
+                  pinColor={"#5FCBFF"}
+                  placeMemoryCount={group.pins[0].memoryCount}
+                  extraPhotoCount={group.pins[0].extraPhotoCount}
+                  placeName={group.pins[0].placeName}
+                  moodScore={group.pins[0].moodScore}
+                  showLabel={showLabels}
+                  flipped={isNearRightEdge(group.pins[0].longitude, bounds)}
+                  isFriend
+                />
+              </Marker>
+            ),
+          )}
+          {ownClusters.map((group) =>
+            group.pins.length > 1 ? (
+              <Marker
+                key={`cluster-${latestPin(group.pins).id}`}
+                lngLat={[
+                  latestPin(group.pins).longitude,
+                  latestPin(group.pins).latitude,
+                ]}
+                anchor="bottom"
+                onPress={() => onClusterPress(group)}
+              >
+                <ClusterPhotoPin pins={group.pins} />
+              </Marker>
+            ) : (
+              <Marker
+                key={group.pins[0].id}
+                lngLat={[group.pins[0].longitude, group.pins[0].latitude]}
+                anchor="bottom"
+                onPress={() => openPin(group.pins[0])}
+              >
+                <MapPhotoPin
+                  imageUrl={group.pins[0].imageUrl}
+                  pinColor={"#5FCBFF"}
+                  placeMemoryCount={group.pins[0].memoryCount}
+                  extraPhotoCount={group.pins[0].extraPhotoCount}
+                  placeName={group.pins[0].placeName}
+                  moodScore={group.pins[0].moodScore}
+                  showLabel={showLabels}
+                  flipped={isNearRightEdge(group.pins[0].longitude, bounds)}
+                />
+              </Marker>
+            ),
+          )}
+          {queuedPins.map((pin) => {
+            const { latitude, longitude } = queuedPinCoordinates(pin);
+            return (
+              <Marker
+                key={`queued-${pin.clientId}`}
+                lngLat={[longitude, latitude]}
+                anchor="bottom"
+                onPress={() => showQueuedPinActions(pin)}
+              >
+                <MapPhotoPin
+                  imageUrl={pin.photoPaths[0]}
+                  pinColor={"#5FCBFF"}
+                  placeName={queuedPinPlaceName(pin)}
+                  moodScore={pin.moodScore}
+                  showLabel={showLabels}
+                  flipped={isNearRightEdge(longitude, bounds)}
+                  queueStatus={pin.status === "failed" ? "failed" : "pending"}
+                />
+              </Marker>
+            );
+          })}
+        </Map>
+      ) : (
+        <View style={styles.map} />
+      )}
 
       {/* Invisible target for the onboarding tour's "map + pin" step. After
           flyTo, the new pin's tip sits at the map's center, so the target is
@@ -453,67 +479,48 @@ export function MemoriesMapScreen() {
         pointerEvents="box-none"
       >
         <SuccessToast visible={showSuccessToast} />
-        <View style={styles.topRow}>
-        <SoftShadowBox radius={StickerRadius.chip}>
-          <Pressable
-            onPress={openFeed}
-            style={({ pressed }) => [
-              styles.badge,
-              pressed && styles.badgePressed,
-            ]}
-            accessibilityRole="button"
-            accessibilityLabel="Show all your memories"
-          >
-            <Text style={styles.badgeText}>
-              {totalMemories == null
+        <View style={styles.topRow} pointerEvents="box-none">
+          <TechChip
+            tone="dark"
+            label={
+              totalMemories == null
                 ? isStatsLoading
-                  ? "Loading…"
+                  ? "loading…"
                   : `${pins.length} memories`
                 : totalMemories === 1
                   ? "1 memory"
-                  : `${totalMemories} memories`}
-              {isError && totalMemories == null ? " · offline" : ""}
-            </Text>
-            <Text style={styles.badgeChevron}>›</Text>
-          </Pressable>
-        </SoftShadowBox>
-        </View>
-      </SafeAreaView>
-
-      <SafeAreaView
-        style={styles.bottomOverlay}
-        edges={["bottom"]}
-        pointerEvents="box-none"
-      >
-        {showFriendsEmptyHint ? (
-          <View style={styles.friendsHintRow}>
-            <Text style={styles.friendsHintText}>
-              No friends' memories here yet
-            </Text>
-          </View>
-        ) : null}
-        <SoftShadowBox radius={StickerRadius.pill}>
+                  : `${totalMemories} memories`
+            }
+            trailing={isError && totalMemories == null ? "· offline ›" : "›"}
+            onPress={openFeed}
+            accessibilityLabel="Show all your memories"
+          />
           <Pressable
             onPress={() => setShowFriends((v) => !v)}
-            style={[styles.friendsFab, showFriends && styles.friendsFabOn]}
+            hitSlop={10}
             accessibilityRole="switch"
             accessibilityState={{ checked: showFriends }}
             accessibilityLabel="Show friends' memories on the map"
           >
-            <Text
-              style={[
-                styles.friendsFabText,
-                showFriends && styles.friendsFabTextOn,
-              ]}
-            >
-              Friends
-            </Text>
+            <TechChip
+              tone={showFriends ? "pink" : "paper"}
+              leading="👥"
+              label="Friends"
+            />
           </Pressable>
-        </SoftShadowBox>
+        </View>
+        {showFriendsEmptyHint ? (
+          <Text style={styles.friendsHintText}>
+            No friends&apos; memories here yet
+          </Text>
+        ) : null}
       </SafeAreaView>
 
       <PlaceMemoriesSheet ref={placeMemoriesSheetRef} />
-      <AllMemoriesSheet ref={allMemoriesSheetRef} onSelectPin={onSelectSheetPin} />
+      <AllMemoriesSheet
+        ref={allMemoriesSheetRef}
+        onSelectPin={onSelectSheetPin}
+      />
       <ClusterPinsSheet ref={clusterPinsSheetRef} onSelectPin={openPin} />
     </View>
   );
@@ -521,7 +528,7 @@ export function MemoriesMapScreen() {
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
-  map: { flex: 1 },
+  map: { flex: 1, backgroundColor: AddyColors.mapBg },
   pinHighlightFrame: {
     ...StyleSheet.absoluteFillObject,
     alignItems: "center",
@@ -554,70 +561,24 @@ const styles = StyleSheet.create({
   toastSparkleLeft: { top: -6, left: 18 },
   toastSparkleRight: { top: -4, right: 22 },
 
+  friendsHintText: {
+    alignSelf: "flex-start",
+    marginHorizontal: 16,
+    marginTop: -8,
+    backgroundColor: AddyColors.paperDim,
+    color: AddyColors.inkMuted,
+    fontSize: 16,
+    fontFamily: AddyFonts.tech,
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+    borderRadius: AddyRadius.chip,
+    overflow: "hidden",
+  },
   topRow: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
+    gap: 8,
     margin: 16,
-  },
-  badge: {
-    alignSelf: "flex-start",
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    backgroundColor: BrandColors.ink,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: StickerRadius.chip,
-  },
-  bottomOverlay: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-    alignItems: "flex-end",
-    paddingRight: 16,
-    paddingBottom: 16,
-    gap: 8,
-  },
-  friendsFab: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderRadius: StickerRadius.pill,
-    backgroundColor: BrandColors.paper,
-  },
-  friendsFabOn: {
-    backgroundColor: BrandColors.accentPink,
-  },
-  friendsFabText: {
-    fontSize: 14,
-    fontFamily: "Baloo2-SemiBold",
-    color: BrandColors.ink,
-  },
-  friendsFabTextOn: { color: BrandColors.paper },
-  friendsHintRow: {
-    alignSelf: "flex-end",
-  },
-  friendsHintText: {
-    backgroundColor: BrandColors.gray100,
-    color: BrandColors.inkMuted,
-    fontSize: 13,
-    fontFamily: "VT323-Regular",
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: StickerRadius.chip,
-    overflow: "hidden",
-  },
-  badgePressed: { opacity: 0.7 },
-  badgeText: { fontSize: 14, fontFamily: "Baloo2-SemiBold", color: BrandColors.paper },
-  badgeChevron: {
-    fontSize: 18,
-    lineHeight: 18,
-    fontWeight: "700",
-    color: BrandColors.paper,
   },
   webFallback: {
     flex: 1,

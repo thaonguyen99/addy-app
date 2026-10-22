@@ -1,7 +1,7 @@
-import Ionicons from "@expo/vector-icons/Ionicons";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 
-import { BrandColors } from "@/constants/theme";
+import { IconCircleButton } from "@/components/ui/icon-circle-button";
+import { AddyColors, AddyFonts } from "@/constants/theme";
 import { safeBack } from "@/lib/navigation/safe-router";
 
 type ProfileSubHeaderProps = Readonly<{
@@ -12,15 +12,11 @@ type ProfileSubHeaderProps = Readonly<{
 export function ProfileSubHeader({ title }: ProfileSubHeaderProps) {
   return (
     <View style={styles.row}>
-      <Pressable
+      <IconCircleButton
+        icon="chevron-back"
+        accessibilityLabel="Back to profile settings"
         onPress={() => safeBack("/(app)/profile")}
-        hitSlop={12}
-        style={styles.backButton}
-        accessibilityRole="button"
-        accessibilityLabel="Back to profile menu"
-      >
-        <Ionicons name="chevron-back" size={22} color={BrandColors.ink} />
-      </Pressable>
+      />
       <Text style={styles.title}>{title}</Text>
     </View>
   );
@@ -30,17 +26,14 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 4,
+    gap: 12,
     paddingHorizontal: 16,
-    paddingVertical: 10,
-  },
-  backButton: {
-    padding: 4,
-    marginLeft: -4,
+    paddingVertical: 8,
   },
   title: {
-    fontFamily: "Baloo2-SemiBold",
-    fontSize: 19,
-    color: BrandColors.ink,
+    fontFamily: AddyFonts.title,
+    fontSize: 20,
+    lineHeight: 30,
+    color: AddyColors.ink,
   },
 });

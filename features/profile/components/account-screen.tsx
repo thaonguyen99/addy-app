@@ -15,7 +15,14 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { GlossyButton } from "@/components/ui/glossy-button";
-import { BrandColors } from "@/constants/theme";
+import { SkyBackground } from "@/components/ui/sky-background";
+import {
+  ADDY_BORDER_WIDTH,
+  AddyColors,
+  AddyFonts,
+  AddyRadius,
+  AddyShadow,
+} from "@/constants/theme";
 import { AuthTextField } from "@/features/auth/components/auth-text-field";
 import { ProfileSubHeader } from "@/features/profile/components/profile-sub-header";
 import { useAvatarUpload } from "@/features/profile/hooks/use-avatar-upload";
@@ -135,131 +142,133 @@ export function AccountScreen() {
   });
 
   return (
-    <SafeAreaView style={styles.safe} edges={["top", "bottom"]}>
-      <ProfileSubHeader title="Account" />
+    <SkyBackground>
+      <SafeAreaView style={styles.safe} edges={["top", "bottom"]}>
+        <ProfileSubHeader title="Account" />
 
-      {isLoading ? (
-        <View style={styles.center}>
-          <ActivityIndicator color={BrandColors.primary} size="large" />
-        </View>
-      ) : isError || !profile ? (
-        <View style={styles.center}>
-          <Text style={styles.muted}>Could not load your profile.</Text>
-          <Pressable style={styles.retry} onPress={() => refetch()}>
-            <Text style={styles.retryText}>Try again</Text>
-          </Pressable>
-        </View>
-      ) : (
-        <KeyboardAvoidingView
-          style={styles.flex}
-          behavior={Platform.OS === "ios" ? "padding" : undefined}
-        >
-          <ScrollView
-            contentContainerStyle={styles.scroll}
-            keyboardShouldPersistTaps="handled"
-            showsVerticalScrollIndicator={false}
+        {isLoading ? (
+          <View style={styles.center}>
+            <ActivityIndicator color={AddyColors.ink} size="large" />
+          </View>
+        ) : isError || !profile ? (
+          <View style={styles.center}>
+            <Text style={styles.muted}>Could not load your profile.</Text>
+            <Pressable style={styles.retry} onPress={() => refetch()}>
+              <Text style={styles.retryText}>Try again</Text>
+            </Pressable>
+          </View>
+        ) : (
+          <KeyboardAvoidingView
+            style={styles.flex}
+            behavior={Platform.OS === "ios" ? "padding" : undefined}
           >
-            <View style={styles.avatarRow}>
-              <Pressable
-                onPress={pickAndUpload}
-                disabled={avatarBusy}
-                style={styles.avatar}
-                accessibilityRole="button"
-                accessibilityLabel="Change profile picture"
-              >
-                {profile.avatarUrl ? (
-                  <Image
-                    source={{ uri: profile.avatarUrl }}
-                    style={styles.avatarImage}
-                    contentFit="cover"
-                    transition={150}
-                  />
-                ) : (
-                  <Text style={styles.avatarInitial}>{initial}</Text>
-                )}
-                {avatarBusy ? (
-                  <View style={styles.avatarOverlay}>
-                    <ActivityIndicator color={BrandColors.ink} />
+            <ScrollView
+              contentContainerStyle={styles.scroll}
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={false}
+            >
+              <View style={styles.avatarRow}>
+                <Pressable
+                  onPress={pickAndUpload}
+                  disabled={avatarBusy}
+                  style={styles.avatar}
+                  accessibilityRole="button"
+                  accessibilityLabel="Change profile picture"
+                >
+                  {profile.avatarUrl ? (
+                    <Image
+                      source={{ uri: profile.avatarUrl }}
+                      style={styles.avatarImage}
+                      contentFit="cover"
+                      transition={150}
+                    />
+                  ) : (
+                    <Text style={styles.avatarInitial}>{initial}</Text>
+                  )}
+                  {avatarBusy ? (
+                    <View style={styles.avatarOverlay}>
+                      <ActivityIndicator color={AddyColors.ink} />
+                    </View>
+                  ) : null}
+                  <View style={styles.avatarEditBadge}>
+                    <Text style={styles.avatarEditGlyph}>✏️</Text>
                   </View>
-                ) : null}
-                <View style={styles.avatarEditBadge}>
-                  <Text style={styles.avatarEditGlyph}>✏️</Text>
-                </View>
-              </Pressable>
-              <Pressable onPress={pickAndUpload} disabled={avatarBusy}>
-                <Text style={styles.changePhoto}>Change photo</Text>
-              </Pressable>
-              <Text style={styles.email}>{profile.email}</Text>
-            </View>
+                </Pressable>
+                <Pressable onPress={pickAndUpload} disabled={avatarBusy}>
+                  <Text style={styles.changePhoto}>Change photo</Text>
+                </Pressable>
+                <Text style={styles.email}>{profile.email}</Text>
+              </View>
 
-            <Controller
-              control={control}
-              name="name"
-              render={({ field: { onChange, onBlur, value } }) => (
-                <AuthTextField
-                  label="Name"
-                  placeholder="Your name"
-                  value={value}
-                  onBlur={onBlur}
-                  onChangeText={onChange}
-                  error={errors.name?.message}
-                />
-              )}
-            />
-
-            <Controller
-              control={control}
-              name="username"
-              render={({ field: { onChange, onBlur, value } }) => (
-                <AuthTextField
-                  label="Username"
-                  placeholder="username"
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  value={value}
-                  onBlur={onBlur}
-                  onChangeText={(text) => onChange(text.toLowerCase())}
-                  error={errors.username?.message ?? usernameHint(usernameStatus)}
-                />
-              )}
-            />
-
-            <View style={styles.field}>
-              <Text style={styles.label}>Bio</Text>
               <Controller
                 control={control}
-                name="bio"
+                name="name"
                 render={({ field: { onChange, onBlur, value } }) => (
-                  <TextInput
-                    style={styles.bioInput}
-                    placeholder="A short line about your memories"
-                    placeholderTextColor={BrandColors.inkMuted}
-                    multiline
-                    maxLength={300}
+                  <AuthTextField
+                    label="Name"
+                    placeholder="Your name"
                     value={value}
                     onBlur={onBlur}
                     onChangeText={onChange}
+                    error={errors.name?.message}
                   />
                 )}
               />
-              {errors.bio?.message ? (
-                <Text style={styles.errorText}>{errors.bio.message}</Text>
+
+              <Controller
+                control={control}
+                name="username"
+                render={({ field: { onChange, onBlur, value } }) => (
+                  <AuthTextField
+                    label="Username"
+                    placeholder="username"
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    value={value}
+                    onBlur={onBlur}
+                    onChangeText={(text) => onChange(text.toLowerCase())}
+                    error={errors.username?.message ?? usernameHint(usernameStatus)}
+                  />
+                )}
+              />
+
+              <View style={styles.field}>
+                <Text style={styles.label}>Bio</Text>
+                <Controller
+                  control={control}
+                  name="bio"
+                  render={({ field: { onChange, onBlur, value } }) => (
+                    <TextInput
+                      style={styles.bioInput}
+                      placeholder="A short line about your memories"
+                      placeholderTextColor={AddyColors.inkMuted}
+                      multiline
+                      maxLength={300}
+                      value={value}
+                      onBlur={onBlur}
+                      onChangeText={onChange}
+                    />
+                  )}
+                />
+                {errors.bio?.message ? (
+                  <Text style={styles.errorText}>{errors.bio.message}</Text>
+                ) : null}
+              </View>
+
+              {saveError ? (
+                <Text style={styles.errorText}>{saveError}</Text>
               ) : null}
-            </View>
 
-            {saveError ? (
-              <Text style={styles.errorText}>{saveError}</Text>
-            ) : null}
-
-            <GlossyButton
-              label={updateProfile.isPending ? "Saving…" : "Save changes"}
-              loading={updateProfile.isPending}
-              onPress={onSubmit}
-            />
-          </ScrollView>
-        </KeyboardAvoidingView>
-      )}
-    </SafeAreaView>
+              <GlossyButton
+                label={updateProfile.isPending ? "Saving…" : "Save changes"}
+                loading={updateProfile.isPending}
+                onPress={onSubmit}
+              />
+            </ScrollView>
+          </KeyboardAvoidingView>
+        )}
+      </SafeAreaView>
+    </SkyBackground>
   );
 }
 
@@ -279,7 +288,7 @@ function usernameHint(status: UsernameStatus): string | undefined {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: BrandColors.paper },
+  safe: { flex: 1 },
   flex: { flex: 1 },
   center: {
     flex: 1,
@@ -289,99 +298,103 @@ const styles = StyleSheet.create({
     padding: 32,
   },
   muted: {
+    fontFamily: AddyFonts.body,
     fontSize: 14,
-    color: BrandColors.inkMuted,
+    color: AddyColors.inkMuted,
     textAlign: "center",
   },
   retry: {
     paddingHorizontal: 18,
     paddingVertical: 9,
-    borderRadius: 10,
-    backgroundColor: BrandColors.elevated,
+    borderRadius: AddyRadius.pill,
+    backgroundColor: AddyColors.white,
   },
-  retryText: { color: BrandColors.ink, fontWeight: "600" },
+  retryText: { fontFamily: AddyFonts.title, color: AddyColors.ink },
   scroll: {
-    paddingHorizontal: 24,
+    paddingHorizontal: 16,
     paddingTop: 8,
     paddingBottom: 40,
     gap: 16,
   },
   avatarRow: {
     alignItems: "center",
-    gap: 8,
+    gap: 6,
     marginBottom: 4,
   },
   avatar: {
-    width: 96,
-    height: 96,
-    borderRadius: 48,
-    borderWidth: 1,
-    borderColor: BrandColors.ink,
-    backgroundColor: BrandColors.paper,
+    width: 104,
+    height: 104,
+    borderRadius: 52,
+    borderWidth: 4,
+    borderColor: AddyColors.white,
+    backgroundColor: AddyColors.paperDim,
     alignItems: "center",
     justifyContent: "center",
     overflow: "visible",
+    ...AddyShadow.soft,
   },
   avatarImage: {
     width: "100%",
     height: "100%",
-    borderRadius: 44,
+    borderRadius: 48,
   },
   avatarInitial: {
-    fontFamily: "Baloo2-ExtraBold",
-    fontSize: 36,
-    color: BrandColors.ink,
+    fontFamily: AddyFonts.title,
+    fontSize: 38,
+    color: AddyColors.ink,
   },
   avatarOverlay: {
     ...StyleSheet.absoluteFillObject,
-    borderRadius: 44,
+    borderRadius: 48,
     overflow: "hidden",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: BrandColors.primaryMuted,
+    backgroundColor: "rgba(199, 242, 58, 0.4)",
   },
   avatarEditBadge: {
     position: "absolute",
     bottom: -2,
     right: -2,
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: BrandColors.accentYellow,
-    borderWidth: 1,
-    borderColor: BrandColors.ink,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: AddyColors.lime,
+    borderWidth: 2,
+    borderColor: AddyColors.white,
     alignItems: "center",
     justifyContent: "center",
   },
   avatarEditGlyph: {
-    fontSize: 12,
+    fontSize: 13,
   },
   changePhoto: {
+    fontFamily: AddyFonts.titleSemiBold,
     fontSize: 14,
-    fontWeight: "600",
-    color: BrandColors.primary,
+    color: AddyColors.ink,
   },
   email: {
+    fontFamily: AddyFonts.body,
     fontSize: 13,
-    color: BrandColors.inkMuted,
+    color: AddyColors.inkMuted,
   },
   field: { gap: 6 },
   label: {
+    fontFamily: AddyFonts.titleSemiBold,
     fontSize: 14,
-    fontWeight: "600",
-    color: BrandColors.inkMuted,
+    color: AddyColors.inkMuted,
   },
   bioInput: {
-    borderWidth: 1,
-    borderColor: BrandColors.neutralBorder,
-    borderRadius: 12,
-    backgroundColor: BrandColors.placeHolder,
+    borderWidth: ADDY_BORDER_WIDTH,
+    borderColor: AddyColors.line,
+    borderRadius: AddyRadius.input,
+    backgroundColor: AddyColors.white,
     paddingHorizontal: 14,
     paddingVertical: 12,
-    fontSize: 16,
-    color: BrandColors.ink,
+    fontFamily: AddyFonts.body,
+    fontSize: 15,
+    color: AddyColors.ink,
     minHeight: 88,
     textAlignVertical: "top",
   },
-  errorText: { fontSize: 13, color: BrandColors.danger },
+  errorText: { fontFamily: AddyFonts.body, fontSize: 13, color: AddyColors.danger },
 });

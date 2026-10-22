@@ -107,7 +107,7 @@ export type MemoryDetail = {
   isOwner: boolean;
   reactionCount: number;
   hasReacted: boolean;
-  /** Number of "Psst..." messages visible to the viewer. */
+  /** Number of chat messages visible to the viewer. */
   messageCount: number;
   capturedAt: string;
   createdAt: string;
@@ -183,7 +183,7 @@ export type MessageMention = {
   username: string;
 };
 
-/** One message in a memory's "Psst..." thread. */
+/** One message in a memory's chat thread. */
 export type MemoryMessage = {
   id: string;
   /** Null only when the author has blocked the viewer — render unnamed. */

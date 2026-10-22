@@ -59,9 +59,8 @@ function MemoryFeedCardBase({
           <View style={compact ? styles.stickerInset : styles.sticker}>
             <MoodSticker
               score={memory.moodScore}
-              size={compact ? 22 : 32}
-              tilted={!compact}
-              backgroundColor={compact ? BrandColors.accentYellow : undefined}
+              size={compact ? 18 : 26}
+              seed={memory.id}
             />
           </View>
         </View>

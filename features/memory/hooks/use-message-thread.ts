@@ -16,7 +16,7 @@ import type { MemoryMessage } from "@/types/api";
 type PendingItem = Extract<ThreadItem, { kind: "pending" }>;
 
 /**
- * The "Psst..." thread for one memory: server pages plus local sends that are
+ * The chat thread for one memory: server pages plus local sends that are
  * still in flight or failed (kept out of the query cache so a refetch can't
  * wipe a failed bubble before the user retries it).
  */

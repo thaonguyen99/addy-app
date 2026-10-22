@@ -5,7 +5,7 @@ import { useMapFocusStore } from "@/features/map/store/map-focus-store";
 
 /**
  * After a pin is saved: stash the map focus coords, close the whole create flow
- * (create-pin + place-selection + photo-selection all live on the root (app)
+ * (capture + create-pin + place-selection all live on the root (app)
  * stack, so one dismissAll clears them), then land on the explore/map tab.
  */
 export function navigateAfterCreatePin(latitude: number, longitude: number) {

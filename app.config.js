@@ -90,6 +90,16 @@ module.exports = ({ config }) => ({
       },
     ],
     [
+      "expo-media-library",
+      {
+        photosPermission:
+          "Addy needs photo library access to add gallery images to your pin.",
+        savePhotosPermission:
+          "Addy saves your invite story image to your photos.",
+        isAccessMediaLocationEnabled: false,
+      },
+    ],
+    [
       "expo-location",
       {
         locationWhenInUsePermission:

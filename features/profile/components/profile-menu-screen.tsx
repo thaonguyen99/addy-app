@@ -1,4 +1,3 @@
-import Ionicons from "@expo/vector-icons/Ionicons";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { Image } from "expo-image";
 import { router } from "expo-router";
@@ -14,29 +13,29 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import { StickerCard } from "@/components/ui/sticker-card";
+import { IconCircleButton } from "@/components/ui/icon-circle-button";
+import { SkyBackground } from "@/components/ui/sky-background";
 import { SUPPORT_EMAIL } from "@/constants/app-config";
 import {
-  StickerRadius,
-  accentCyanDeep,
-  accentPinkDeep,
-  darkenHex,
-} from "@/constants/sticker-style";
-import { BrandColors } from "@/constants/theme";
+  ADDY_BORDER_WIDTH,
+  AddyColors,
+  AddyFonts,
+  AddyRadius,
+  AddyShadow,
+} from "@/constants/theme";
 import { useAuthStore } from "@/features/auth/store/auth-store";
 import { clearPinQueue, usePinQueueStore } from "@/features/pin-queue/pin-queue-store";
 import { getApiErrorMessage } from "@/lib/api/errors";
 import { safeBack } from "@/lib/navigation/safe-router";
 import { useDeleteAccountMutation, useProfileQuery } from "@/lib/query/hooks";
 
-const accentYellowDeep = darkenHex(BrandColors.accentYellow, 0.15);
-
 type MenuItem = {
   key: string;
   icon: keyof typeof MaterialIcons.glyphMap;
   label: string;
   sublabel: string;
-  gradient: [string, string];
+  /** Orb color behind the icon. */
+  color: string;
   onPress: () => void;
   disabled?: boolean;
   destructive?: boolean;
@@ -114,7 +113,7 @@ export function ProfileMenuScreen() {
       icon: "person",
       label: "Account",
       sublabel: "username, name, avatar",
-      gradient: [BrandColors.primaryLight, BrandColors.primary],
+      color: AddyColors.lime,
       onPress: () => router.push("/(app)/profile/account"),
     },
     {
@@ -122,7 +121,7 @@ export function ProfileMenuScreen() {
       icon: "lock",
       label: "Security",
       sublabel: "change password",
-      gradient: [BrandColors.accentCyan, accentCyanDeep],
+      color: AddyColors.cyan,
       onPress: () => router.push("/(app)/profile/security"),
     },
     {
@@ -130,7 +129,7 @@ export function ProfileMenuScreen() {
       icon: "notifications",
       label: "Notifications",
       sublabel: "alerts & reminders",
-      gradient: [BrandColors.accentPink, accentPinkDeep],
+      color: AddyColors.pink,
       onPress: () => router.push("/(app)/profile/notifications"),
     },
     {
@@ -138,15 +137,15 @@ export function ProfileMenuScreen() {
       icon: "people",
       label: "Friends",
       sublabel: "your connections",
-      gradient: [BrandColors.accentYellow, accentYellowDeep],
-      onPress: () => router.push("/(app)/friends"),
+      color: AddyColors.yellow,
+      onPress: () => router.navigate("/(app)/(tabs)/friends"),
     },
     {
       key: "blocked",
       icon: "block",
       label: "Blocked accounts",
       sublabel: "manage blocked users",
-      gradient: [BrandColors.primaryLight, BrandColors.primary],
+      color: AddyColors.lime,
       onPress: () => router.push("/(app)/blocked-accounts"),
     },
     {
@@ -154,7 +153,7 @@ export function ProfileMenuScreen() {
       icon: "privacy-tip",
       label: "Privacy Policy",
       sublabel: "how we use your data",
-      gradient: [BrandColors.accentCyan, accentCyanDeep],
+      color: AddyColors.cyan,
       onPress: () => router.push("/(app)/privacy-policy"),
     },
     {
@@ -162,7 +161,7 @@ export function ProfileMenuScreen() {
       icon: "mail",
       label: "Contact us",
       sublabel: SUPPORT_EMAIL,
-      gradient: [BrandColors.accentYellow, accentYellowDeep],
+      color: AddyColors.yellow,
       onPress: onContactUs,
     },
     {
@@ -170,7 +169,7 @@ export function ProfileMenuScreen() {
       icon: "delete-forever",
       label: "Delete account",
       sublabel: "permanently erase everything",
-      gradient: [BrandColors.dangerLight, BrandColors.danger],
+      color: AddyColors.danger,
       onPress: onDeleteAccount,
       disabled: deleteAccount.isPending,
       destructive: true,
@@ -178,130 +177,129 @@ export function ProfileMenuScreen() {
   ];
 
   return (
-    <SafeAreaView style={styles.safe} edges={["top", "bottom"]}>
-      <View style={styles.topBar}>
-        <Pressable
-          onPress={() => safeBack("/(app)/(tabs)")}
-          hitSlop={12}
-          style={styles.backButton}
-          accessibilityRole="button"
-          accessibilityLabel="Back to home"
-        >
-          <Ionicons name="chevron-back" size={22} color={BrandColors.ink} />
-          <Text style={styles.topBarTitle}>Profile</Text>
-        </Pressable>
-      </View>
+    <SkyBackground>
+      <SafeAreaView style={styles.safe} edges={["top", "bottom"]}>
+        <View style={styles.topBar}>
+          <IconCircleButton
+            icon="chevron-back"
+            accessibilityLabel="Back"
+            onPress={() => safeBack("/(app)/(tabs)")}
+          />
+          <Text style={styles.topBarTitle}>Profile settings</Text>
+        </View>
 
-      {isLoading ? (
-        <View style={styles.center}>
-          <ActivityIndicator color={BrandColors.primary} size="large" />
-        </View>
-      ) : isError || !profile ? (
-        <View style={styles.center}>
-          <Text style={styles.muted}>Could not load your profile.</Text>
-          <Pressable style={styles.retry} onPress={() => refetch()}>
-            <Text style={styles.retryText}>Try again</Text>
-          </Pressable>
-        </View>
-      ) : (
-        <ScrollView
-          contentContainerStyle={styles.scroll}
-          showsVerticalScrollIndicator={false}
-        >
-          <View style={styles.avatarWrap}>
-            <View style={styles.avatar}>
-              {profile.avatarUrl ? (
-                <Image
-                  source={{ uri: profile.avatarUrl }}
-                  style={styles.avatarImage}
-                  contentFit="cover"
-                  transition={150}
-                />
-              ) : (
-                <Text style={styles.avatarInitial}>{initial}</Text>
-              )}
-            </View>
-            <Text style={styles.name}>{profile.name || profile.username}</Text>
-            <Text style={styles.username}>@{profile.username}</Text>
+        {isLoading ? (
+          <View style={styles.center}>
+            <ActivityIndicator color={AddyColors.ink} size="large" />
           </View>
-
-          <View style={styles.menuList}>
-            {menuItems.map((item) => (
+        ) : isError || !profile ? (
+          <View style={styles.center}>
+            <Text style={styles.muted}>Could not load your profile.</Text>
+            <Pressable style={styles.retry} onPress={() => refetch()}>
+              <Text style={styles.retryText}>Try again</Text>
+            </Pressable>
+          </View>
+        ) : (
+          <ScrollView
+            contentContainerStyle={styles.scroll}
+            showsVerticalScrollIndicator={false}
+          >
+            <View style={styles.avatarWrap}>
               <Pressable
-                key={item.key}
-                onPress={item.onPress}
-                disabled={item.disabled}
+                onPress={() => router.push("/(app)/profile/account")}
                 accessibilityRole="button"
-                accessibilityLabel={item.label}
-                style={item.disabled && styles.menuRowDisabled}
+                accessibilityLabel="Edit your profile"
+                style={[styles.avatar, AddyShadow.soft]}
               >
-                <StickerCard radius={StickerRadius.button} shadowOffset={2}>
-                  <View style={styles.menuRow}>
-                    <View style={styles.iconBadgeShadow}>
-                      <View style={styles.iconBadge}>
-                        <View
-                          style={[
-                            StyleSheet.absoluteFillObject,
-                            { backgroundColor: item.gradient[1] },
-                          ]}
-                        />
-                        <MaterialIcons
-                          name={item.icon}
-                          size={18}
-                          color={BrandColors.ink}
-                        />
-                      </View>
-                    </View>
-                    <View style={styles.menuTextWrap}>
-                      <Text
-                        style={[
-                          styles.menuLabel,
-                          item.destructive && styles.menuLabelDestructive,
-                        ]}
-                      >
-                        {item.label}
-                      </Text>
-                      <Text style={styles.menuSublabel}>{item.sublabel}</Text>
-                    </View>
-                    <Text style={styles.chevron}>›</Text>
-                  </View>
-                </StickerCard>
+                {profile.avatarUrl ? (
+                  <Image
+                    source={{ uri: profile.avatarUrl }}
+                    style={styles.avatarImage}
+                    contentFit="cover"
+                    transition={150}
+                  />
+                ) : (
+                  <Text style={styles.avatarInitial}>{initial}</Text>
+                )}
+                <View style={styles.editBadge}>
+                  <MaterialIcons name="edit" size={15} color={AddyColors.ink} />
+                </View>
               </Pressable>
-            ))}
-          </View>
+              <Text style={styles.name}>{profile.name || profile.username}</Text>
+              <Text style={styles.username}>@{profile.username}</Text>
+            </View>
 
-          <Pressable onPress={onSignOut} style={styles.signOut}>
-            <Text style={styles.signOutText}>Sign out</Text>
-          </Pressable>
-        </ScrollView>
-      )}
-    </SafeAreaView>
+            <View style={styles.menuList}>
+              {menuItems.map((item) => (
+                <Pressable
+                  key={item.key}
+                  onPress={item.onPress}
+                  disabled={item.disabled}
+                  accessibilityRole="button"
+                  accessibilityLabel={item.label}
+                  style={({ pressed }) => [
+                    styles.menuRow,
+                    AddyShadow.soft,
+                    pressed && styles.pressed,
+                    item.disabled && styles.menuRowDisabled,
+                  ]}
+                >
+                  <View style={[styles.orb, { backgroundColor: item.color }]}>
+                    <View style={styles.orbShine} />
+                    <MaterialIcons
+                      name={item.icon}
+                      size={18}
+                      color={item.destructive ? AddyColors.white : AddyColors.ink}
+                    />
+                  </View>
+                  <View style={styles.menuTextWrap}>
+                    <Text
+                      style={[
+                        styles.menuLabel,
+                        item.destructive && styles.menuLabelDestructive,
+                      ]}
+                    >
+                      {item.label}
+                    </Text>
+                    <Text style={styles.menuSublabel} numberOfLines={1}>
+                      {item.sublabel}
+                    </Text>
+                  </View>
+                  <Text style={styles.chevron}>›</Text>
+                </Pressable>
+              ))}
+            </View>
+
+            <Pressable
+              onPress={onSignOut}
+              style={styles.signOut}
+              accessibilityRole="button"
+            >
+              <Text style={styles.signOutText}>Sign out</Text>
+            </Pressable>
+          </ScrollView>
+        )}
+      </SafeAreaView>
+    </SkyBackground>
   );
 }
 
+const ORB = 36;
+
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: BrandColors.paper },
+  safe: { flex: 1 },
   topBar: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
+    gap: 12,
     paddingHorizontal: 16,
-    paddingVertical: 12,
-  },
-  backButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 2,
+    paddingVertical: 8,
   },
   topBarTitle: {
-    fontFamily: "Baloo2-ExtraBold",
+    fontFamily: AddyFonts.title,
     fontSize: 20,
-    color: BrandColors.ink,
-  },
-  signOutLink: {
-    fontSize: 15,
-    color: BrandColors.inkMuted,
-    fontWeight: "600",
+    lineHeight: 30,
+    color: AddyColors.ink,
   },
   center: {
     flex: 1,
@@ -311,104 +309,121 @@ const styles = StyleSheet.create({
     padding: 32,
   },
   muted: {
+    fontFamily: AddyFonts.body,
     fontSize: 14,
-    color: BrandColors.inkMuted,
+    color: AddyColors.inkMuted,
     textAlign: "center",
   },
   retry: {
     paddingHorizontal: 18,
     paddingVertical: 9,
-    borderRadius: 10,
-    backgroundColor: BrandColors.elevated,
+    borderRadius: AddyRadius.pill,
+    backgroundColor: AddyColors.white,
   },
-  retryText: { color: BrandColors.ink, fontWeight: "600" },
+  retryText: { fontFamily: AddyFonts.title, color: AddyColors.ink },
   scroll: {
-    paddingHorizontal: 24,
-    paddingTop: 12,
+    paddingHorizontal: 16,
+    paddingTop: 8,
     paddingBottom: 40,
     gap: 22,
   },
-  avatarWrap: {
-    alignItems: "center",
-    gap: 2,
-  },
+  avatarWrap: { alignItems: "center", gap: 0 },
   avatar: {
-    width: 84,
-    height: 84,
-    borderRadius: 42,
-    borderWidth: 1,
-    borderColor: BrandColors.ink,
-    backgroundColor: BrandColors.paper,
+    width: 104,
+    height: 104,
+    borderRadius: 52,
+    borderWidth: 4,
+    borderColor: AddyColors.white,
+    backgroundColor: AddyColors.paperDim,
     alignItems: "center",
     justifyContent: "center",
-    overflow: "hidden",
   },
-  avatarImage: { width: "100%", height: "100%" },
+  avatarImage: { width: "100%", height: "100%", borderRadius: 48 },
   avatarInitial: {
-    fontFamily: "Baloo2-ExtraBold",
-    fontSize: 32,
-    color: BrandColors.ink,
+    fontFamily: AddyFonts.title,
+    fontSize: 38,
+    color: AddyColors.ink,
+  },
+  editBadge: {
+    position: "absolute",
+    right: -2,
+    bottom: -2,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: AddyColors.lime,
+    borderWidth: 2,
+    borderColor: AddyColors.white,
+    alignItems: "center",
+    justifyContent: "center",
   },
   name: {
-    fontFamily: "Baloo2-SemiBold",
-    fontSize: 17,
-    color: BrandColors.ink,
-    marginTop: 8,
+    fontFamily: AddyFonts.title,
+    fontSize: 20,
+    lineHeight: 30,
+    color: AddyColors.ink,
+    marginTop: 10,
   },
   username: {
-    fontFamily: "VT323-Regular",
-    fontSize: 15,
-    color: BrandColors.inkMuted,
+    fontFamily: AddyFonts.tech,
+    fontSize: 17,
+    color: AddyColors.inkMuted,
   },
-  menuList: {
-    gap: 10,
-  },
+  menuList: { gap: 10 },
   menuRow: {
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
-    padding: 12,
+    minHeight: 60,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderRadius: AddyRadius.card,
+    borderWidth: ADDY_BORDER_WIDTH,
+    borderColor: AddyColors.line,
+    backgroundColor: AddyColors.white,
   },
-  iconBadgeShadow: {},
-  iconBadge: {
-    width: 36,
-    height: 36,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: BrandColors.ink,
+  pressed: { opacity: 0.8 },
+  menuRowDisabled: { opacity: 0.5 },
+  orb: {
+    width: ORB,
+    height: ORB,
+    borderRadius: ORB / 2,
     alignItems: "center",
     justifyContent: "center",
     overflow: "hidden",
   },
-  menuTextWrap: {
-    flex: 1,
-    gap: 1,
+  // Glossy highlight, top-left — same light direction as GlossyOrb.
+  orbShine: {
+    position: "absolute",
+    top: 3,
+    left: 6,
+    width: ORB * 0.5,
+    height: ORB * 0.32,
+    borderRadius: ORB,
+    backgroundColor: "rgba(255, 255, 255, 0.55)",
   },
-  menuRowDisabled: {
-    opacity: 0.5,
-  },
+  menuTextWrap: { flex: 1, gap: 1 },
   menuLabel: {
-    fontFamily: "Baloo2-SemiBold",
+    fontFamily: AddyFonts.title,
     fontSize: 15,
-    color: BrandColors.ink,
+    lineHeight: 21,
+    color: AddyColors.ink,
   },
-  menuLabelDestructive: {
-    color: BrandColors.danger,
-  },
+  menuLabelDestructive: { color: AddyColors.danger },
   menuSublabel: {
-    fontFamily: "VT323-Regular",
-    fontSize: 14,
-    color: BrandColors.inkMuted,
+    fontFamily: AddyFonts.body,
+    fontSize: 12,
+    color: AddyColors.inkMuted,
   },
   chevron: {
-    fontFamily: "VT323-Regular",
-    fontSize: 22,
-    color: BrandColors.gray300,
+    fontFamily: AddyFonts.tech,
+    fontSize: 24,
+    color: AddyColors.inkMuted,
   },
-  signOut: {
-    alignItems: "center",
-    paddingVertical: 14,
-    marginTop: 4,
+  signOut: { alignItems: "center", paddingVertical: 14, marginTop: 4 },
+  signOutText: {
+    fontFamily: AddyFonts.bodyMedium,
+    color: AddyColors.inkMuted,
+    fontSize: 15,
   },
-  signOutText: { color: BrandColors.inkMuted, fontSize: 15 },
 });

@@ -16,6 +16,9 @@ export function useAddyCamera() {
   const [flash, setFlash] = useState<FlashMode>('off');
   const [facing, setFacing] = useState<CameraType>('back');
   const [zoom, setZoom] = useState(0);
+  // iOS only: lenses on the current camera, e.g. "Back Ultra Wide Camera".
+  const [availableLenses, setAvailableLenses] = useState<readonly string[]>([]);
+  const [selectedLens, setSelectedLens] = useState<string | undefined>(undefined);
 
   const onCameraReady = useCallback(() => {
     setIsCameraReady(true);
@@ -32,7 +35,16 @@ export function useAddyCamera() {
 
   const flipCamera = useCallback(() => {
     setFacing((prev) => (prev === 'back' ? 'front' : 'back'));
+    setSelectedLens(undefined);
+    setZoom(0);
   }, []);
+
+  const onAvailableLensesChanged = useCallback(
+    (event: { lenses: string[] }) => {
+      setAvailableLenses(event.lenses);
+    },
+    []
+  );
 
   const nudgeZoom = useCallback((delta: number) => {
     setZoom((z) => Math.min(1, Math.max(0, z + delta * CAMERA_ZOOM_STEP)));
@@ -89,5 +101,9 @@ export function useAddyCamera() {
     zoomOut,
     zoomIn,
     setZoomNormalized,
+    availableLenses,
+    selectedLens,
+    setSelectedLens,
+    onAvailableLensesChanged,
   };
 }

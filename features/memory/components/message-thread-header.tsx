@@ -7,11 +7,9 @@ import {
 } from "react-native";
 
 import { StickerCard } from "@/components/ui/sticker-card";
-import { StickerRadius } from "@/constants/sticker-style";
-import { BrandColors } from "@/constants/theme";
+import { AddyColors, AddyFonts, AddyRadius } from "@/constants/theme";
 
 type MessageThreadHeaderProps = {
-  messageCount: number;
   isLoading: boolean;
   isError: boolean;
   isUnavailable: boolean;
@@ -22,9 +20,9 @@ type MessageThreadHeaderProps = {
   onRetry: () => void;
 };
 
-/** "Psst..." label + count, and whatever sits above the first bubble. */
+/** Whatever sits between the memory post and the first message: loading,
+ *  errors, "earlier messages", or the empty-chat nudge. */
 export function MessageThreadHeader({
-  messageCount,
   isLoading,
   isError,
   isUnavailable,
@@ -36,14 +34,9 @@ export function MessageThreadHeader({
 }: MessageThreadHeaderProps) {
   return (
     <View style={styles.container}>
-      {/* <View style={styles.labelRow}>
-        <Text style={styles.label}>Psst...</Text>
-        <Text style={styles.meta}>{messageCount} · friends only</Text>
-      </View> */}
-
       {isUnavailable ? (
         <StickerCard
-          radius={StickerRadius.card}
+          radius={AddyRadius.card}
           borderStyle="dashed"
           shadow={false}
         >
@@ -55,7 +48,7 @@ export function MessageThreadHeader({
           </View>
         </StickerCard>
       ) : isLoading ? (
-        <ActivityIndicator color={BrandColors.ink} style={styles.spinner} />
+        <ActivityIndicator color={AddyColors.ink} style={styles.spinner} />
       ) : isError ? (
         <Pressable
           onPress={onRetry}
@@ -75,14 +68,14 @@ export function MessageThreadHeader({
           accessibilityLabel="Load earlier messages"
         >
           {isLoadingOlder ? (
-            <ActivityIndicator color={BrandColors.ink} size="small" />
+            <ActivityIndicator color={AddyColors.ink} size="small" />
           ) : (
             <Text style={styles.meta}>↑ earlier messages</Text>
           )}
         </Pressable>
       ) : isEmpty ? (
         <Text style={[styles.meta, styles.emptyText]}>
-          no messages yet — start the gossip ✦
+          no messages yet · say something sweet ✦
         </Text>
       ) : null}
     </View>
@@ -91,25 +84,15 @@ export function MessageThreadHeader({
 
 const styles = StyleSheet.create({
   container: {
-    paddingHorizontal: 20,
-    paddingTop: 28,
+    paddingHorizontal: 16,
+    paddingTop: 4,
     paddingBottom: 8,
     gap: 10,
   },
-  labelRow: {
-    flexDirection: "row",
-    alignItems: "baseline",
-    justifyContent: "space-between",
-  },
-  label: {
-    fontFamily: "Baloo2-ExtraBold",
-    fontSize: 22,
-    color: BrandColors.ink,
-  },
   meta: {
-    fontFamily: "VT323-Regular",
+    fontFamily: AddyFonts.tech,
     fontSize: 16,
-    color: BrandColors.inkMuted,
+    color: AddyColors.inkMuted,
   },
   card: {
     alignItems: "center",
@@ -119,9 +102,9 @@ const styles = StyleSheet.create({
   },
   cardEmoji: { fontSize: 28 },
   cardText: {
-    fontFamily: "Baloo2-SemiBold",
+    fontFamily: AddyFonts.titleSemiBold,
     fontSize: 15,
-    color: BrandColors.ink,
+    color: AddyColors.ink,
     textAlign: "center",
   },
   spinner: { paddingVertical: 12 },

@@ -94,6 +94,87 @@ export const BrandColors = {
 
 export type BrandColorName = keyof typeof BrandColors;
 
+// --- Revamp tokens (Y2K tech + chatroom skeuomorphism) ----------------------
+// New screens use these. `BrandColors` stays for untouched call sites; the
+// overlapping hexes are the same values.
+
+export const AddyColors = {
+  lime: "#C7F23A",
+  limeDeep: "#9FE000",
+  /** Pale lime — your own post bubble, so a photo doesn't sit on bright lime. */
+  limePale: "#F2FFD2",
+  cyan: "#5FCBFF",
+  pink: "#FF5CAE",
+  yellow: "#FFDD4A",
+  ink: "#16171A",
+  inkMuted: "#5C5C54",
+  paper: "#FBFBF6",
+  paperDim: "#F1F1E8",
+  white: "#FFFFFF",
+  /** 1.5px hairline border. */
+  line: "rgba(40, 44, 92, 0.16)",
+  navy: "#2E3266",
+  mapBg: "#ECEDF1",
+  captureBg: "#141519",
+  danger: "#FF5C5C",
+};
+
+/** The one map pin color (see `getPinColor`). */
+export const PIN_COLOR = "#5FCBFF";
+
+/** Font family names as registered in app/_layout.tsx. */
+export const AddyFonts = {
+  /** Baloo 2 — titles, section headers, buttons, user names. */
+  title: "Baloo2-Bold",
+  titleSemiBold: "Baloo2-SemiBold",
+  /** Be Vietnam Pro — body, captions, place names, inputs. */
+  body: "BeVietnam-Regular",
+  bodyMedium: "BeVietnam-Medium",
+  bodySemiBold: "BeVietnam-SemiBold",
+  bodyBold: "BeVietnam-Bold",
+  /** VT323 — short tech text only: timestamps, counts, chips. */
+  tech: "VT323-Regular",
+};
+
+export const AddyRadius = {
+  chip: 9,
+  tile: 6,
+  input: 14,
+  photo: 16,
+  card: 18,
+  pill: 9999,
+};
+
+/** Hairline border width used everywhere instead of thick ink outlines. */
+export const ADDY_BORDER_WIDTH = 1.5;
+
+/** Soft two-layer shadow. `boxShadow` renders on both platforms under the
+ *  New Architecture, so no separate Android `elevation` is needed. */
+export const AddyShadow = {
+  soft: {
+    boxShadow:
+      "0 2px 6px rgba(40, 44, 92, 0.08), 0 6px 16px rgba(40, 44, 92, 0.08)",
+  },
+  /** Raised elements floating over content (tab bar, camera orb). */
+  raised: {
+    boxShadow:
+      "0 4px 10px rgba(40, 44, 92, 0.12), 0 10px 24px rgba(40, 44, 92, 0.12)",
+  },
+} as const;
+
+export const AddyGradients = {
+  /** Sky wallpaper: top → mid → paper by ~58% of the height. */
+  sky: {
+    colors: ["#B9E4FF", "#E3F4FF", "#FBFBF6"] as const,
+    locations: [0, 0.3, 0.58] as const,
+  },
+  /** Primary pill button — vertical lime gloss. */
+  limeGloss: ["#DDFA72", "#C7F23A", "#9FE000"] as const,
+  /** Icon buttons and the tab bar. */
+  chrome: ["#FFFFFF", "#E9EEF4"] as const,
+  tabBar: ["#FFFFFF", "#EDF2F7"] as const,
+};
+
 const darkPalette = {
   background: BrandColors.gray900,
   text: BrandColors.neutral,

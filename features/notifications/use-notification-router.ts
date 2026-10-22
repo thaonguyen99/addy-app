@@ -7,7 +7,7 @@ export function toAppPath(raw: unknown): string | null {
   if (typeof raw !== "string") return null;
   const path = raw.replace(/^addyapp:\/\//, "/");
   if (path.startsWith("/memory/")) return path;
-  if (path.startsWith("/friends")) return path.replace("/friends", "/(app)/friends");
+  if (path.startsWith("/friends")) return path;
   return null;
 }
 

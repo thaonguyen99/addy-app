@@ -10,13 +10,16 @@ import Svg, {
 } from "react-native-svg";
 
 import { BrandColors } from "@/constants/theme";
+import { cloudinaryThumb } from "@/lib/image/cloudinary-thumb";
 
 // 100x128 viewBox reference teardrop path — the one consistent pin
 // silhouette.
-const PIN_PATH =
+export const PIN_PATH =
   "M50,4 C25,4 4,24 4,49 C4,74 50,122 50,122 C50,122 96,74 96,49 C96,24 75,4 50,4 Z";
-const VIEWBOX_WIDTH = 100;
-const VIEWBOX_HEIGHT = 128;
+export const PIN_VIEWBOX_WIDTH = 100;
+export const PIN_VIEWBOX_HEIGHT = 128;
+const VIEWBOX_WIDTH = PIN_VIEWBOX_WIDTH;
+const VIEWBOX_HEIGHT = PIN_VIEWBOX_HEIGHT;
 
 // The photo sits as an inset circle within the teardrop's bulb, ringed in
 // white so it reads against any pin color.
@@ -92,11 +95,8 @@ export function PhotoPin({ uri, size = 64, pinColor, style }: PhotoPinProps) {
           fill="url(#photoFallback)"
         />
         {uri ? (
-          // TODO: swap for a Cloudinary thumbnail transform once `uri`'s
-          // format is confirmed — no such helper exists yet, so this is
-          // used as-is today.
           <Image
-            href={{ uri }}
+            href={{ uri: cloudinaryThumb(uri, size) }}
             x={PHOTO_CIRCLE_CX - PHOTO_CIRCLE_R}
             y={PHOTO_CIRCLE_CY - PHOTO_CIRCLE_R}
             width={PHOTO_CIRCLE_R * 2}

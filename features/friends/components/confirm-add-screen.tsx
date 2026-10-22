@@ -113,7 +113,7 @@ export function ConfirmAddScreen() {
       <AuthPrimaryButton
         label="Done"
         variant="secondary"
-        onPress={() => router.replace("/(app)/friends")}
+        onPress={() => router.replace("/(app)/(tabs)/friends")}
       />
 
       <Pressable

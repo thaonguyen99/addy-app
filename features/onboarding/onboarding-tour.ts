@@ -101,7 +101,7 @@ export function useOnboardingTour() {
         // onTourEnd) and opens it, instead of being swallowed by the overlay.
         onSpotlightPress: () => {
           nextStep();
-          router.push("/(app)/friends");
+          router.navigate("/(app)/(tabs)/friends");
         },
         before: async () => {
           if (router.canGoBack()) router.back();

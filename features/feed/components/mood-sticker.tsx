@@ -1,59 +1,58 @@
-import { StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text } from "react-native";
 
-import { StickerShadowBox } from "@/components/ui/sticker-shadow";
-import { BrandColors } from "@/constants/theme";
+import { AddyColors } from "@/constants/theme";
 import { MOOD_SCORE_OPTIONS } from "@/features/camera/constants/mood-score";
+import { stableTiltDeg } from "@/lib/stable-hash";
 
 type MoodStickerProps = {
   score: number | null | undefined;
   size?: number;
-  /** Tilted "hanging off the corner" style for a hero moment; false gives a
-   *  small, level, inset badge for tight grid/list contexts. */
+  /** False keeps the emoji level, for tight grid/list contexts. */
   tilted?: boolean;
-  backgroundColor?: string;
+  /** Stable seed for the tilt (e.g. the memory id) so it never jitters. */
+  seed?: string;
 };
 
 /**
- * A small "stuck on afterward" sticker showing a memory's mood — meant to be
- * absolutely positioned by the caller over the top-right corner of a photo.
- * Shared by the feed card and the memory detail hero so mood reads as the
- * same object in both places.
+ * A memory's mood as a bare emoji sticker: no circle, a slight tilt and a
+ * soft drop shadow. The caller positions it over a photo or bubble.
  */
 export function MoodSticker({
   score,
   size = 32,
   tilted = true,
-  backgroundColor = BrandColors.accentPink,
+  seed,
 }: MoodStickerProps) {
   const mood =
     score != null ? MOOD_SCORE_OPTIONS.find((o) => o.score === score) : null;
 
   if (!mood) return null;
 
+  const tilt = tilted ? stableTiltDeg(seed ?? String(score)) : 0;
+
   return (
-    <StickerShadowBox
-      radius={size / 2}
-      shadowOffset={2}
-      style={tilted ? { transform: [{ rotate: "12deg" }] } : undefined}
+    <Text
+      style={[
+        styles.emoji,
+        {
+          fontSize: size,
+          lineHeight: size * 1.2,
+          transform: [{ rotate: `${tilt}deg` }],
+        },
+      ]}
+      accessibilityLabel={`Mood: ${mood.label}`}
     >
-      <View
-        style={[
-          styles.sticker,
-          { width: size, height: size, borderRadius: size / 2, backgroundColor },
-        ]}
-      >
-        <Text style={[styles.emoji, { fontSize: size * 0.5 }]}>{mood.emoji}</Text>
-      </View>
-    </StickerShadowBox>
+      {mood.emoji}
+    </Text>
   );
 }
 
 const styles = StyleSheet.create({
-  sticker: {
-    borderWidth: 1,
-    borderColor: BrandColors.ink,
-    alignItems: "center",
-    justifyContent: "center",
+  emoji: {
+    textAlign: "center",
+    textShadowColor: "rgba(40, 44, 92, 0.28)",
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 4,
+    color: AddyColors.ink,
   },
-  emoji: { textAlign: "center" },
 });

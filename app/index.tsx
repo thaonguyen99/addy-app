@@ -10,7 +10,7 @@ export default function Index() {
   }
 
   if (status === "authenticated") {
-    return <Redirect href="/(app)/(tabs)/camera" />;
+    return <Redirect href="/capture" />;
   }
 
   return <Redirect href="/sign-in" />;
