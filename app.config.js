@@ -54,7 +54,6 @@ module.exports = ({ config }) => ({
     adaptiveIcon: {
       backgroundColor: "#C7F23A",
       foregroundImage: "./assets/images/android-icon-foreground.png",
-      monochromeImage: "./assets/images/android-icon-monochrome.png",
     },
     edgeToEdgeEnabled: true,
     predictiveBackGestureEnabled: false,
@@ -111,10 +110,7 @@ module.exports = ({ config }) => ({
       },
     ],
     iosUrlScheme
-      ? [
-          "@react-native-google-signin/google-signin",
-          { iosUrlScheme },
-        ]
+      ? ["@react-native-google-signin/google-signin", { iosUrlScheme }]
       : "@react-native-google-signin/google-signin",
     "@maplibre/maplibre-react-native",
     [
