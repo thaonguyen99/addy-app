@@ -24,20 +24,20 @@ import { StickerCard } from "@/components/ui/sticker-card";
 import { StickerShadowBox } from "@/components/ui/sticker-shadow";
 import { StickerBorderWidth, StickerRadius } from "@/constants/sticker-style";
 import { BrandColors } from "@/constants/theme";
+import { useAuthStore } from "@/features/auth/store/auth-store";
 import { MoodSticker } from "@/features/feed/components/mood-sticker";
 import { formatCapturedAtLabel } from "@/features/feed/utils/format-relative-time";
-import { useAuthStore } from "@/features/auth/store/auth-store";
+import type { MemoryOptionsSheetRef } from "@/features/memory/components/memory-options-sheet";
+import { MemoryOptionsSheet } from "@/features/memory/components/memory-options-sheet";
+import type { MessageActionsSheetRef } from "@/features/memory/components/message-actions-sheet";
+import { MessageActionsSheet } from "@/features/memory/components/message-actions-sheet";
 import {
   MessageBubble,
   type ThreadItem,
 } from "@/features/memory/components/message-bubble";
-import type { MessageActionsSheetRef } from "@/features/memory/components/message-actions-sheet";
-import { MessageActionsSheet } from "@/features/memory/components/message-actions-sheet";
 import { MessageComposer } from "@/features/memory/components/message-composer";
 import { MessageThreadHeader } from "@/features/memory/components/message-thread-header";
 import { useMessageThread } from "@/features/memory/hooks/use-message-thread";
-import type { MemoryOptionsSheetRef } from "@/features/memory/components/memory-options-sheet";
-import { MemoryOptionsSheet } from "@/features/memory/components/memory-options-sheet";
 import { ONBOARDING_MEMORY_DETAIL_TARGET_ID } from "@/features/onboarding/onboarding-tour";
 import type { ReactorsSheetRef } from "@/features/reactions/components/reactors-sheet";
 import { ReactorsSheet } from "@/features/reactions/components/reactors-sheet";
@@ -50,8 +50,8 @@ import {
   useDeleteMemoryMutation,
   useDeleteMessageMutation,
   useEditMessageMutation,
-  useMentionableQuery,
   useMemoryQuery,
+  useMentionableQuery,
   useProfileQuery,
   useToggleReactionMutation,
   useUpdateMemoryMutation,
@@ -62,7 +62,7 @@ const SCREEN_WIDTH = Dimensions.get("window").width;
 const HERO_PADDING = 20;
 const STRIP_INSET = 10;
 const HERO_WIDTH = SCREEN_WIDTH - HERO_PADDING * 2 - STRIP_INSET * 2;
-const HERO_HEIGHT = 300;
+const HERO_HEIGHT = HERO_WIDTH;
 /** Start loading older messages when scrolling up within this many px of the thread top. */
 const LOAD_OLDER_THRESHOLD = 160;
 
@@ -436,29 +436,6 @@ export function MemoryDetailScreen({ id }: MemoryDetailScreenProps) {
                   </View>
                 </View>
 
-                {/* <View style={styles.content}>
-            <StickerCard borderStyle="dashed" shadowOffset={2}>
-              <View style={styles.placeCard}>
-                <MaterialIcons
-                  name="place"
-                  size={18}
-                  color={BrandColors.primary}
-                />
-                <Text style={styles.address}>
-                  {data.place.formattedAddress}
-                </Text>
-              </View>
-              <View style={styles.placeCardDivider} />
-              <View style={styles.placeCard}>
-                <MaterialIcons
-                  name="calendar-today"
-                  size={16}
-                  color={BrandColors.inkMuted}
-                />
-                <Text style={styles.metaText}>{formattedDate}</Text>
-              </View>
-            </StickerCard>
-          </View> */}
                 {showThread ? (
                   <MessageThreadHeader
                     messageCount={data.messageCount ?? 0}
@@ -543,7 +520,7 @@ const styles = StyleSheet.create({
     height: 36,
     borderRadius: 18,
     backgroundColor: "rgba(22, 23, 26, 0.08)",
-    borderWidth: 2,
+    borderWidth: 1,
     borderColor: BrandColors.ink,
     alignItems: "center",
     justifyContent: "center",
@@ -670,15 +647,12 @@ const styles = StyleSheet.create({
     fontFamily: "VT323-Regular",
     fontSize: 20,
     color: BrandColors.ink,
-    // textAlign: "center",
   },
 
   tagRow: {
     alignItems: "flex-start",
   },
-  tagSticker: {
-    transform: [{ rotate: "-1.5deg" }],
-  },
+  tagSticker: {},
   tagText: {
     fontFamily: "VT323-Regular",
     fontSize: 16,
@@ -686,7 +660,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 4,
   },
-
   placeCard: {
     flexDirection: "row",
     alignItems: "center",

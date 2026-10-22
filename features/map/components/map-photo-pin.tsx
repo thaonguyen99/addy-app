@@ -1,38 +1,90 @@
+import { memo } from "react";
 import { StyleSheet, Text, View } from "react-native";
 
+import { SoftShadowBox } from "@/components/ui/soft-shadow";
 import { PhotoPin } from "@/components/ui/photo-pin";
+import { MAP_LABEL_NAVY } from "@/constants/map-style";
 import { BrandColors } from "@/constants/theme";
+import { MapMoodSticker } from "@/features/map/components/map-mood-sticker";
+import { PlaceLabelBubble } from "@/features/map/components/place-label-bubble";
 import type { QueuedPinStatus } from "@/features/pin-queue/pin-queue-types";
 
 type MapPhotoPinProps = {
-  imageUrl: string;
-  /** When more than one memory shares this place, shows a "+N" corner badge. */
-  count?: number;
+  imageUrl?: string;
+  pinColor: string;
+  /** Memories sharing this place (real, populated data) — tap opens the
+   *  place sheet instead of navigating straight to one memory. */
+  placeMemoryCount?: number;
+  /** Photos on this memory beyond its cover — not yet sent by the map-pin
+   *  endpoints, so this stays hidden until it is. */
+  extraPhotoCount?: number;
+  /** Not yet sent by the map-pin endpoints for server pins; local queued
+   *  pins do have it today. */
+  placeName?: string;
+  moodScore?: number | null;
+  /** Zoom-gated: place labels only render when zoomed in enough. */
+  showLabel?: boolean;
+  /** True once this pin sits in the right ~40% of the screen, so the label
+   *  flips to grow left instead of running off the edge. */
+  flipped?: boolean;
   /** Marks this as a friend's memory rather than the user's own. */
   isFriend?: boolean;
   /** Set for a pin still in the offline queue: "waiting" / "couldn't upload" sticker. */
   queueStatus?: QueuedPinStatus;
 };
 
-const PIN_SIZE = 72;
+const PIN_SIZE = 64;
+const PIN_HEIGHT = (PIN_SIZE / 100) * 128;
+const MOOD_SIZE = 28;
 
 /**
- * The map marker: PhotoPin plus two bolt-ons PhotoPin itself doesn't know
- * about — a place's memory count, and an own-vs-friend indicator. PhotoPin's
- * own badge slot is reserved for category, so these render as separate
- * overlays instead of being passed into it.
+ * The map marker: PhotoPin plus its bolt-ons — place count, friend/queue
+ * indicators, and (where data allows) a place-name label and mood sticker.
  */
-export function MapPhotoPin({
+export const MapPhotoPin = memo(function MapPhotoPin({
   imageUrl,
-  count,
+  pinColor,
+  placeMemoryCount,
+  extraPhotoCount,
+  placeName,
+  moodScore,
+  showLabel = false,
+  flipped = false,
   isFriend,
   queueStatus,
 }: MapPhotoPinProps) {
+  const moodSide = flipped ? "right" : "left";
+
   return (
     <View style={styles.wrapper}>
-      <PhotoPin uri={imageUrl} size={PIN_SIZE} />
+      {showLabel ? (
+        <PlaceLabelBubble
+          placeName={placeName}
+          flipped={flipped}
+          style={[
+            styles.label,
+            flipped
+              ? { right: PIN_SIZE / 2 - 14 }
+              : { left: PIN_SIZE / 2 - 14 },
+          ]}
+        />
+      ) : null}
+
+      <MapMoodSticker
+        moodScore={moodScore}
+        style={[
+          styles.mood,
+          moodSide === "left"
+            ? { left: -(MOOD_SIZE / 2 + 6) }
+            : { right: -(MOOD_SIZE / 2 + 6) },
+        ]}
+      />
+
+      <PhotoPin uri={imageUrl} size={PIN_SIZE} pinColor={pinColor} />
+
       {queueStatus ? (
-        <View
+        <SoftShadowBox
+          radius={11}
           style={[
             styles.queueBadge,
             queueStatus === "failed" && styles.queueBadgeFailed,
@@ -41,42 +93,75 @@ export function MapPhotoPin({
           <Text style={styles.queueBadgeText}>
             {queueStatus === "failed" ? "! retry" : "⏳ waiting"}
           </Text>
-        </View>
+        </SoftShadowBox>
       ) : null}
-      {isFriend ? <View style={styles.friendDot} /> : null}
-      {count != null && count > 1 ? (
-        <View style={styles.countBadge}>
-          <Text style={styles.countBadgeText}>+{count}</Text>
-        </View>
+
+      {isFriend ? <SoftShadowBox radius={8} style={styles.friendDot} /> : null}
+
+      {extraPhotoCount != null && extraPhotoCount > 0 ? (
+        <SoftShadowBox radius={12} style={styles.extraPhotoBadge}>
+          <Text style={styles.extraPhotoBadgeText}>+{extraPhotoCount}</Text>
+        </SoftShadowBox>
+      ) : null}
+
+      {placeMemoryCount != null && placeMemoryCount > 1 ? (
+        <SoftShadowBox radius={12} style={styles.placeCountBadge}>
+          <Text style={styles.placeCountBadgeText}>+{placeMemoryCount}</Text>
+        </SoftShadowBox>
       ) : null}
     </View>
   );
-}
+});
 
 export const MAP_PHOTO_PIN_WIDTH = PIN_SIZE;
-export const MAP_PHOTO_PIN_HEIGHT = (PIN_SIZE / 100) * 128;
+export const MAP_PHOTO_PIN_HEIGHT = PIN_HEIGHT;
 
 const styles = StyleSheet.create({
   wrapper: { alignItems: "center" },
-  countBadge: {
+  label: {
+    position: "absolute",
+    bottom: PIN_HEIGHT + 4,
+  },
+  mood: {
+    position: "absolute",
+    top: PIN_HEIGHT * 0.3 - MOOD_SIZE / 2,
+    zIndex: 2,
+  },
+  // Top-left: extra photos on this memory beyond its cover (gap data today).
+  extraPhotoBadge: {
+    position: "absolute",
+    top: -4,
+    left: -4,
+    minWidth: 24,
+    height: 24,
+    paddingHorizontal: 6,
+    backgroundColor: BrandColors.white,
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 3,
+  },
+  extraPhotoBadgeText: {
+    color: MAP_LABEL_NAVY,
+    fontSize: 11,
+    fontFamily: "Baloo2-SemiBold",
+  },
+  // Top-right: memories sharing this place (real data, drives navigation).
+  placeCountBadge: {
     position: "absolute",
     top: -4,
     right: -4,
     minWidth: 24,
     height: 24,
-    borderRadius: 12,
     paddingHorizontal: 6,
-    backgroundColor: BrandColors.accentYellow,
-    borderWidth: 2,
-    borderColor: BrandColors.ink,
+    backgroundColor: BrandColors.white,
     alignItems: "center",
     justifyContent: "center",
     zIndex: 3,
   },
-  countBadgeText: {
-    color: BrandColors.ink,
+  placeCountBadgeText: {
+    color: MAP_LABEL_NAVY,
     fontSize: 11,
-    fontFamily: "VT323-Regular",
+    fontFamily: "Baloo2-SemiBold",
   },
   queueBadge: {
     position: "absolute",
@@ -84,10 +169,7 @@ const styles = StyleSheet.create({
     left: -12,
     paddingHorizontal: 6,
     height: 22,
-    borderRadius: 11,
     backgroundColor: BrandColors.accentCyan,
-    borderWidth: 2,
-    borderColor: BrandColors.ink,
     alignItems: "center",
     justifyContent: "center",
     zIndex: 3,
@@ -101,13 +183,10 @@ const styles = StyleSheet.create({
   friendDot: {
     position: "absolute",
     left: -2,
-    bottom: 28,
+    bottom: 24,
     width: 16,
     height: 16,
-    borderRadius: 8,
     backgroundColor: BrandColors.accentPink,
-    borderWidth: 2,
-    borderColor: BrandColors.ink,
     zIndex: 3,
   },
 });

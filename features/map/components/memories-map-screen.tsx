@@ -24,8 +24,9 @@ import { router } from "expo-router";
 import { TourTarget, useTourGuide } from "@wrack/react-native-tour-guide";
 
 import { ChatBubbleBanner } from "@/components/ui/chat-bubble-banner";
-import { StickerShadowBox } from "@/components/ui/sticker-shadow";
-import { StickerBorderWidth, StickerRadius } from "@/constants/sticker-style";
+import { SoftShadowBox } from "@/components/ui/soft-shadow";
+import { StickerRadius } from "@/constants/sticker-style";
+import { LABEL_VISIBLE_ZOOM } from "@/constants/map-style";
 import { GOONG_MAP_API_KEY } from "@/lib/env";
 import {
   useFriendsMapQuery,
@@ -34,6 +35,7 @@ import {
 } from "@/lib/query/hooks";
 import type { FriendMemoryPin, MapBounds, MemoryPin } from "@/types/api";
 import { BrandColors } from "@/constants/theme";
+import { ClusterMarker } from "@/features/map/components/cluster-marker";
 import {
   MAP_PHOTO_PIN_HEIGHT,
   MAP_PHOTO_PIN_WIDTH,
@@ -57,9 +59,13 @@ import {
   pinsAreInseparable,
   type ClusterGroup,
 } from "@/features/map/utils/cluster-pins";
+import { getPinColor } from "@/features/map/utils/pin-color";
 import { pinsToTrailGeoJSON } from "@/features/map/utils/pins-to-trail";
 import { usePinQueueStore } from "@/features/pin-queue/pin-queue-store";
-import { queuedPinCoordinates } from "@/features/pin-queue/pin-queue-types";
+import {
+  queuedPinCoordinates,
+  queuedPinPlaceName,
+} from "@/features/pin-queue/pin-queue-types";
 import { showQueuedPinActions } from "@/features/pin-queue/queued-pin-actions";
 import {
   ONBOARDING_ADD_MEMORY_STEP_ID,
@@ -90,6 +96,17 @@ const TOAST_VISIBLE_MS = 3000;
 
 function boundsToMapBounds([west, south, east, north]: LngLatBounds): MapBounds {
   return { north, south, east, west, limit: 50 };
+}
+
+// MapLibre markers are native layers with no DOM measurement — approximate
+// a pin's screen-X position by interpolating its longitude across the
+// current viewport bounds. Ignores Mercator curvature/rotation, which is
+// fine since this map never rotates or pitches.
+function isNearRightEdge(longitude: number, bounds: MapBounds): boolean {
+  const span = bounds.east - bounds.west;
+  if (span <= 0) return false;
+  const ratio = (longitude - bounds.west) / span;
+  return ratio > 0.6;
 }
 
 function ToastSparkle({
@@ -218,6 +235,8 @@ export function MemoriesMapScreen() {
   );
 
   const [showFriends, setShowFriends] = useState(false);
+  const bounds = debouncedBounds ?? DEFAULT_BOUNDS;
+  const showLabels = zoom >= LABEL_VISIBLE_ZOOM;
 
   const { data, isError } = useMemoriesMapQuery(debouncedBounds);
   const pins = data?.pins ?? [];
@@ -338,11 +357,7 @@ export function MemoriesMapScreen() {
               anchor="bottom"
               onPress={() => onClusterPress(group)}
             >
-              <MapPhotoPin
-                imageUrl={group.pins[0].imageUrl}
-                count={group.pins.length}
-                isFriend
-              />
+              <ClusterMarker count={group.pins.length} />
             </Marker>
           ) : (
             <Marker
@@ -353,7 +368,13 @@ export function MemoriesMapScreen() {
             >
               <MapPhotoPin
                 imageUrl={group.pins[0].imageUrl}
-                count={group.pins[0].memoryCount}
+                pinColor={getPinColor(group.pins[0])}
+                placeMemoryCount={group.pins[0].memoryCount}
+                extraPhotoCount={group.pins[0].extraPhotoCount}
+                placeName={group.pins[0].placeName}
+                moodScore={group.pins[0].moodScore}
+                showLabel={showLabels}
+                flipped={isNearRightEdge(group.pins[0].longitude, bounds)}
                 isFriend
               />
             </Marker>
@@ -367,10 +388,7 @@ export function MemoriesMapScreen() {
               anchor="bottom"
               onPress={() => onClusterPress(group)}
             >
-              <MapPhotoPin
-                imageUrl={group.pins[0].imageUrl}
-                count={group.pins.length}
-              />
+              <ClusterMarker count={group.pins.length} />
             </Marker>
           ) : (
             <Marker
@@ -381,7 +399,13 @@ export function MemoriesMapScreen() {
             >
               <MapPhotoPin
                 imageUrl={group.pins[0].imageUrl}
-                count={group.pins[0].memoryCount}
+                pinColor={getPinColor(group.pins[0])}
+                placeMemoryCount={group.pins[0].memoryCount}
+                extraPhotoCount={group.pins[0].extraPhotoCount}
+                placeName={group.pins[0].placeName}
+                moodScore={group.pins[0].moodScore}
+                showLabel={showLabels}
+                flipped={isNearRightEdge(group.pins[0].longitude, bounds)}
               />
             </Marker>
           ),
@@ -397,6 +421,11 @@ export function MemoriesMapScreen() {
             >
               <MapPhotoPin
                 imageUrl={pin.photoPaths[0]}
+                pinColor={getPinColor({ id: pin.clientId })}
+                placeName={queuedPinPlaceName(pin)}
+                moodScore={pin.moodScore}
+                showLabel={showLabels}
+                flipped={isNearRightEdge(longitude, bounds)}
                 queueStatus={pin.status === "failed" ? "failed" : "pending"}
               />
             </Marker>
@@ -425,7 +454,7 @@ export function MemoriesMapScreen() {
       >
         <SuccessToast visible={showSuccessToast} />
         <View style={styles.topRow}>
-        <StickerShadowBox radius={StickerRadius.chip} shadowOffset={2}>
+        <SoftShadowBox radius={StickerRadius.chip}>
           <Pressable
             onPress={openFeed}
             style={({ pressed }) => [
@@ -447,7 +476,7 @@ export function MemoriesMapScreen() {
             </Text>
             <Text style={styles.badgeChevron}>›</Text>
           </Pressable>
-        </StickerShadowBox>
+        </SoftShadowBox>
         </View>
       </SafeAreaView>
 
@@ -463,7 +492,7 @@ export function MemoriesMapScreen() {
             </Text>
           </View>
         ) : null}
-        <StickerShadowBox radius={StickerRadius.pill} shadowOffset={2}>
+        <SoftShadowBox radius={StickerRadius.pill}>
           <Pressable
             onPress={() => setShowFriends((v) => !v)}
             style={[styles.friendsFab, showFriends && styles.friendsFabOn]}
@@ -480,7 +509,7 @@ export function MemoriesMapScreen() {
               Friends
             </Text>
           </Pressable>
-        </StickerShadowBox>
+        </SoftShadowBox>
       </SafeAreaView>
 
       <PlaceMemoriesSheet ref={placeMemoriesSheetRef} />
@@ -537,8 +566,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 6,
     backgroundColor: BrandColors.ink,
-    borderWidth: StickerBorderWidth.standard,
-    borderColor: BrandColors.ink,
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: StickerRadius.chip,
@@ -561,12 +588,9 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderRadius: StickerRadius.pill,
     backgroundColor: BrandColors.paper,
-    borderWidth: StickerBorderWidth.standard,
-    borderColor: BrandColors.ink,
   },
   friendsFabOn: {
     backgroundColor: BrandColors.accentPink,
-    borderColor: BrandColors.ink,
   },
   friendsFabText: {
     fontSize: 14,
@@ -585,8 +609,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: StickerRadius.chip,
-    borderWidth: StickerBorderWidth.thin,
-    borderColor: BrandColors.ink,
     overflow: "hidden",
   },
   badgePressed: { opacity: 0.7 },

@@ -1,7 +1,8 @@
+import { LinearGradient } from "expo-linear-gradient";
 import { View } from "react-native";
 
 import { IconSymbol } from "@/components/ui/icon-symbol";
-import { StickerCard } from "@/components/ui/sticker-card";
+import { SoftShadowBox } from "@/components/ui/soft-shadow";
 import { accentCyanDeep, accentPinkDeep } from "@/constants/sticker-style";
 import { BrandColors } from "@/constants/theme";
 
@@ -32,22 +33,33 @@ export function ChunkyNavIcon({
         transform: [{ scale: active ? 1 : 0.9 }],
       }}
     >
-      <StickerCard
-        radius={size * 0.32}
-        gradientColors={NAV_ICON_GRADIENTS[name]}
-        shadowOffset={active ? 3 : 2}
-      >
+      <SoftShadowBox radius={size * 0.32}>
         <View
           style={{
             width: size,
             height: size,
-            alignItems: "center",
-            justifyContent: "center",
+            borderRadius: size * 0.32,
+            overflow: "hidden",
           }}
         >
-          <IconSymbol name={name} size={size * 0.5} color={BrandColors.ink} />
+          <LinearGradient
+            colors={NAV_ICON_GRADIENTS[name]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 0, y: 1 }}
+            style={{
+              flex: 1,
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <IconSymbol
+              name={name}
+              size={size * 0.5}
+              color={BrandColors.ink}
+            />
+          </LinearGradient>
         </View>
-      </StickerCard>
+      </SoftShadowBox>
     </View>
   );
 }

@@ -183,7 +183,7 @@ const styles = StyleSheet.create({
     marginLeft: -6,
     borderRadius: 6,
     backgroundColor: BrandColors.primary,
-    borderWidth: 2,
+    borderWidth: 1,
     borderColor: BrandColors.ink,
   },
 });

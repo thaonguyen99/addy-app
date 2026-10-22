@@ -299,7 +299,7 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: 14,
-    borderWidth: 2,
+    borderWidth: 1,
     borderColor: "rgba(255,255,255,0.9)",
     backgroundColor: "rgba(0,0,0,0.35)",
     alignItems: "center",
@@ -308,11 +308,6 @@ const styles = StyleSheet.create({
   selectionControlSelected: {
     backgroundColor: BrandColors.primary,
     borderColor: BrandColors.ink,
-    shadowColor: BrandColors.ink,
-    shadowOffset: { width: 2, height: 2 },
-    shadowOpacity: 1,
-    shadowRadius: 0,
-    elevation: 3,
   },
   dotsRow: {
     flexDirection: "row",

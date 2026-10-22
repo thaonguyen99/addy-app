@@ -1,8 +1,8 @@
 import { StyleProp, StyleSheet, Text, View, ViewStyle } from "react-native";
 
 import { StickerCard } from "@/components/ui/sticker-card";
+import { StickerRadius } from "@/constants/sticker-style";
 import { BrandColors } from "@/constants/theme";
-import { StickerBorderWidth, StickerRadius } from "@/constants/sticker-style";
 
 type StatChipProps = {
   value: string | number;
@@ -16,9 +16,8 @@ export function StatChip({ value, label, style }: StatChipProps) {
     <StickerCard
       style={style}
       radius={StickerRadius.chip}
-      borderWidth={StickerBorderWidth.thin}
+      // borderWidth={StickerBorderWidth.thin}
       backgroundColor={BrandColors.gray100}
-      shadowOffset={2}
     >
       <View style={styles.content}>
         <Text style={styles.value}>{value}</Text>

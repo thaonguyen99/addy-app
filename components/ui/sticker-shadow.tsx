@@ -1,8 +1,5 @@
 import { ReactNode } from "react";
-import { Platform, StyleProp, StyleSheet, View, ViewStyle } from "react-native";
-
-import { BrandColors } from "@/constants/theme";
-import { STICKER_SHADOW_OFFSET } from "@/constants/sticker-style";
+import { StyleProp, View, ViewStyle } from "react-native";
 
 type StickerShadowBoxProps = {
   children?: ReactNode;
@@ -14,65 +11,9 @@ type StickerShadowBoxProps = {
 };
 
 /**
- * Flat, offset "sticker" shadow — never blurred. iOS/web get this for free
- * from RN's shadow props with `shadowRadius: 0`; Android's `elevation` has
- * no flat mode, so it's faked with a second, offset background View.
+ * Sticker shadow effect, disabled app-wide: renders children in a plain
+ * View with no shadow. Props are kept for call-site compatibility.
  */
-export function StickerShadowBox({
-  children,
-  style,
-  radius = 0,
-  shadowColor = BrandColors.ink,
-  shadowOffset = STICKER_SHADOW_OFFSET,
-  enabled = true,
-}: StickerShadowBoxProps) {
-  if (!enabled) {
-    return <View style={style}>{children}</View>;
-  }
-
-  if (Platform.OS === "android") {
-    // Only grow into a fixed-size box. In a hug-content box flexGrow lets the
-    // wrapper (and so the shadow) expand into whatever space the parent
-    // offers, while the visible content stays small.
-    const fixedHeight = StyleSheet.flatten(style)?.height != null;
-    return (
-      <View style={style}>
-        <View
-          style={{
-            position: "absolute",
-            // Same footprint as the content, shifted — matches iOS, where the
-            // shadow pokes out past the bottom-right edge instead of hiding
-            // behind the content.
-            left: shadowOffset,
-            top: shadowOffset,
-            right: -shadowOffset,
-            bottom: -shadowOffset,
-            backgroundColor: shadowColor,
-            borderRadius: radius,
-          }}
-        />
-        {/* flexGrow so `flex: 1` children fill a fixed-size box (e.g. the
-            camera buttons) instead of collapsing to 0 height. */}
-        <View style={{ flexGrow: fixedHeight ? 1 : 0, zIndex: 1 }}>
-          {children}
-        </View>
-      </View>
-    );
-  }
-
-  return (
-    <View
-      style={[
-        {
-          shadowColor,
-          shadowOffset: { width: shadowOffset, height: shadowOffset },
-          shadowOpacity: 1,
-          shadowRadius: 0,
-        },
-        style,
-      ]}
-    >
-      {children}
-    </View>
-  );
+export function StickerShadowBox({ children, style }: StickerShadowBoxProps) {
+  return <View style={style}>{children}</View>;
 }

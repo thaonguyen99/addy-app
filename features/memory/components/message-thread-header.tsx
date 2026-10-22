@@ -1,4 +1,10 @@
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
+import {
+  ActivityIndicator,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 
 import { StickerCard } from "@/components/ui/sticker-card";
 import { StickerRadius } from "@/constants/sticker-style";
@@ -30,23 +36,35 @@ export function MessageThreadHeader({
 }: MessageThreadHeaderProps) {
   return (
     <View style={styles.container}>
-      <View style={styles.labelRow}>
+      {/* <View style={styles.labelRow}>
         <Text style={styles.label}>Psst...</Text>
         <Text style={styles.meta}>{messageCount} · friends only</Text>
-      </View>
+      </View> */}
 
       {isUnavailable ? (
-        <StickerCard radius={StickerRadius.card} borderStyle="dashed" shadow={false}>
+        <StickerCard
+          radius={StickerRadius.card}
+          borderStyle="dashed"
+          shadow={false}
+        >
           <View style={styles.card}>
             <Text style={styles.cardEmoji}>🫥</Text>
-            <Text style={styles.cardText}>This chat isn&apos;t available anymore.</Text>
+            <Text style={styles.cardText}>
+              This chat isn&apos;t available anymore.
+            </Text>
           </View>
         </StickerCard>
       ) : isLoading ? (
         <ActivityIndicator color={BrandColors.ink} style={styles.spinner} />
       ) : isError ? (
-        <Pressable onPress={onRetry} style={styles.inlineRow} accessibilityRole="button">
-          <Text style={styles.meta}>couldn&apos;t load messages · tap to retry</Text>
+        <Pressable
+          onPress={onRetry}
+          style={styles.inlineRow}
+          accessibilityRole="button"
+        >
+          <Text style={styles.meta}>
+            couldn&apos;t load messages · tap to retry
+          </Text>
         </Pressable>
       ) : hasOlder ? (
         <Pressable

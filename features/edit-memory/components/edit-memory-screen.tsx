@@ -316,7 +316,7 @@ const styles = StyleSheet.create({
   },
   addTile: {
     marginTop: 6,
-    borderWidth: 2,
+    borderWidth: 1,
     borderStyle: "dashed",
     borderColor: BrandColors.ink,
     alignItems: "center",

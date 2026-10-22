@@ -50,7 +50,7 @@ export function MoodSticker({
 
 const styles = StyleSheet.create({
   sticker: {
-    borderWidth: 2.5,
+    borderWidth: 1,
     borderColor: BrandColors.ink,
     alignItems: "center",
     justifyContent: "center",

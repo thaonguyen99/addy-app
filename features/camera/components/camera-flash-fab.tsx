@@ -24,17 +24,7 @@ type MaterialIconName = ComponentProps<typeof MaterialIcons>["name"];
 const FAB_SIZE = 44;
 
 /** Depth under the glass pill (native). */
-const hostShadowStyle: ViewStyle =
-  Platform.OS === "ios"
-    ? {
-        shadowColor: BrandColors.black,
-        shadowOffset: { width: 0, height: 3 },
-        shadowOpacity: 0.28,
-        shadowRadius: 6,
-      }
-    : Platform.OS === "android"
-      ? { elevation: 8 }
-      : {};
+const hostShadowStyle: ViewStyle = {};
 
 /** Safari / Chrome: frosted panel when BlurView is not used. */
 const webBackdropBlur =

@@ -238,6 +238,17 @@ export type MemoryPin = {
   imageUrl: string;
   /** How many memories exist at this place. */
   memoryCount: number;
+  /** Not yet sent by GET /memories/map or /memories/friends-map — the map's
+   *  place-name label stays hidden until the backend populates this. */
+  placeName?: string;
+  /** Not yet sent by GET /memories/map or /memories/friends-map — the map's
+   *  mood sticker stays hidden until the backend populates this. */
+  moodScore?: number | null;
+  /** Photos on this memory beyond its cover. Not yet sent by GET
+   *  /memories/map or /memories/friends-map — the pin's "+N" tag stays
+   *  hidden until the backend populates this. Distinct from `memoryCount`
+   *  (memories sharing this place), which is already real, populated data. */
+  extraPhotoCount?: number;
 };
 
 /** A single memory shown in the "memories at this place" sheet. */

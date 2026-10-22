@@ -242,17 +242,12 @@ const styles = StyleSheet.create({
     gap: 6,
     paddingVertical: 12,
     borderRadius: 16,
-    borderWidth: 2.5,
+    borderWidth: 1,
     borderColor: BrandColors.ink,
     backgroundColor: BrandColors.paper,
   },
   tabActive: {
     backgroundColor: BrandColors.primaryLight,
-    shadowColor: BrandColors.ink,
-    shadowOffset: { width: 2, height: 2 },
-    shadowOpacity: 1,
-    shadowRadius: 0,
-    elevation: 3,
   },
   tabLabel: {
     fontFamily: "Baloo2-SemiBold",
@@ -277,7 +272,7 @@ const styles = StyleSheet.create({
   },
   actionPrimary: {
     backgroundColor: BrandColors.primary,
-    borderWidth: 2,
+    borderWidth: 1,
     borderColor: BrandColors.ink,
   },
   actionText: { fontSize: 13, fontWeight: "600", color: BrandColors.inkMuted },

@@ -15,9 +15,9 @@ export const StickerRadius = {
 };
 
 export const StickerBorderWidth = {
-  thin: 2.5,
-  standard: 3,
-  thick: 4,
+  thin: 1,
+  standard: 1,
+  thick: 1,
 };
 
 /** Flat hard-shadow offset (both x and y), in px. */

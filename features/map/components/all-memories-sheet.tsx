@@ -203,7 +203,7 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    borderWidth: 2,
+    borderWidth: 1,
     borderColor: BrandColors.ink,
     backgroundColor: BrandColors.paper,
     alignItems: "center",

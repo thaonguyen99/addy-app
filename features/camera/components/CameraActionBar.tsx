@@ -159,7 +159,7 @@ const styles = StyleSheet.create({
   snapOuter: {
     flex: 1,
     borderRadius: SNAP_OUTER_DIAMETER / 2,
-    borderWidth: 4,
+    borderWidth: 1,
     borderColor: BrandColors.ink,
     backgroundColor: BrandColors.paper,
     alignItems: "center",

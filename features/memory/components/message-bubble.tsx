@@ -180,7 +180,7 @@ const styles = StyleSheet.create({
     width: AVATAR_SIZE,
     height: AVATAR_SIZE,
     borderRadius: AVATAR_SIZE / 2,
-    borderWidth: 2,
+    borderWidth: 1,
     borderColor: BrandColors.ink,
     backgroundColor: BrandColors.gray100,
     alignItems: "center",

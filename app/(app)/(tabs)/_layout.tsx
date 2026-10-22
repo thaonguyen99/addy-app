@@ -24,11 +24,15 @@ export default function TabLayout() {
       screenOptions={{
         tabBarShowLabel: false,
         tabBarStyle: {
-          borderTopColor: BrandColors.neutralBorder,
-          borderTopWidth: 3,
+          borderTopWidth: 0,
           height: DOCK_PADDING * 2 + ICON_SIZE + insets.bottom,
           paddingTop: DOCK_PADDING,
           paddingBottom: insets.bottom,
+          shadowColor: BrandColors.ink,
+          shadowOffset: { width: 0, height: -2 },
+          shadowOpacity: 0.1,
+          shadowRadius: 6,
+          elevation: 8,
         },
         tabBarBackground: () => (
           <LinearGradient
