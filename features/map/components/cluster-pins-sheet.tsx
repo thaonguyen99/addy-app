@@ -12,16 +12,33 @@ import {
   useRef,
   useState,
 } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import {
+  ActivityIndicator,
+  Pressable,
+  StyleSheet,
+  Text,
+  useWindowDimensions,
+  View,
+} from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { StickerCard } from "@/components/ui/sticker-card";
-import { BrandColors } from "@/constants/theme";
-import { StickerBorderWidth, StickerRadius } from "@/constants/sticker-style";
-import { PinCountBadge } from "@/features/map/components/map-photo-pin";
+import { TechChip } from "@/components/ui/tech-chip";
+import {
+  ADDY_BORDER_WIDTH,
+  AddyColors,
+  AddyFonts,
+  AddyRadius,
+} from "@/constants/theme";
+import { formatRelativeTime } from "@/features/feed/utils/format-relative-time";
+import { cloudinaryThumb } from "@/lib/image/cloudinary-thumb";
+import { useClusterMemoriesQuery } from "@/lib/query/hooks";
 import type { FriendMemoryPin, MemoryPin } from "@/types/api";
 
 type ClusterPin = MemoryPin | FriendMemoryPin;
+
+const COLUMNS = 3;
+const GAP = 8;
+const SIDE = 16;
 
 export type ClusterPinsSheetRef = {
   present: (pins: ClusterPin[]) => void;
@@ -29,18 +46,22 @@ export type ClusterPinsSheetRef = {
 };
 
 type ClusterPinsSheetProps = {
-  onSelectPin: (pin: ClusterPin) => void;
+  onSelectMemory: (memoryId: string) => void;
 };
 
 /**
- * Picker shown when a grouped pin is tapped: one tile per pin in the group.
- * A tile holding several memories at one place opens that place's list.
+ * Picker shown when a grouped pin is tapped: every memory inside it in one
+ * flat grid (places with several memories are expanded), newest first.
+ * Tapping a tile opens that memory.
  */
 export const ClusterPinsSheet = forwardRef<ClusterPinsSheetRef, ClusterPinsSheetProps>(
-  function ClusterPinsSheet({ onSelectPin }, ref) {
+  function ClusterPinsSheet({ onSelectMemory }, ref) {
     const insets = useSafeAreaInsets();
+    const { width } = useWindowDimensions();
     const sheetRef = useRef<BottomSheetModal>(null);
     const [pins, setPins] = useState<ClusterPin[]>([]);
+    const { memories, isLoading } = useClusterMemoriesQuery(pins);
+    const tile = Math.floor((width - SIDE * 2 - GAP * (COLUMNS - 1)) / COLUMNS);
 
     useImperativeHandle(
       ref,
@@ -55,11 +76,11 @@ export const ClusterPinsSheet = forwardRef<ClusterPinsSheetRef, ClusterPinsSheet
     );
 
     const onPressItem = useCallback(
-      (pin: ClusterPin) => {
+      (id: string) => {
         sheetRef.current?.dismiss();
-        onSelectPin(pin);
+        onSelectMemory(id);
       },
-      [onSelectPin],
+      [onSelectMemory],
     );
 
     const renderBackdrop = useCallback(
@@ -77,43 +98,56 @@ export const ClusterPinsSheet = forwardRef<ClusterPinsSheetRef, ClusterPinsSheet
     return (
       <BottomSheetModal
         ref={sheetRef}
-        snapPoints={["40%"]}
+        snapPoints={["50%", "85%"]}
         enableDynamicSizing={false}
         enablePanDownToClose
         topInset={insets.top}
         backdropComponent={renderBackdrop}
         handleIndicatorStyle={styles.handleIndicator}
         backgroundStyle={styles.background}
+        onDismiss={() => setPins([])}
       >
         <View style={styles.titleRow}>
           <Text style={styles.title}>Which memory?</Text>
+          {memories.length > 0 ? (
+            <TechChip label={`${memories.length} here`} size="sm" />
+          ) : null}
         </View>
         <BottomSheetFlatList
-          horizontal
-          data={pins}
+          data={memories}
           keyExtractor={(item) => item.id}
-          contentContainerStyle={styles.list}
-          showsHorizontalScrollIndicator={false}
+          numColumns={COLUMNS}
+          columnWrapperStyle={styles.column}
+          contentContainerStyle={[
+            styles.list,
+            { paddingBottom: Math.max(24, insets.bottom + 12) },
+          ]}
+          ListFooterComponent={
+            isLoading ? <ActivityIndicator color={AddyColors.ink} style={styles.loading} /> : null
+          }
           renderItem={({ item }) => (
             <Pressable
-              onPress={() => onPressItem(item)}
+              onPress={() => onPressItem(item.id)}
               accessibilityRole="button"
-              accessibilityLabel="Open memory"
+              accessibilityLabel={`Open memory from ${formatRelativeTime(item.capturedAt)}`}
+              style={({ pressed }) => [
+                styles.tile,
+                { width: tile, height: tile },
+                pressed && styles.pressed,
+              ]}
             >
-              <StickerCard
-                style={styles.thumbFrame}
-                radius={StickerRadius.card}
-                borderWidth={StickerBorderWidth.standard}
-              >
-                <Image
-                  source={{ uri: item.imageUrl }}
-                  style={styles.thumbPhoto}
-                  contentFit="cover"
-                />
-                {item.memoryCount > 1 ? (
-                  <PinCountBadge count={item.memoryCount} style={styles.countBadge} />
-                ) : null}
-              </StickerCard>
+              <Image
+                source={{ uri: cloudinaryThumb(item.imageUrl, tile) }}
+                style={StyleSheet.absoluteFill}
+                contentFit="cover"
+                recyclingKey={item.id}
+              />
+              <TechChip
+                label={formatRelativeTime(item.capturedAt)}
+                tone="dark"
+                size="sm"
+                style={styles.time}
+              />
             </Pressable>
           )}
         />
@@ -122,27 +156,33 @@ export const ClusterPinsSheet = forwardRef<ClusterPinsSheetRef, ClusterPinsSheet
   },
 );
 
-const THUMB_SIZE = 96;
-
 const styles = StyleSheet.create({
-  background: { backgroundColor: BrandColors.paper },
-  handleIndicator: { backgroundColor: BrandColors.ink, width: 40 },
+  background: { backgroundColor: AddyColors.paper },
+  handleIndicator: { backgroundColor: AddyColors.line, width: 40 },
   titleRow: {
-    paddingHorizontal: 16,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: SIDE,
     paddingTop: 4,
     paddingBottom: 10,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: BrandColors.stroke2,
+    borderBottomWidth: ADDY_BORDER_WIDTH,
+    borderBottomColor: AddyColors.line,
   },
-  title: { color: BrandColors.ink, fontSize: 18, fontFamily: "Baloo2-SemiBold" },
-  list: { paddingHorizontal: 16, paddingVertical: 16, gap: 14 },
-  thumbFrame: {
-    alignSelf: "flex-start",
+  title: {
+    fontFamily: AddyFonts.title,
+    fontSize: 19,
+    lineHeight: 28,
+    color: AddyColors.ink,
   },
-  thumbPhoto: {
-    width: THUMB_SIZE,
-    height: THUMB_SIZE,
-    backgroundColor: BrandColors.gray200,
+  list: { paddingHorizontal: SIDE, paddingTop: 14 },
+  column: { gap: GAP, marginBottom: GAP },
+  tile: {
+    borderRadius: AddyRadius.tile + 4,
+    overflow: "hidden",
+    backgroundColor: AddyColors.paperDim,
   },
-  countBadge: { position: "absolute", top: 6, right: 6 },
+  time: { position: "absolute", left: 6, bottom: 6 },
+  pressed: { opacity: 0.8 },
+  loading: { paddingVertical: 16 },
 });

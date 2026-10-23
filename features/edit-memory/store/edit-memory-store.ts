@@ -5,6 +5,7 @@ import type {
   MemoryImageType,
   MemoryVisibility,
   PlaceSuggestion,
+  PublicUser,
 } from "@/types/api";
 
 /** A photo in the edit draft: one already on the server, or one just picked. */
@@ -29,6 +30,7 @@ type EditMemoryState = {
   moodScore: number | null;
   feeling: string;
   visibility: MemoryVisibility;
+  taggedUsers: PublicUser[];
   /** Start a draft from the memory as it is on the server. */
   load: (memory: MemoryDetail) => void;
   setPhotos: (photos: EditPhoto[]) => void;
@@ -36,6 +38,7 @@ type EditMemoryState = {
   setMoodScore: (moodScore: number | null) => void;
   setFeeling: (feeling: string) => void;
   setVisibility: (visibility: MemoryVisibility) => void;
+  setTaggedUsers: (users: PublicUser[]) => void;
   clear: () => void;
 };
 
@@ -48,7 +51,18 @@ const EMPTY = {
   moodScore: null,
   feeling: "",
   visibility: "private" as MemoryVisibility,
+  taggedUsers: [] as PublicUser[],
 };
+
+/** True when the draft tags a different set of people than the memory. */
+export function taggedUsersChanged(
+  draft: readonly PublicUser[],
+  current: readonly PublicUser[],
+): boolean {
+  if (draft.length !== current.length) return true;
+  const ids = new Set(current.map((user) => user.id));
+  return draft.some((user) => !ids.has(user.id));
+}
 
 export const useEditMemoryStore = create<EditMemoryState>((set) => ({
   ...EMPTY,
@@ -76,11 +90,13 @@ export const useEditMemoryStore = create<EditMemoryState>((set) => ({
       moodScore: memory.moodScore,
       feeling: memory.feeling ?? "",
       visibility: memory.visibility,
+      taggedUsers: memory.taggedUsers,
     }),
   setPhotos: (photos) => set({ photos, photosChanged: true }),
   setPlace: (place) => set({ place, placeChanged: true }),
   setMoodScore: (moodScore) => set({ moodScore }),
   setFeeling: (feeling) => set({ feeling }),
   setVisibility: (visibility) => set({ visibility }),
+  setTaggedUsers: (taggedUsers) => set({ taggedUsers }),
   clear: () => set(EMPTY),
 }));

@@ -2,6 +2,11 @@ import * as Notifications from "expo-notifications";
 import { router } from "expo-router";
 import { useEffect } from "react";
 
+import {
+  celebrateFriendOnce,
+  newFriendIdFromPush,
+} from "@/features/friends/celebrated-friends";
+
 /** Turn an addyapp:// notification URL into an in-app route. */
 export function toAppPath(raw: unknown): string | null {
   if (typeof raw !== "string") return null;
@@ -12,9 +17,10 @@ export function toAppPath(raw: unknown): string | null {
 }
 
 function handleResponse(response: Notifications.NotificationResponse) {
-  const path = toAppPath(
-    response.notification.request.content.data?.url,
-  );
+  const { data } = response.notification.request.content;
+  const friendId = newFriendIdFromPush(data);
+  if (friendId) void celebrateFriendOnce(friendId);
+  const path = toAppPath(data?.url);
   if (path) {
     router.push(path as never);
   }

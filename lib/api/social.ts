@@ -5,10 +5,11 @@ import {
   apiPost,
 } from "@/lib/api/client";
 import type {
+  AcceptInviteResult,
   BlockedUser,
   InviteInfo,
+  InvitePreview,
   Paginated,
-  ResolvedInvite,
   UserSearchResult,
 } from "@/types/api";
 
@@ -27,10 +28,6 @@ export async function rotateInvite() {
   return apiPost<InviteInfo>("/users/me/invite/rotate");
 }
 
-export async function resolveInvite(token: string) {
-  return apiGet<ResolvedInvite>(`/users/invite/${encodeURIComponent(token)}`);
-}
-
 export async function blockUser(userId: string) {
   return apiPost<{ blocked: boolean }>("/blocks", { userId });
 }
@@ -43,4 +40,14 @@ export async function listBlockedUsers(
   cursor?: string,
 ): Promise<Paginated<BlockedUser>> {
   return apiGetPaginated<BlockedUser>("/blocks", { cursor, limit: 30 });
+}
+
+export async function getInvitePreview(token: string) {
+  return apiGet<InvitePreview>(`/invites/${encodeURIComponent(token)}`);
+}
+
+export async function acceptInvite(token: string) {
+  return apiPost<AcceptInviteResult>(
+    `/invites/${encodeURIComponent(token)}/accept`,
+  );
 }

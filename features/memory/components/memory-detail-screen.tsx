@@ -34,6 +34,7 @@ import {
 import { MessageComposer } from "@/features/memory/components/message-composer";
 import { MessageThreadHeader } from "@/features/memory/components/message-thread-header";
 import { RevealFlash } from "@/features/memory/components/reveal-flash";
+import { TaggedLine } from "@/features/memory/components/tagged-line";
 import { useFirstTimeHint } from "@/features/memory/hooks/use-first-time-hint";
 import { useMessageThread } from "@/features/memory/hooks/use-message-thread";
 import { ONBOARDING_MEMORY_DETAIL_TARGET_ID } from "@/features/onboarding/onboarding-tour";
@@ -53,6 +54,7 @@ import {
   useToggleReactionMutation,
   useUpdateMemoryMutation,
 } from "@/lib/query/hooks";
+import { useUntagSelfMutation } from "@/lib/query/hooks-social";
 import type { MemoryMessage, MemoryVisibility } from "@/types/api";
 
 /** Start loading older messages when scrolling up within this many px of the thread top. */
@@ -81,6 +83,7 @@ export function MemoryDetailScreen({ id, reveal }: MemoryDetailScreenProps) {
   const { data, isLoading, isError } = useMemoryQuery(id);
   const updateMemory = useUpdateMemoryMutation(id);
   const deleteMemory = useDeleteMemoryMutation(id);
+  const untagSelf = useUntagSelfMutation(id);
   const toggleReaction = useToggleReactionMutation(id);
   const reactorsSheet = useRef<ReactorsSheetRef>(null);
   const optionsSheet = useRef<MemoryOptionsSheetRef>(null);
@@ -89,8 +92,8 @@ export function MemoryDetailScreen({ id, reveal }: MemoryDetailScreenProps) {
   const viewerId = useAuthStore((s) => s.user?.id);
   const likeHint = useFirstTimeHint("double-tap-like");
 
-  // Private memories have no chat at all — don't even fetch it.
-  const showThread = data !== undefined && data.visibility !== "private";
+  // Private memories without tagged friends have no chat — don't even fetch it.
+  const showThread = data?.canComment === true;
   const thread = useMessageThread(id, showThread);
   const { data: mentionable } = useMentionableQuery(id, showThread);
   const [draft, setDraft] = useState("");
@@ -193,6 +196,21 @@ export function MemoryDetailScreen({ id, reveal }: MemoryDetailScreenProps) {
       onSuccess: () => safeBack("/(app)/(tabs)"),
       onError: () => {
         Alert.alert("Couldn't delete memory", "Please try again.");
+      },
+    });
+  };
+
+  const onUntagSelf = () => {
+    untagSelf.mutate(undefined, {
+      onSuccess: () => {
+        showToast("You're no longer tagged");
+        safeBack("/(app)/(tabs)");
+      },
+      onError: (error) => {
+        Alert.alert(
+          "Couldn't remove you",
+          getApiErrorMessage(error, "Please try again."),
+        );
       },
     });
   };
@@ -305,6 +323,23 @@ export function MemoryDetailScreen({ id, reveal }: MemoryDetailScreenProps) {
                       onLongPress={onPostLongPress}
                     />
                   </TourTarget>
+                  {data.taggedUsers.length > 0 ? (
+                    <View style={styles.tagged}>
+                      <TaggedLine
+                        author={data.author}
+                        tagged={data.taggedUsers}
+                        viewerId={viewerId}
+                      />
+                    </View>
+                  ) : null}
+                  {data.visibility === "private" && showThread ? (
+                    <TechChip
+                      label="only you & tagged friends can see this"
+                      leading="🔒"
+                      size="sm"
+                      style={styles.privateNote}
+                    />
+                  ) : null}
                   {showThread ? (
                     <MessageThreadHeader
                       isLoading={thread.isLoading}
@@ -353,6 +388,7 @@ export function MemoryDetailScreen({ id, reveal }: MemoryDetailScreenProps) {
         }
         onDelete={onDeleteMemory}
         onReport={() => reportSheet.current?.present({ type: "MEMORY", id })}
+        onUntagSelf={data?.isTagged && !data.isOwner ? onUntagSelf : undefined}
       />
       <MessageActionsSheet
         ref={messageActions}
@@ -404,4 +440,5 @@ const styles = StyleSheet.create({
   hint: { alignSelf: "center", marginBottom: 8 },
   revealPill: { alignSelf: "center", marginBottom: 8 },
   privateNote: { alignSelf: "center", marginTop: 4 },
+  tagged: { paddingHorizontal: 16, marginTop: 10 },
 });

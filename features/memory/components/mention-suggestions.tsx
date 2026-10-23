@@ -13,7 +13,8 @@ type MentionSuggestionsProps = {
   onPick: (user: PublicUser) => void;
 };
 
-function matches(user: PublicUser, query: string) {
+/** Username prefix or name substring match, case-insensitive. */
+export function matchesUserQuery(user: PublicUser, query: string) {
   if (!query) return true;
   const q = query.toLowerCase();
   return (
@@ -29,7 +30,7 @@ export function MentionSuggestions({
   onPick,
 }: MentionSuggestionsProps) {
   const results = friends
-    .filter((user) => matches(user, query))
+    .filter((user) => matchesUserQuery(user, query))
     .slice(0, MAX_SUGGESTIONS);
 
   return (

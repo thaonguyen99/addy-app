@@ -1,72 +1,225 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { router, useLocalSearchParams } from "expo-router";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
-  ActivityIndicator,
-  Alert,
   FlatList,
+  Keyboard,
   Pressable,
-  ScrollView,
+  RefreshControl,
   StyleSheet,
   Text,
+  TextInput,
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { useFloatingTabBarInset } from "@/components/navigation/floating-tab-bar";
-import { GlossyOrb } from "@/components/ui/glossy-orb";
-import { IconCircleButton } from "@/components/ui/icon-circle-button";
-import { SegmentedControl } from "@/components/ui/segmented-control";
 import { SkyBackground } from "@/components/ui/sky-background";
-import { UserRow, userDisplayName } from "@/components/ui/user-row";
-import { AddyColors, AddyFonts, AddyRadius } from "@/constants/theme";
-import { MyQrCard } from "@/features/friends/components/my-qr-card";
-import type { ReportSheetRef } from "@/features/reports/components/report-sheet";
-import { ReportSheet } from "@/features/reports/components/report-sheet";
+import { TechChip } from "@/components/ui/tech-chip";
+import { userDisplayName } from "@/components/ui/user-row";
+import {
+  ADDY_BORDER_WIDTH,
+  AddyColors,
+  AddyFonts,
+  AddyRadius,
+  AddyShadow,
+} from "@/constants/theme";
+import { formatRelativeTime } from "@/features/feed/utils/format-relative-time";
+import {
+  FriendSearchBar,
+  FriendSearchResults,
+  SEARCH_MIN_CHARS,
+} from "@/features/friends/components/friend-search";
+import { InviteCard } from "@/features/friends/components/invite-card";
+import { InviteStrip } from "@/features/friends/components/invite-strip";
+import { PersonRow } from "@/features/friends/components/person-row";
+import { PillButton } from "@/features/friends/components/pill-button";
+import { SectionHeader } from "@/features/friends/components/section-header";
+import { SkeletonRow } from "@/features/friends/components/skeleton-row";
+import { SuggestionsRow } from "@/features/friends/components/suggestions-row";
+import {
+  celebrateFriend,
+  useFriendSheetsStore,
+} from "@/features/friends/store/friend-sheets-store";
+import { showToast } from "@/features/toast/toast-store";
+import { getApiErrorMessage } from "@/lib/api/errors";
 import {
   useAcceptFriendRequestMutation,
-  useBlockUserMutation,
-  useCancelFriendRequestMutation,
   useDeclineFriendRequestMutation,
   useFriendRequestsQuery,
+  useFriendSuggestionsQuery,
   useFriendsQuery,
-  useUnfriendMutation,
+  useInviteQuery,
+  useProfileQuery,
 } from "@/lib/query/hooks";
-import type { FriendRequest, PublicUser } from "@/types/api";
+import type { Friend, FriendRequest, PublicUser } from "@/types/api";
 
-type Segment = "friends" | "qr" | "requests";
+const SIDE_PADDING = 16;
+const SEARCH_DEBOUNCE_MS = 400;
 
-function segmentFromParam(tab: string | undefined): Segment {
-  if (tab === "incoming" || tab === "outgoing" || tab === "requests") return "requests";
-  if (tab === "qr") return "qr";
-  return "friends";
-}
-
+/**
+ * The Friends tab: search in place, incoming requests, invite, suggestions,
+ * and your friends. `?tab=invite` scrolls to the invite; `?tab=incoming` to
+ * the top, where requests sit.
+ */
 export function FriendsScreen() {
   const params = useLocalSearchParams<{ tab?: string }>();
-  const initialSegment = segmentFromParam(params.tab);
-  const [segment, setSegment] = useState<Segment>(initialSegment);
-  // The tab screen stays mounted, so a later deep link (?tab=incoming) has
-  // to update the selection too.
+  const tabBarInset = useFloatingTabBarInset();
+  const listRef = useRef<FlatList<Friend>>(null);
+  const searchRef = useRef<TextInput>(null);
+
+  const [input, setInput] = useState("");
+  const [term, setTerm] = useState("");
+  const [focused, setFocused] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const [inviteY, setInviteY] = useState<number | null>(null);
+
+  const friendsQuery = useFriendsQuery();
+  const incomingQuery = useFriendRequestsQuery("incoming");
+  const suggestionsQuery = useFriendSuggestionsQuery();
+  const inviteQuery = useInviteQuery();
+  const { data: profile } = useProfileQuery();
+  const accept = useAcceptFriendRequestMutation();
+  const decline = useDeclineFriendRequestMutation();
+  const [pendingRequestId, setPendingRequestId] = useState<string | null>(null);
+
+  const friends = friendsQuery.data?.pages.flatMap((p) => p.items) ?? [];
+  const incoming = incomingQuery.data?.pages.flatMap((p) => p.items) ?? [];
+  const link = inviteQuery.data?.webUrl ?? "";
+  const searching =
+    term.length >= SEARCH_MIN_CHARS &&
+    input.trim().length >= SEARCH_MIN_CHARS;
+  const loading = friendsQuery.isLoading || incomingQuery.isLoading;
+
+  // Debounce the search term so each keystroke doesn't hit the server.
   useEffect(() => {
-    setSegment(initialSegment);
-  }, [initialSegment]);
+    const next = input.trim();
+    const timer = setTimeout(() => setTerm(next), SEARCH_DEBOUNCE_MS);
+    return () => clearTimeout(timer);
+  }, [input]);
 
-  const incoming = useFriendRequestsQuery("incoming");
-  const incomingCount =
-    incoming.data?.pages.reduce((sum, page) => sum + page.items.length, 0) ?? 0;
+  // Deep links (?tab=invite from the You tab's 💌, ?tab=incoming from a push).
+  useEffect(() => {
+    if (params.tab === "invite" && inviteY !== null) {
+      listRef.current?.scrollToOffset({
+        offset: Math.max(0, inviteY - 12),
+        animated: true,
+      });
+    } else if (params.tab === "incoming" || params.tab === "requests") {
+      listRef.current?.scrollToOffset({ offset: 0, animated: true });
+    } else {
+      return;
+    }
+    // Clear it so the next 💌 tap scrolls again.
+    router.setParams({ tab: undefined });
+  }, [params.tab, inviteY]);
 
-  const options = useMemo(
-    () =>
-      [
-        { value: "friends", label: "Friends" },
-        { value: "qr", label: "My QR" },
-        {
-          value: "requests",
-          label: incomingCount > 0 ? `Requests (${incomingCount})` : "Requests",
-        },
-      ] as const,
-    [incomingCount],
+  const cancelSearch = () => {
+    setInput("");
+    setTerm("");
+    setFocused(false);
+    searchRef.current?.blur();
+    Keyboard.dismiss();
+  };
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await Promise.allSettled([
+      friendsQuery.refetch(),
+      incomingQuery.refetch(),
+      suggestionsQuery.refetch(),
+      inviteQuery.refetch(),
+    ]);
+    setRefreshing(false);
+  }, [friendsQuery, incomingQuery, suggestionsQuery, inviteQuery]);
+
+  const openQr = () => useFriendSheetsStore.getState().openQr("code");
+  const openAdd = useFriendSheetsStore.getState().openAdd;
+
+  const openFriendMap = (user: PublicUser) =>
+    router.navigate({
+      pathname: "/(app)/(tabs)/explore",
+      params: { friend: user.id },
+    });
+
+  const openFriendMenu = (friend: Friend) =>
+    useFriendSheetsStore.getState().openFriendMenu({
+      user: friend.user,
+      friendsSince: friend.friendsSince,
+    });
+
+  const respond = (request: FriendRequest, action: "accept" | "decline") => {
+    setPendingRequestId(request.id);
+    (action === "accept" ? accept : decline).mutate(request.id, {
+      onSuccess: () => {
+        if (action === "accept") celebrateFriend(request.user);
+      },
+      onError: (error) =>
+        showToast(getApiErrorMessage(error, "Something went wrong. Try again.")),
+      onSettled: () => setPendingRequestId(null),
+    });
+  };
+
+  const header = searching ? (
+    <FriendSearchResults
+      term={term}
+      link={link}
+      onOpenUser={(result) =>
+        openAdd({
+          kind: "user",
+          user: result,
+          relationship: result.relationship,
+          ...(result.mutualCount !== undefined
+            ? { mutualCount: result.mutualCount }
+            : {}),
+        })
+      }
+    />
+  ) : loading ? (
+    <View>
+      {[0, 1, 2, 3].map((i) => (
+        <SkeletonRow key={i} />
+      ))}
+    </View>
+  ) : (
+    <View style={styles.sections}>
+      {incoming.length > 0 ? (
+        <View>
+          <SectionHeader title="Wants to be friends" count={incoming.length} />
+          <View style={styles.sectionBody}>
+            {incoming.map((request) => (
+              <RequestRow
+                key={request.id}
+                request={request}
+                pending={pendingRequestId === request.id}
+                onAccept={() => respond(request, "accept")}
+                onDecline={() => respond(request, "decline")}
+              />
+            ))}
+          </View>
+        </View>
+      ) : null}
+
+      <View onLayout={(e) => setInviteY(e.nativeEvent.layout.y)}>
+        {/* The big card is for an empty friends list; once you have friends,
+            the slim strip keeps them in view. */}
+        {friendsQuery.isLoading ? null : friends.length === 0 ? (
+          <InviteCard me={profile} link={link} onShowQr={openQr} />
+        ) : (
+          <InviteStrip link={link} />
+        )}
+      </View>
+
+      <SuggestionsRow
+        onOpenUser={({ user, mutualCount }) =>
+          openAdd({ kind: "user", user, relationship: "none", mutualCount })
+        }
+      />
+
+      {friends.length > 0 ? (
+        <SectionHeader title="Your friends" count={friends.length} />
+      ) : null}
+    </View>
   );
 
   return (
@@ -74,240 +227,139 @@ export function FriendsScreen() {
       <SafeAreaView style={styles.safe} edges={["top"]}>
         <View style={styles.header}>
           <Text style={styles.title}>Friends</Text>
-          <IconCircleButton
-            icon="scan-outline"
-            size={36}
-            accessibilityLabel="Scan invite QR"
-            onPress={() => router.push("/(app)/friends/scan")}
-          />
-          <IconCircleButton
-            icon="person-add-outline"
-            size={36}
-            accessibilityLabel="Find friends by username"
-            onPress={() => router.push("/(app)/friends/add")}
+          <Pressable
+            onPress={openQr}
+            accessibilityRole="button"
+            accessibilityLabel="My QR code and scan"
+            style={({ pressed }) => [
+              styles.qrPill,
+              AddyShadow.soft,
+              pressed && styles.pressed,
+            ]}
+          >
+            <Ionicons name="qr-code" size={18} color={AddyColors.ink} />
+            <Text style={styles.qrPillText}>My QR · Scan</Text>
+          </Pressable>
+        </View>
+
+        <View style={styles.searchWrap}>
+          <FriendSearchBar
+            ref={searchRef}
+            value={input}
+            onChangeText={setInput}
+            focused={focused}
+            onFocus={() => setFocused(true)}
+            onCancel={cancelSearch}
           />
         </View>
 
-        <SegmentedControl
-          options={options}
-          value={segment}
-          onChange={setSegment}
-          style={styles.segments}
+        <FlatList
+          ref={listRef}
+          data={searching || loading ? [] : friends}
+          keyExtractor={(item) => item.user.id}
+          ListHeaderComponent={header}
+          ListHeaderComponentStyle={styles.listHeader}
+          contentContainerStyle={[
+            styles.list,
+            { paddingBottom: tabBarInset + 16 },
+          ]}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            searching ? undefined : (
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={() => void onRefresh()}
+                tintColor={AddyColors.ink}
+              />
+            )
+          }
+          renderItem={({ item }) => (
+            <PersonRow
+              user={item.user}
+              subtitle={friendSubtitle(item)}
+              onPress={() => openFriendMap(item.user)}
+              onLongPress={() => openFriendMenu(item)}
+              accessibilityHint="Opens their map. Long press for more options."
+              right={
+                <TechChip
+                  label="map"
+                  trailing="›"
+                  size="sm"
+                  accessibilityLabel={`See ${userDisplayName(item.user)}'s map`}
+                  onPress={() => openFriendMap(item.user)}
+                />
+              }
+            />
+          )}
+          onEndReached={() => {
+            if (
+              !searching &&
+              friendsQuery.hasNextPage &&
+              !friendsQuery.isFetchingNextPage
+            ) {
+              void friendsQuery.fetchNextPage();
+            }
+          }}
         />
-
-        {segment === "friends" ? (
-          <FriendsList />
-        ) : segment === "qr" ? (
-          <QrSegment />
-        ) : (
-          <RequestsList />
-        )}
       </SafeAreaView>
     </SkyBackground>
   );
 }
 
-export function friendActionsAlert(
-  user: PublicUser,
-  actions: { onRemove?: () => void; onBlock: () => void; onReport: () => void },
-) {
-  const name = userDisplayName(user);
-  const buttons: {
-    text: string;
-    style?: "cancel" | "destructive";
-    onPress?: () => void;
-  }[] = [{ text: "Cancel", style: "cancel" }];
-  if (actions.onRemove) {
-    buttons.push({ text: "Remove friend", onPress: actions.onRemove });
-  }
-  buttons.push({ text: `Report ${name}`, onPress: actions.onReport });
-  buttons.push({
-    text: `Block ${name}`,
-    style: "destructive",
-    onPress: () =>
-      Alert.alert(
-        `Block ${name}?`,
-        "They won't be able to send you requests or see your memories. Any friendship is removed.",
-        [
-          { text: "Cancel", style: "cancel" },
-          { text: "Block", style: "destructive", onPress: actions.onBlock },
-        ],
-      ),
-  });
-  Alert.alert(name, undefined, buttons);
+function friendSubtitle(friend: Friend): string {
+  const last = friend.lastSharedMemory;
+  // Older servers don't send it at all: fall back to the handle.
+  if (last === undefined) return `@${friend.user.username}`;
+  if (last === null) return "no shared memories yet";
+  return `📍 pinned ${last.placeName} · ${formatRelativeTime(last.capturedAt)}`;
 }
 
-function QrSegment() {
-  const tabBarInset = useFloatingTabBarInset();
+function RequestRow({
+  request,
+  pending,
+  onAccept,
+  onDecline,
+}: {
+  request: FriendRequest;
+  pending: boolean;
+  onAccept: () => void;
+  onDecline: () => void;
+}) {
+  const name = userDisplayName(request.user);
+  const mutual = request.mutualCount ?? 0;
   return (
-    <ScrollView
-      contentContainerStyle={[styles.qrScroll, { paddingBottom: tabBarInset }]}
-      showsVerticalScrollIndicator={false}
-    >
-      <MyQrCard />
-    </ScrollView>
-  );
-}
-
-function FriendsList() {
-  const tabBarInset = useFloatingTabBarInset();
-  const query = useFriendsQuery();
-  const unfriend = useUnfriendMutation();
-  const block = useBlockUserMutation();
-  const reportSheet = useRef<ReportSheetRef>(null);
-  const friends = query.data?.pages.flatMap((p) => p.items) ?? [];
-
-  if (query.isLoading) return <Loading />;
-
-  return (
-    <>
-      <FlatList
-        data={friends}
-        keyExtractor={(item) => item.user.id}
-        contentContainerStyle={[styles.list, { paddingBottom: tabBarInset }]}
-        renderItem={({ item }) => (
-          <UserRow
-            user={item.user}
-            right={
-              <IconCircleButton
-                icon="ellipsis-horizontal"
-                accessibilityLabel={`Options for ${userDisplayName(item.user)}`}
-                onPress={() =>
-                  friendActionsAlert(item.user, {
-                    onRemove: () => unfriend.mutate(item.user.id),
-                    onBlock: () => block.mutate(item.user.id),
-                    onReport: () =>
-                      reportSheet.current?.present({
-                        type: "USER",
-                        id: item.user.id,
-                      }),
-                  })
-                }
-              />
-            }
-          />
-        )}
-        onEndReached={() => {
-          if (query.hasNextPage && !query.isFetchingNextPage) {
-            void query.fetchNextPage();
-          }
-        }}
-        ListEmptyComponent={<Empty text="No friends yet. Share your QR!" />}
-      />
-      <ReportSheet ref={reportSheet} />
-    </>
-  );
-}
-
-type RequestRow =
-  | { kind: "section"; key: string; label: string }
-  | { kind: "request"; key: string; request: FriendRequest };
-
-/** Incoming requests first (accept / decline), then the ones you sent. */
-function RequestsList() {
-  const tabBarInset = useFloatingTabBarInset();
-  const incoming = useFriendRequestsQuery("incoming");
-  const outgoing = useFriendRequestsQuery("outgoing");
-  const accept = useAcceptFriendRequestMutation();
-  const decline = useDeclineFriendRequestMutation();
-  const cancel = useCancelFriendRequestMutation();
-
-  const rows = useMemo<RequestRow[]>(() => {
-    const received = incoming.data?.pages.flatMap((p) => p.items) ?? [];
-    const sent = outgoing.data?.pages.flatMap((p) => p.items) ?? [];
-    const out: RequestRow[] = received.map((request) => ({
-      kind: "request",
-      key: request.id,
-      request,
-    }));
-    if (sent.length > 0) {
-      out.push({ kind: "section", key: "sent", label: "Sent" });
-      for (const request of sent) {
-        out.push({ kind: "request", key: request.id, request });
+    <PersonRow
+      user={request.user}
+      highlighted
+      subtitle={
+        mutual > 0
+          ? `${mutual} mutual friend${mutual === 1 ? "" : "s"}`
+          : `@${request.user.username}`
       }
-    }
-    return out;
-  }, [incoming.data, outgoing.data]);
-
-  if (incoming.isLoading || outgoing.isLoading) return <Loading />;
-
-  return (
-    <FlatList
-      data={rows}
-      keyExtractor={(row) => row.key}
-      contentContainerStyle={[styles.list, { paddingBottom: tabBarInset }]}
-      renderItem={({ item }) => {
-        if (item.kind === "section") {
-          return <Text style={styles.section}>{item.label}</Text>;
-        }
-        const { request } = item;
-        const name = userDisplayName(request.user);
-        return (
-          <UserRow
-            user={request.user}
-            right={
-              request.direction === "incoming" ? (
-                <View style={styles.rowActions}>
-                  <Pressable
-                    onPress={() => accept.mutate(request.id)}
-                    hitSlop={6}
-                    accessibilityRole="button"
-                    accessibilityLabel={`Accept ${name}`}
-                  >
-                    <GlossyOrb size={34}>
-                      <Ionicons name="checkmark" size={18} color={AddyColors.ink} />
-                    </GlossyOrb>
-                  </Pressable>
-                  <Pressable
-                    onPress={() => decline.mutate(request.id)}
-                    hitSlop={6}
-                    accessibilityRole="button"
-                    accessibilityLabel={`Decline ${name}`}
-                    style={styles.declineOrb}
-                  >
-                    <Ionicons name="close" size={18} color={AddyColors.white} />
-                  </Pressable>
-                </View>
-              ) : (
-                <Pressable
-                  onPress={() => cancel.mutate(request.id)}
-                  hitSlop={8}
-                  accessibilityRole="button"
-                  accessibilityLabel={`Cancel request to ${name}`}
-                  style={styles.cancelPill}
-                >
-                  <Text style={styles.cancelText}>cancel</Text>
-                </Pressable>
-              )
-            }
+      right={
+        <>
+          <PillButton
+            label="Accept"
+            tone="cyan"
+            loading={pending}
+            accessibilityLabel={`Accept ${name}`}
+            onPress={onAccept}
           />
-        );
-      }}
-      onEndReached={() => {
-        if (incoming.hasNextPage && !incoming.isFetchingNextPage) {
-          void incoming.fetchNextPage();
-        } else if (outgoing.hasNextPage && !outgoing.isFetchingNextPage) {
-          void outgoing.fetchNextPage();
-        }
-      }}
-      ListEmptyComponent={<Empty text="No friend requests right now." />}
+          <Pressable
+            onPress={onDecline}
+            disabled={pending}
+            hitSlop={4}
+            accessibilityRole="button"
+            accessibilityLabel={`Decline ${name}`}
+            style={({ pressed }) => [styles.decline, pressed && styles.pressed]}
+          >
+            <Ionicons name="close" size={20} color={AddyColors.ink} />
+          </Pressable>
+        </>
+      }
     />
-  );
-}
-
-function Loading() {
-  return (
-    <View style={styles.center}>
-      <ActivityIndicator color={AddyColors.ink} size="large" />
-    </View>
-  );
-}
-
-function Empty({ text }: { text: string }) {
-  return (
-    <View style={styles.center}>
-      <Text style={styles.emptyText}>{text}</Text>
-    </View>
   );
 }
 
@@ -317,49 +369,43 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 10,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
+    paddingHorizontal: SIDE_PADDING,
+    paddingTop: 8,
+    paddingBottom: 12,
   },
   title: {
     flex: 1,
     fontFamily: AddyFonts.title,
-    fontSize: 24,
-    lineHeight: 34,
+    fontSize: 32,
+    lineHeight: 42,
     color: AddyColors.ink,
   },
-  segments: { marginHorizontal: 16, marginBottom: 12 },
-  qrScroll: { paddingHorizontal: 16, paddingTop: 12 },
-  list: { paddingHorizontal: 16, paddingTop: 2, flexGrow: 1 },
-  section: {
-    fontFamily: AddyFonts.titleSemiBold,
-    fontSize: 14,
-    color: AddyColors.inkMuted,
-    marginTop: 8,
-    marginBottom: 8,
+  qrPill: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    minHeight: 44,
+    paddingHorizontal: 16,
+    borderRadius: AddyRadius.pill,
+    borderWidth: ADDY_BORDER_WIDTH,
+    borderColor: AddyColors.line,
+    backgroundColor: AddyColors.white,
   },
-  center: { flex: 1, alignItems: "center", justifyContent: "center", padding: 40 },
-  emptyText: {
-    fontFamily: AddyFonts.body,
-    color: AddyColors.inkMuted,
-    fontSize: 14,
-    textAlign: "center",
-  },
-  rowActions: { flexDirection: "row", alignItems: "center", gap: 10 },
-  declineOrb: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    backgroundColor: AddyColors.pink,
+  qrPillText: { fontFamily: AddyFonts.title, fontSize: 16, color: AddyColors.ink },
+  searchWrap: { paddingHorizontal: SIDE_PADDING, paddingBottom: 12 },
+  list: { paddingHorizontal: SIDE_PADDING, paddingTop: 4, flexGrow: 1 },
+  listHeader: { marginBottom: 10 },
+  sections: { gap: 20 },
+  sectionBody: { marginTop: 10 },
+  decline: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     alignItems: "center",
     justifyContent: "center",
-  },
-  cancelPill: {
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: AddyRadius.pill,
-    borderWidth: 1.5,
+    borderWidth: ADDY_BORDER_WIDTH,
     borderColor: AddyColors.line,
-    backgroundColor: AddyColors.paperDim,
+    backgroundColor: AddyColors.white,
   },
-  cancelText: { fontFamily: AddyFonts.tech, fontSize: 17, color: AddyColors.ink },
+  pressed: { opacity: 0.75 },
 });

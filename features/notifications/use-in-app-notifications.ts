@@ -4,6 +4,10 @@ import * as Notifications from "expo-notifications";
 import { usePathname } from "expo-router";
 import { useEffect, useRef } from "react";
 
+import {
+  celebrateFriendOnce,
+  newFriendIdFromPush,
+} from "@/features/friends/celebrated-friends";
 import { useInAppNotificationStore } from "@/features/notifications/in-app-notification-store";
 import { toAppPath } from "@/features/notifications/use-notification-router";
 import { queryKeys } from "@/lib/query/keys";
@@ -38,6 +42,10 @@ export function useInAppNotifications(): void {
           queryClient.invalidateQueries({ queryKey: queryKeys.friends });
           queryClient.invalidateQueries({ queryKey: ["friends", "requests"] });
           queryClient.invalidateQueries({ queryKey: ["memories", "friends-map"] });
+          {
+            const friendId = newFriendIdFromPush(data);
+            if (friendId) void celebrateFriendOnce(friendId);
+          }
           break;
         case "reaction_received":
         case "message_received":
@@ -48,6 +56,13 @@ export function useInAppNotifications(): void {
             queryClient.invalidateQueries({ queryKey: queryKeys.memoryReactions(memoryId) });
             queryClient.invalidateQueries({ queryKey: queryKeys.memoryMessages(memoryId) });
           }
+          break;
+        case "memory_tagged":
+          if (memoryId) {
+            queryClient.invalidateQueries({ queryKey: queryKeys.memory(memoryId) });
+          }
+          queryClient.invalidateQueries({ queryKey: ["memories", "friends-map"] });
+          queryClient.invalidateQueries({ queryKey: ["memories", "place"] });
           break;
       }
 

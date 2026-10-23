@@ -28,6 +28,7 @@ import { KeyboardProvider } from "react-native-keyboard-controller";
 import "react-native-reanimated";
 
 import { BrandColors } from "@/constants/theme";
+import { UpdateReadyBanner } from "@/features/app-update/components/update-ready-banner";
 import { useAuthStore } from "@/features/auth/store/auth-store";
 import { InAppNotificationBanner } from "@/features/notifications/components/in-app-notification-banner";
 import { configureNotificationHandler } from "@/features/notifications/push-registration";
@@ -118,7 +119,15 @@ export default function RootLayout() {
                   <Stack.Screen name="index" />
                   <Stack.Screen name="(auth)" />
                   <Stack.Screen name="(app)" />
-                  <Stack.Screen name="add-friend" />
+                  {/* Invite links: open the Add sheet, then step aside. */}
+                  <Stack.Screen
+                    name="add-friend"
+                    options={{ presentation: "transparentModal", animation: "none" }}
+                  />
+                  <Stack.Screen
+                    name="i/[token]"
+                    options={{ presentation: "transparentModal", animation: "none" }}
+                  />
                   <Stack.Screen
                     name="modal"
                     options={{ presentation: "modal", title: "Modal" }}
@@ -128,6 +137,7 @@ export default function RootLayout() {
                 <TourGuideOverlay />
                 <AppToastHost />
                 <InAppNotificationBanner />
+                <UpdateReadyBanner />
               </TourGuideProvider>
             </BottomSheetModalProvider>
           </ThemeProvider>

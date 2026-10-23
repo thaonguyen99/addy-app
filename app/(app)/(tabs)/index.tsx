@@ -117,7 +117,7 @@ export default function YouScreen() {
         <IconCircleButton
           accessibilityLabel="Invite friends"
           size={36}
-          onPress={() => router.push("/invite")}
+          onPress={() => router.navigate("/(app)/(tabs)/friends?tab=invite")}
         >
           <Text style={styles.headerEmoji}>💌</Text>
         </IconCircleButton>

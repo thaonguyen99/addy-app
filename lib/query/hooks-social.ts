@@ -51,7 +51,21 @@ export function useFriendRequestsQuery(
   });
 }
 
-/** Invalidate every friends/requests/search/map list after a graph change. */
+/** Friends of friends. Errors (e.g. an older server) just hide the row. */
+export function useFriendSuggestionsQuery(enabled = true) {
+  return useQuery({
+    queryKey: queryKeys.friendSuggestions,
+    queryFn: () => friendsApi.listFriendSuggestions(),
+    staleTime: 60_000,
+    retry: false,
+    enabled,
+  });
+}
+
+/**
+ * Invalidate every friends/requests/suggestions/search/map list after a graph
+ * change. `queryKeys.friends` is the prefix of requests and suggestions too.
+ */
 function invalidateSocialLists(queryClient: ReturnType<typeof useQueryClient>) {
   queryClient.invalidateQueries({ queryKey: queryKeys.friends });
   queryClient.invalidateQueries({ queryKey: ["friends", "requests"] });
@@ -133,12 +147,24 @@ export function useRotateInviteMutation() {
   });
 }
 
-export function useResolveInviteQuery(token: string | undefined) {
+export function useInvitePreviewQuery(token: string | undefined) {
   return useQuery({
-    queryKey: ["users", "invite", "resolve", token ?? ""],
-    queryFn: () => socialApi.resolveInvite(token!),
+    queryKey: ["invites", "preview", token ?? ""],
+    queryFn: () => socialApi.getInvitePreview(token!),
     enabled: Boolean(token),
     retry: false,
+  });
+}
+
+/** Opening someone's link or QR: friends straight away, no request. */
+export function useAcceptInviteMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (token: string) => socialApi.acceptInvite(token),
+    onSuccess: () => {
+      invalidateSocialLists(queryClient);
+      queryClient.invalidateQueries({ queryKey: ["invites", "preview"] });
+    },
   });
 }
 
@@ -154,7 +180,7 @@ function invalidateAfterBlockChange(
   queryClient: ReturnType<typeof useQueryClient>,
 ) {
   invalidateSocialLists(queryClient);
-  queryClient.invalidateQueries({ queryKey: ["users", "invite", "resolve"] });
+  queryClient.invalidateQueries({ queryKey: ["invites", "preview"] });
   queryClient.invalidateQueries({ queryKey: ["memories", "messages"] });
   queryClient.invalidateQueries({ queryKey: ["memories", "detail"] });
   queryClient.invalidateQueries({ queryKey: ["memories", "reactions"] });
@@ -270,6 +296,19 @@ export function useUpdateMemoryMutation(id: string) {
       queryClient.invalidateQueries({ queryKey: ["memories", "map"] });
       queryClient.invalidateQueries({ queryKey: ["memories", "friends-map"] });
       // The place or cover photo may have changed.
+      queryClient.invalidateQueries({ queryKey: ["memories", "place"] });
+    },
+  });
+}
+
+export function useUntagSelfMutation(id: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () => memoriesApi.untagSelf(id),
+    onSuccess: () => {
+      // A private memory is no longer visible once untagged.
+      queryClient.removeQueries({ queryKey: queryKeys.memory(id) });
+      queryClient.invalidateQueries({ queryKey: ["memories", "friends-map"] });
       queryClient.invalidateQueries({ queryKey: ["memories", "place"] });
     },
   });

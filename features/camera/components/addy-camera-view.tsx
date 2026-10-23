@@ -16,8 +16,8 @@ import { GlossyOrb } from "@/components/ui/glossy-orb";
 import { TechChip } from "@/components/ui/tech-chip";
 import { AddyColors } from "@/constants/theme";
 import { CameraZoomChips } from "@/features/camera/components/camera-zoom-chips";
-import { useCameraShutterSound } from "@/features/camera/hooks/useCameraShutterSound";
 import { useLastLibraryPhoto } from "@/features/camera/hooks/use-last-library-photo";
+import { useCameraShutterSound } from "@/features/camera/hooks/useCameraShutterSound";
 import { ONBOARDING_ADD_MEMORY_STEP_ID } from "@/features/onboarding/onboarding-tour";
 import { useOnboardingCaptureStore } from "@/features/onboarding/store/onboarding-capture-store";
 
@@ -388,7 +388,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     paddingHorizontal: 36,
     paddingTop: 8,
-    paddingBottom: 16,
+    paddingBottom: 56,
   },
   galleryTile: {
     width: 48,

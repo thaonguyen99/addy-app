@@ -1,5 +1,6 @@
 import {
   apiDelete,
+  apiGet,
   apiGetPaginated,
   apiPost,
 } from "@/lib/api/client";
@@ -7,6 +8,7 @@ import type {
   Friend,
   FriendRequest,
   FriendRequestDirection,
+  FriendSuggestion,
   Paginated,
 } from "@/types/api";
 
@@ -45,4 +47,8 @@ export async function declineFriendRequest(id: string) {
 
 export async function cancelFriendRequest(id: string) {
   return apiDelete<{ status: string }>(`/friends/requests/${id}`);
+}
+
+export async function listFriendSuggestions(limit = 10) {
+  return apiGet<FriendSuggestion[]>("/friends/suggestions", { limit });
 }

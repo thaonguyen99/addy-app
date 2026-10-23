@@ -33,13 +33,23 @@ type MemoryOptionsSheetProps = {
   onEdit: () => void;
   onDelete: () => void;
   onReport: () => void;
+  /** Shown to a tagged viewer: removes their tag (and access, if private). */
+  onUntagSelf?: () => void;
 };
 
 export const MemoryOptionsSheet = forwardRef<
   MemoryOptionsSheetRef,
   MemoryOptionsSheetProps
 >(function MemoryOptionsSheet(
-  { isOwner, visibility, onChangeVisibility, onEdit, onDelete, onReport },
+  {
+    isOwner,
+    visibility,
+    onChangeVisibility,
+    onEdit,
+    onDelete,
+    onReport,
+    onUntagSelf,
+  },
   ref,
 ) {
   const insets = useSafeAreaInsets();
@@ -99,6 +109,21 @@ export const MemoryOptionsSheet = forwardRef<
     );
   }, [onDelete]);
 
+  const confirmUntag = useCallback(() => {
+    if (!onUntagSelf) return;
+    sheetRef.current?.dismiss();
+    Alert.alert(
+      "Remove yourself?",
+      visibility === "private"
+        ? "You won't be able to see this memory or its chat anymore."
+        : "You'll no longer be tagged on this memory.",
+      [
+        { text: "Cancel", style: "cancel" },
+        { text: "Remove", style: "destructive", onPress: onUntagSelf },
+      ],
+    );
+  }, [onUntagSelf, visibility]);
+
   const openReport = useCallback(() => {
     sheetRef.current?.dismiss();
     onReport();
@@ -119,7 +144,7 @@ export const MemoryOptionsSheet = forwardRef<
   return (
     <BottomSheetModal
       ref={sheetRef}
-      snapPoints={[isOwner ? "38%" : "22%"]}
+      snapPoints={[isOwner ? "38%" : onUntagSelf ? "30%" : "22%"]}
       enableDynamicSizing={false}
       enablePanDownToClose
       topInset={insets.top}
@@ -180,21 +205,38 @@ export const MemoryOptionsSheet = forwardRef<
             </Pressable>
           </>
         ) : (
-          <Pressable
-            onPress={openReport}
-            style={styles.row}
-            accessibilityRole="button"
-            accessibilityLabel="Report memory"
-          >
-            <Ionicons
-              name="flag-outline"
-              size={20}
-              color={BrandColors.danger}
-            />
-            <Text style={[styles.rowLabel, styles.dangerLabel]}>
-              Report memory
-            </Text>
-          </Pressable>
+          <>
+            {onUntagSelf ? (
+              <Pressable
+                onPress={confirmUntag}
+                style={styles.row}
+                accessibilityRole="button"
+                accessibilityLabel="Remove me from this memory"
+              >
+                <Ionicons
+                  name="person-remove-outline"
+                  size={20}
+                  color={BrandColors.ink}
+                />
+                <Text style={styles.rowLabel}>Remove me from this memory</Text>
+              </Pressable>
+            ) : null}
+            <Pressable
+              onPress={openReport}
+              style={styles.row}
+              accessibilityRole="button"
+              accessibilityLabel="Report memory"
+            >
+              <Ionicons
+                name="flag-outline"
+                size={20}
+                color={BrandColors.danger}
+              />
+              <Text style={[styles.rowLabel, styles.dangerLabel]}>
+                Report memory
+              </Text>
+            </Pressable>
+          </>
         )}
       </View>
     </BottomSheetModal>

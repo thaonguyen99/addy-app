@@ -1,6 +1,7 @@
 import {
   useInfiniteQuery,
   useMutation,
+  useQueries,
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
@@ -99,6 +100,58 @@ export function usePlaceMemoriesQuery(placeId: string | null) {
     queryFn: () => memoriesApi.getPlaceMemories(placeId!),
     enabled: Boolean(placeId),
   });
+}
+
+/** One memory as shown in a map cluster picker. */
+export type ClusterMemory = { id: string; imageUrl: string; capturedAt: string };
+
+/**
+ * Every memory inside a group of map pins, newest first. A pin that stands
+ * for several memories at one place is expanded via its place's list; a
+ * single-memory pin is used as-is.
+ */
+export function useClusterMemoriesQuery(
+  pins: readonly { id: string; placeId: string; imageUrl: string; capturedAt: string; memoryCount: number }[],
+) {
+  const multi = pins.filter((pin) => pin.memoryCount > 1);
+  const results = useQueries({
+    queries: multi.map((pin) => ({
+      queryKey: queryKeys.placeMemories(pin.placeId),
+      queryFn: () => memoriesApi.getPlaceMemories(pin.placeId),
+    })),
+  });
+
+  const memories = new Map<string, ClusterMemory>();
+  for (const pin of pins) {
+    if (pin.memoryCount <= 1) {
+      memories.set(pin.id, { id: pin.id, imageUrl: pin.imageUrl, capturedAt: pin.capturedAt });
+    }
+  }
+  results.forEach((result, i) => {
+    const place = result.data;
+    if (!place) {
+      // Until the place list loads (or if it fails), show its cover pin.
+      const pin = multi[i];
+      if (result.isError) {
+        memories.set(pin.id, { id: pin.id, imageUrl: pin.imageUrl, capturedAt: pin.capturedAt });
+      }
+      return;
+    }
+    for (const memory of place) {
+      memories.set(memory.id, {
+        id: memory.id,
+        imageUrl: memory.imageUrl,
+        capturedAt: memory.capturedAt,
+      });
+    }
+  });
+
+  return {
+    memories: [...memories.values()].sort((a, b) =>
+      b.capturedAt.localeCompare(a.capturedAt),
+    ),
+    isLoading: results.some((result) => result.isLoading),
+  };
 }
 
 export function useProfileQuery(enabled = true) {

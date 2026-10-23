@@ -154,6 +154,9 @@ async function uploadEntry(entry: QueuedPin): Promise<"ok" | "stop"> {
       feeling: entry.feeling ?? undefined,
       capturedAt: entry.capturedAt,
       visibility: entry.visibility,
+      ...(entry.taggedUserIds?.length
+        ? { taggedUserIds: entry.taggedUserIds }
+        : {}),
     });
 
     uploadedMemoryIds.set(entry.clientId, memory.id);

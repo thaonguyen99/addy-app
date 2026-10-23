@@ -18,6 +18,9 @@ function toIosUrlScheme(clientId) {
 
 const iosUrlScheme = toIosUrlScheme(iosClientId);
 
+/** Host of the invite share links (https://<host>/i/<token>); matches the API's INVITE_WEB_BASE_URL. */
+const inviteLinkHost = process.env.INVITE_LINK_HOST ?? "addy.app";
+
 /** @type {import('expo/config').ExpoConfig} */
 module.exports = ({ config }) => ({
   ...config,
@@ -46,6 +49,8 @@ module.exports = ({ config }) => ({
   ios: {
     supportsTablet: true,
     bundleIdentifier: "com.thaonguyen.addy",
+    // Opens /i/<token> links in the app (served by the API's apple-app-site-association).
+    associatedDomains: [`applinks:${inviteLinkHost}`],
     infoPlist: {
       ITSAppUsesNonExemptEncryption: false,
     },
@@ -56,6 +61,15 @@ module.exports = ({ config }) => ({
       foregroundImage: "./assets/images/android-icon-foreground.png",
     },
     edgeToEdgeEnabled: true,
+    // Opens /i/<token> links in the app (verified via the API's assetlinks.json).
+    intentFilters: [
+      {
+        action: "VIEW",
+        autoVerify: true,
+        data: [{ scheme: "https", host: inviteLinkHost, pathPrefix: "/i/" }],
+        category: ["BROWSABLE", "DEFAULT"],
+      },
+    ],
     predictiveBackGestureEnabled: false,
     permissions: [
       "android.permission.CAMERA",

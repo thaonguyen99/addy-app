@@ -3,9 +3,9 @@ import * as SecureStore from "expo-secure-store";
 const KEY = "addy.pendingInviteToken";
 
 /**
- * A friend-invite deep link (addyapp://add-friend?token=...) can arrive while
- * the app is signed out. We stash the token here and resume the confirm-add
- * flow once the user authenticates.
+ * A friend-invite link (https://addy.app/i/<token> or addyapp://add-friend?token=)
+ * can arrive while the app is signed out. We stash the token here and open the
+ * Add sheet once the user authenticates.
  */
 export async function setPendingInviteToken(token: string): Promise<void> {
   try {

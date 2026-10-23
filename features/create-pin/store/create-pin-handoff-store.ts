@@ -1,7 +1,11 @@
 import { create } from "zustand";
 
 import type { AddyMemoryImage } from "@/types/addy-memory";
-import type { MemoryVisibility, PlaceSuggestion } from "@/types/api";
+import type {
+  MemoryVisibility,
+  PlaceSuggestion,
+  PublicUser,
+} from "@/types/api";
 
 /** "auto" follows the device location; "picked" was chosen in the place picker. */
 export type PlaceSource = "auto" | "picked";
@@ -17,6 +21,8 @@ type CreatePinDraftState = {
   selectedPlace: PlaceSuggestion | null;
   placeSource: PlaceSource;
   visibility: MemoryVisibility;
+  /** Friends to tag; they can see the memory even when it's private. */
+  taggedUsers: readonly PublicUser[];
   /** Starts a fresh draft from the photo(s) just captured or picked. */
   startDraft: (images: readonly AddyMemoryImage[]) => void;
   addImages: (images: readonly AddyMemoryImage[]) => void;
@@ -27,6 +33,7 @@ type CreatePinDraftState = {
   setFeeling: (feeling: string) => void;
   setPlace: (place: PlaceSuggestion | null, source: PlaceSource) => void;
   setVisibility: (visibility: MemoryVisibility) => void;
+  setTaggedUsers: (users: readonly PublicUser[]) => void;
   clear: () => void;
 };
 
@@ -37,6 +44,7 @@ const EMPTY = {
   selectedPlace: null,
   placeSource: "auto" as PlaceSource,
   visibility: DEFAULT_VISIBILITY,
+  taggedUsers: [] as readonly PublicUser[],
 };
 
 /** The one-screen create flow's draft (create-pin + place-selection). */
@@ -56,5 +64,6 @@ export const useCreatePinHandoffStore = create<CreatePinDraftState>((set) => ({
   setFeeling: (feeling) => set({ feeling }),
   setPlace: (selectedPlace, placeSource) => set({ selectedPlace, placeSource }),
   setVisibility: (visibility) => set({ visibility }),
+  setTaggedUsers: (taggedUsers) => set({ taggedUsers }),
   clear: () => set(EMPTY),
 }));

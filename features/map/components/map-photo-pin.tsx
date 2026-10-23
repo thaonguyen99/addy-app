@@ -1,10 +1,15 @@
 import { memo } from "react";
 import { StyleProp, StyleSheet, Text, View, ViewStyle } from "react-native";
 
-import { SoftShadowBox } from "@/components/ui/soft-shadow";
 import { PhotoPin } from "@/components/ui/photo-pin";
+import { SoftShadowBox } from "@/components/ui/soft-shadow";
 import { MAP_LABEL_NAVY } from "@/constants/map-style";
-import { AddyColors, AddyFonts, AddyShadow, BrandColors } from "@/constants/theme";
+import {
+  AddyColors,
+  AddyFonts,
+  AddyShadow,
+  BrandColors,
+} from "@/constants/theme";
 import { MapMoodSticker } from "@/features/map/components/map-mood-sticker";
 import { PlaceLabelBubble } from "@/features/map/components/place-label-bubble";
 import type { QueuedPinStatus } from "@/features/pin-queue/pin-queue-types";
@@ -36,6 +41,9 @@ type MapPhotoPinProps = {
 const PIN_SIZE = 64;
 const PIN_HEIGHT = (PIN_SIZE / 100) * 128;
 const MOOD_SIZE = 28;
+/** Room the place label may grow into — without it the absolutely-positioned
+ *  label is squeezed to the pin's own width. The bubble still shrinks to fit. */
+const LABEL_WIDTH = 140;
 
 /**
  * The map marker: PhotoPin plus its bolt-ons — place count, friend/queue
@@ -64,8 +72,8 @@ export const MapPhotoPin = memo(function MapPhotoPin({
           style={[
             styles.label,
             flipped
-              ? { right: PIN_SIZE / 2 - 14 }
-              : { left: PIN_SIZE / 2 - 14 },
+              ? { right: PIN_SIZE / 2 - 16 }
+              : { left: PIN_SIZE / 2 - 16 },
           ]}
         />
       ) : null}
@@ -141,7 +149,8 @@ const styles = StyleSheet.create({
   wrapper: { alignItems: "center" },
   label: {
     position: "absolute",
-    bottom: PIN_HEIGHT + 4,
+    bottom: PIN_HEIGHT - 4,
+    width: LABEL_WIDTH,
   },
   mood: {
     position: "absolute",
@@ -170,8 +179,8 @@ const styles = StyleSheet.create({
   // Top-right: memories sharing this place (real data, drives navigation).
   countBadge: {
     position: "absolute",
-    top: -6,
-    right: -6,
+    top: 2,
+    right: -4,
     zIndex: 3,
   },
   countBadgeBase: {

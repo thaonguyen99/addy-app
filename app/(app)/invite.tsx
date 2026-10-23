@@ -1,5 +1,6 @@
-import { InviteScreen } from "@/features/invite/components/invite-screen";
+import { Redirect } from "expo-router";
 
+/** Old Invite screen: the invite card or strip on the Friends tab. */
 export default function InviteRoute() {
-  return <InviteScreen />;
+  return <Redirect href="/(app)/(tabs)/friends?tab=invite" />;
 }

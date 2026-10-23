@@ -106,6 +106,11 @@ export async function deleteMemory(id: string) {
   return apiDelete<{ deleted: boolean }>(`/memories/${id}`);
 }
 
+/** Remove yourself from a memory you're tagged on. */
+export async function untagSelf(id: string) {
+  return apiDelete<{ untagged: boolean }>(`/memories/${id}/tags/me`);
+}
+
 export async function toggleReaction(memoryId: string) {
   return parseApiResponse<ToggleReactionResult>(
     (await apiClient.post(`/memories/${memoryId}/reactions/toggle`)).data,

@@ -1,5 +1,6 @@
-import { AddFriendsScreen } from "@/features/friends/components/add-friends-screen";
+import { Redirect } from "expo-router";
 
+/** Old Find friends screen: search now lives on the Friends tab. */
 export default function AddFriendsRoute() {
-  return <AddFriendsScreen />;
+  return <Redirect href="/(app)/(tabs)/friends" />;
 }

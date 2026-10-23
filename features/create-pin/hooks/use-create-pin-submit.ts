@@ -53,6 +53,7 @@ export function useCreatePinSubmit(images: readonly AddyMemoryImage[]) {
   const handoffFeeling = useCreatePinHandoffStore((s) => s.feeling);
   const selectedPlace = useCreatePinHandoffStore((s) => s.selectedPlace);
   const visibility = useCreatePinHandoffStore((s) => s.visibility);
+  const taggedUsers = useCreatePinHandoffStore((s) => s.taggedUsers);
   const { clearAllDrafts, reloadDrafts } = useCameraSession();
 
   const submit = async () => {
@@ -103,6 +104,7 @@ export function useCreatePinSubmit(images: readonly AddyMemoryImage[]) {
         feeling: handoffFeeling.trim() || null,
         moodScore,
         visibility,
+        taggedUserIds: taggedUsers.map((user) => user.id),
         capturedAt: images[0].createdAt,
         createdAt: now,
         attempts: 0,

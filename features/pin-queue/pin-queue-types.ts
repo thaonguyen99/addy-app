@@ -22,6 +22,8 @@ export type QueuedPin = {
   feeling: string | null;
   moodScore: number | null;
   visibility: MemoryVisibility;
+  /** Optional: entries queued by older builds don't have it. */
+  taggedUserIds?: string[];
   capturedAt: string;
   createdAt: string;
   attempts: number;

@@ -1,7 +1,10 @@
 import { useState } from "react";
 import { Alert } from "react-native";
 
-import { useEditMemoryStore } from "@/features/edit-memory/store/edit-memory-store";
+import {
+  taggedUsersChanged,
+  useEditMemoryStore,
+} from "@/features/edit-memory/store/edit-memory-store";
 import { isUnresolvedPlace } from "@/features/location/fallback-places";
 import { placeSuggestionToPlaceInput } from "@/features/location/place-input";
 import { checkImagesSafety } from "@/features/moderation/check-image-safety";
@@ -95,6 +98,9 @@ export function useEditMemorySave(memory: MemoryDetail | undefined) {
       }
       if (draft.visibility !== memory.visibility) {
         input.visibility = draft.visibility;
+      }
+      if (taggedUsersChanged(draft.taggedUsers, memory.taggedUsers)) {
+        input.taggedUserIds = draft.taggedUsers.map((user) => user.id);
       }
 
       if (Object.keys(input).length > 0) {

@@ -35,12 +35,18 @@ import { MoodRow } from "@/features/create-pin/components/mood-row";
 import { useAutoPlace } from "@/features/create-pin/hooks/use-auto-place";
 import { useCreatePinSubmit } from "@/features/create-pin/hooks/use-create-pin-submit";
 import { useCreatePinHandoffStore } from "@/features/create-pin/store/create-pin-handoff-store";
+import {
+  TagFriendsSheet,
+  type TagFriendsSheetRef,
+} from "@/features/memory/components/tag-friends-sheet";
+import { TaggedFriendsRow } from "@/features/memory/components/tagged-friends-row";
 import { safeBack } from "@/lib/navigation/safe-router";
 import type { MemoryVisibility } from "@/types/api";
 
 const SIDE_PADDING = 16;
 
-const VISIBILITY_OPTIONS = [
+/** Shared with the edit screen. */
+export const VISIBILITY_OPTIONS = [
   { value: "private", label: "only me" },
   { value: "friends", label: "friends" },
 ] as const satisfies readonly { value: MemoryVisibility; label: string }[];
@@ -57,6 +63,8 @@ export function CreatePinScreen() {
   const moodScore = useCreatePinHandoffStore((s) => s.moodScore);
   const feeling = useCreatePinHandoffStore((s) => s.feeling);
   const visibility = useCreatePinHandoffStore((s) => s.visibility);
+  const taggedUsers = useCreatePinHandoffStore((s) => s.taggedUsers);
+  const tagSheetRef = useRef<TagFriendsSheetRef>(null);
   const {
     addImages,
     removeImage,
@@ -64,6 +72,7 @@ export function CreatePinScreen() {
     setMoodScore,
     setFeeling,
     setVisibility,
+    setTaggedUsers,
     clear,
   } = useCreatePinHandoffStore.getState();
 
@@ -181,6 +190,22 @@ export function CreatePinScreen() {
                 onChange={setVisibility}
               />
             </View>
+
+            <View style={styles.section}>
+              <Text style={styles.label}>Tag friends</Text>
+              <TaggedFriendsRow
+                users={taggedUsers}
+                onRemove={(user) =>
+                  setTaggedUsers(taggedUsers.filter((u) => u.id !== user.id))
+                }
+                onAdd={() => tagSheetRef.current?.present()}
+              />
+              {visibility === "private" && taggedUsers.length > 0 ? (
+                <Text style={styles.hint}>
+                  tagged friends can still see it and chat
+                </Text>
+              ) : null}
+            </View>
           </ScrollView>
 
           <View style={styles.footer}>
@@ -193,6 +218,12 @@ export function CreatePinScreen() {
           </View>
         </KeyboardAvoidingView>
       </SafeAreaView>
+
+      <TagFriendsSheet
+        ref={tagSheetRef}
+        selected={taggedUsers}
+        onDone={setTaggedUsers}
+      />
 
       <ConfirmSheet
         visible={confirmVisible}
@@ -237,6 +268,11 @@ const styles = StyleSheet.create({
   label: {
     fontFamily: AddyFonts.titleSemiBold,
     fontSize: 14,
+    color: AddyColors.inkMuted,
+  },
+  hint: {
+    fontFamily: AddyFonts.body,
+    fontSize: 13,
     color: AddyColors.inkMuted,
   },
   input: {

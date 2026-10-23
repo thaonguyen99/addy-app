@@ -1,11 +1,14 @@
-import { Redirect, router, Stack } from "expo-router";
+import { Redirect, Stack } from "expo-router";
 import { useEffect } from "react";
 import { View } from "react-native";
 
 import { AddyColors } from "@/constants/theme";
 import { CameraSessionProvider } from "@/features/camera/context/camera-session-context";
 import { useAuthStore } from "@/features/auth/store/auth-store";
+import { celebrateFromDeliveredPushes } from "@/features/friends/celebrated-friends";
+import { FriendSheetsHost } from "@/features/friends/components/friend-sheets-host";
 import { takePendingInviteToken } from "@/features/friends/pending-invite";
+import { openInvite } from "@/features/friends/store/friend-sheets-store";
 import { useOnboardingTour } from "@/features/onboarding/onboarding-tour";
 import { registerForPush } from "@/features/notifications/push-registration";
 import { useInAppNotifications } from "@/features/notifications/use-in-app-notifications";
@@ -25,11 +28,10 @@ export default function AppLayout() {
   useEffect(() => {
     if (status !== "authenticated") return;
     void registerForPush();
+    void celebrateFromDeliveredPushes();
     // Resume a friend-invite deep link that arrived while signed out.
     void takePendingInviteToken().then((token) => {
-      if (token) {
-        router.push({ pathname: "/add-friend", params: { token } });
-      }
+      if (token) openInvite(token);
     });
   }, [status]);
 
@@ -79,12 +81,10 @@ export default function AppLayout() {
           <Stack.Screen name="profile/security" />
           <Stack.Screen name="profile/notifications" />
           <Stack.Screen name="privacy-policy" />
-          <Stack.Screen name="friends/add" />
-          <Stack.Screen name="invite" />
-          <Stack.Screen name="friends/scan" />
           <Stack.Screen name="blocked-accounts" />
           <Stack.Screen name="dev-primitives" />
         </Stack>
+        <FriendSheetsHost />
       </View>
     </CameraSessionProvider>
   );

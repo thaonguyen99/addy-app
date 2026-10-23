@@ -1,7 +1,5 @@
 import {
   Camera,
-  GeoJSONSource,
-  Layer,
   Map,
   Marker,
   type CameraRef,
@@ -10,7 +8,7 @@ import {
 } from "@maplibre/maplibre-react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import { TourTarget, useTourGuide } from "@wrack/react-native-tour-guide";
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { NativeSyntheticEvent } from "react-native";
 import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
@@ -59,7 +57,6 @@ import {
   clusterPins,
   type ClusterGroup,
 } from "@/features/map/utils/cluster-pins";
-import { pinsToTrailGeoJSON } from "@/features/map/utils/pins-to-trail";
 import {
   ONBOARDING_ADD_MEMORY_STEP_ID,
   ONBOARDING_MAP_PIN_TARGET_ID,
@@ -71,9 +68,14 @@ import {
   queuedPinPlaceName,
 } from "@/features/pin-queue/pin-queue-types";
 import { showQueuedPinActions } from "@/features/pin-queue/queued-pin-actions";
+import { IconCircleButton } from "@/components/ui/icon-circle-button";
+import { userDisplayName } from "@/components/ui/user-row";
+import { useFriendSheetsStore } from "@/features/friends/store/friend-sheets-store";
 import {
   useFriendsMapQuery,
+  useFriendsQuery,
   useMemoriesMapQuery,
+  useMemoryQuery,
   useStatsQuery,
 } from "@/lib/query/hooks";
 import type { FriendMemoryPin, MapBounds, MemoryPin } from "@/types/api";
@@ -258,32 +260,87 @@ export function MemoriesMapScreen() {
   );
 
   const [showFriends, setShowFriends] = useState(false);
+
+  // "See {name}'s map": ?friend=<userId> shows only that friend's pins;
+  // ?memory=<id> (their latest) is where the camera flies to.
+  const params = useLocalSearchParams<{ friend?: string; memory?: string }>();
+  const focusFriendId = params.friend || null;
+  const friendsQuery = useFriendsQuery(Boolean(focusFriendId));
+  const focusFriend = focusFriendId
+    ? friendsQuery.data?.pages
+        .flatMap((p) => p.items)
+        .find((f) => f.user.id === focusFriendId)
+    : undefined;
+  const focusFriendName = focusFriend
+    ? userDisplayName(focusFriend.user)
+    : "friend";
+  const focusMemoryId =
+    params.memory || focusFriend?.lastSharedMemory?.memoryId || undefined;
+  const { data: focusMemory } = useMemoryQuery(
+    focusFriendId ? focusMemoryId : undefined,
+  );
+  const flownToRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!focusFriendId || !focusMemory) return;
+    const key = `${focusFriendId}:${focusMemory.id}`;
+    if (flownToRef.current === key) return;
+    flownToRef.current = key;
+    cameraRef.current?.flyTo({
+      center: [focusMemory.place.longitude, focusMemory.place.latitude],
+      zoom: 13,
+      duration: 600,
+    });
+  }, [focusFriendId, focusMemory]);
+  const clearFriendFocus = useCallback(() => {
+    flownToRef.current = null;
+    router.setParams({ friend: undefined, memory: undefined });
+  }, []);
+  // Removed or blocked them from the menu: back to your own map. Only once
+  // the whole friends list is loaded, so a later page isn't mistaken for it.
+  const friendGone =
+    focusFriendId !== null &&
+    friendsQuery.isSuccess &&
+    !friendsQuery.isFetching &&
+    !friendsQuery.hasNextPage &&
+    !focusFriend;
+  useEffect(() => {
+    if (friendGone) clearFriendFocus();
+  }, [friendGone, clearFriendFocus]);
+
+  const friendsLayerOn = showFriends || focusFriendId !== null;
   const bounds = debouncedBounds ?? DEFAULT_BOUNDS;
   const showLabels = zoom >= LABEL_VISIBLE_ZOOM;
 
   const { data, isError } = useMemoriesMapQuery(debouncedBounds);
   // Stable references so clustering (now heavier, with photo pins) only
   // reruns when the data or zoom actually changes.
-  const pins = useMemo(() => data?.pins ?? [], [data?.pins]);
+  // Your own pins step aside while you look at one friend's map.
+  const pins = useMemo(
+    () => (focusFriendId ? [] : (data?.pins ?? [])),
+    [focusFriendId, data?.pins],
+  );
 
   const { data: friendsData, isLoading: isFriendsMapLoading } =
-    useFriendsMapQuery(showFriends ? debouncedBounds : null);
-  const friendPins = useMemo(
-    () => (showFriends ? (friendsData?.pins ?? []) : []),
-    [showFriends, friendsData?.pins],
-  );
+    useFriendsMapQuery(friendsLayerOn ? debouncedBounds : null);
+  const friendPins = useMemo(() => {
+    if (!friendsLayerOn) return [];
+    const all = friendsData?.pins ?? [];
+    return focusFriendId
+      ? all.filter((pin) => pin.author.id === focusFriendId)
+      : all;
+  }, [friendsLayerOn, focusFriendId, friendsData?.pins]);
   const showFriendsEmptyHint =
-    showFriends && !isFriendsMapLoading && friendPins.length === 0;
+    friendsLayerOn && !isFriendsMapLoading && friendPins.length === 0;
 
-  // Not-yet-uploaded pins: drawn on top, never clustered or on the trail.
-  const queuedPins = usePinQueueStore((s) => s.entries);
+  // Not-yet-uploaded pins: drawn on top, never clustered.
+  const allQueuedPins = usePinQueueStore((s) => s.entries);
+  const queuedPins = focusFriendId ? [] : allQueuedPins;
 
   const { data: stats, isLoading: isStatsLoading } = useStatsQuery();
   const totalMemories = stats?.totalMemories;
 
   // Own-pins-only, unclustered, so the line reflects true pin-to-pin
   // chronological order rather than cluster centroids.
-  const trailGeoJSON = useMemo(() => pinsToTrailGeoJSON(pins), [pins]);
 
   // Clustered separately so own vs. friend pins never merge into one bubble —
   // keeps the bordered/unbordered visual distinction between them intact.
@@ -354,18 +411,6 @@ export function MemoriesMapScreen() {
             ref={cameraRef}
             initialViewState={{ center: DEFAULT_CENTER, zoom: DEFAULT_ZOOM }}
           />
-          <GeoJSONSource id="memory-trail" data={trailGeoJSON}>
-            <Layer
-              type="line"
-              id="memory-trail-line"
-              paint={{
-                "line-color": BrandColors.ink,
-                "line-width": 1.5,
-                "line-dasharray": [2, 3],
-                "line-opacity": 0.2,
-              }}
-            />
-          </GeoJSONSource>
           {friendClusters.map((group) =>
             group.pins.length > 1 ? (
               <Marker
@@ -495,23 +540,50 @@ export function MemoriesMapScreen() {
             onPress={openFeed}
             accessibilityLabel="Show all your memories"
           />
-          <Pressable
-            onPress={() => setShowFriends((v) => !v)}
-            hitSlop={10}
-            accessibilityRole="switch"
-            accessibilityState={{ checked: showFriends }}
-            accessibilityLabel="Show friends' memories on the map"
-          >
+          {focusFriendId ? (
             <TechChip
-              tone={showFriends ? "pink" : "paper"}
-              leading="👥"
-              label="Friends"
+              tone="pink"
+              leading="🗺️"
+              label={`${focusFriendName}'s map`}
+              trailing="×"
+              onPress={clearFriendFocus}
+              accessibilityLabel={`Close ${focusFriendName}'s map`}
             />
-          </Pressable>
+          ) : null}
+          {focusFriend ? (
+            <IconCircleButton
+              icon="ellipsis-horizontal"
+              size={30}
+              accessibilityLabel={`More options for ${focusFriendName}`}
+              onPress={() =>
+                useFriendSheetsStore.getState().openFriendMenu({
+                  user: focusFriend.user,
+                  friendsSince: focusFriend.friendsSince,
+                })
+              }
+            />
+          ) : null}
+          {focusFriendId ? null : (
+            <Pressable
+              onPress={() => setShowFriends((v) => !v)}
+              hitSlop={10}
+              accessibilityRole="switch"
+              accessibilityState={{ checked: showFriends }}
+              accessibilityLabel="Show friends' memories on the map"
+            >
+              <TechChip
+                tone={showFriends ? "pink" : "paper"}
+                leading="👥"
+                label="Friends"
+              />
+            </Pressable>
+          )}
         </View>
         {showFriendsEmptyHint ? (
           <Text style={styles.friendsHintText}>
-            No friends&apos; memories here yet
+            {focusFriendId
+              ? `No memories from ${focusFriendName} here yet`
+              : "No friends' memories here yet"}
           </Text>
         ) : null}
       </SafeAreaView>
@@ -521,7 +593,10 @@ export function MemoriesMapScreen() {
         ref={allMemoriesSheetRef}
         onSelectPin={onSelectSheetPin}
       />
-      <ClusterPinsSheet ref={clusterPinsSheetRef} onSelectPin={openPin} />
+      <ClusterPinsSheet
+        ref={clusterPinsSheetRef}
+        onSelectMemory={(memoryId) => router.push(`/memory/${memoryId}`)}
+      />
     </View>
   );
 }

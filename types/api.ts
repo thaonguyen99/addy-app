@@ -114,6 +114,12 @@ export type MemoryDetail = {
   place: PlaceSummary;
   /** Who this memory belongs to — the real owner when viewing a friend's memory. */
   author: PublicUser;
+  /** Friends the owner tagged. They can see and chat on the memory even when it's private. */
+  taggedUsers: PublicUser[];
+  /** True when the signed-in user is tagged on this memory. */
+  isTagged: boolean;
+  /** Whether the memory has a chat thread (shared with friends, or has tagged friends). */
+  canComment: boolean;
 };
 
 /** Minimal public identity for another user (friend, requester, reactor). */
@@ -130,9 +136,18 @@ export type FriendRelationship =
   | "request_sent"
   | "request_received";
 
+/** The friend's newest memory you can see. */
+export type LastSharedMemory = {
+  memoryId: string;
+  placeName: string;
+  capturedAt: string;
+};
+
 export type Friend = {
   user: PublicUser;
   friendsSince: string;
+  /** Null when they've shared nothing with you; absent on older servers. */
+  lastSharedMemory?: LastSharedMemory | null;
 };
 
 export type FriendRequestDirection = "incoming" | "outgoing";
@@ -143,10 +158,18 @@ export type FriendRequest = {
   user: PublicUser;
   status: "pending" | "accepted" | "declined" | "cancelled";
   createdAt: string;
+  mutualCount?: number;
 };
 
 export type UserSearchResult = PublicUser & {
   relationship: FriendRelationship;
+  mutualCount?: number;
+};
+
+/** A friend of a friend you might know. */
+export type FriendSuggestion = {
+  user: PublicUser;
+  mutualCount: number;
 };
 
 export type InviteInfo = {
@@ -157,9 +180,18 @@ export type InviteInfo = {
   webUrl: string;
 };
 
-export type ResolvedInvite = {
+/** Who an invite link or QR belongs to, as seen by you. */
+export type InvitePreview = {
   user: PublicUser;
-  relationship: FriendRelationship;
+  mutualCount: number;
+  placesCount: number;
+  relationship: FriendRelationship | "self";
+};
+
+/** Opening someone's link makes you friends straight away. */
+export type AcceptInviteResult = {
+  status: "friends";
+  friend: Friend;
 };
 
 export type BlockedUser = {
@@ -312,6 +344,7 @@ export type CreateMemoryInput = {
   visibility?: MemoryVisibility;
   /** UUID v4 from the offline queue; a repeat create returns the stored memory. */
   clientId?: string;
+  taggedUserIds?: string[];
 };
 
 /** PATCH /memories/:id — send only what changed. `images` replaces the full set. */
@@ -321,6 +354,8 @@ export type UpdateMemoryInput = {
   images?: CreateMemoryImageInput[];
   moodScore?: number | null;
   feeling?: string | null;
+  /** Replaces the full tag set. */
+  taggedUserIds?: string[];
 };
 
 export type MediaUploadResult = {

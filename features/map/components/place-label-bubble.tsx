@@ -58,8 +58,8 @@ const styles = StyleSheet.create({
     backgroundColor: BrandColors.white,
     borderWidth: 1.5,
     borderColor: MAP_LABEL_NAVY,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    paddingHorizontal: 6,
+    paddingVertical: 4,
   },
   text: {
     maxWidth: MAX_WIDTH,

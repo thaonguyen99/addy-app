@@ -17,6 +17,7 @@ export const queryKeys = {
   friends: ["friends"] as const,
   friendRequests: (direction: "incoming" | "outgoing") =>
     ["friends", "requests", direction] as const,
+  friendSuggestions: ["friends", "suggestions"] as const,
   userSearch: (q: string) => ["users", "search", q] as const,
   invite: ["users", "invite"] as const,
   blockedUsers: ["blocks"] as const,

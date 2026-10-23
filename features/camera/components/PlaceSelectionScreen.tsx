@@ -1,4 +1,5 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
+import type { Href } from "expo-router";
 import { memo, useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
@@ -86,6 +87,36 @@ const PlaceRow = memo(function PlaceRow({
 /** Place picker for the create flow; picking a row returns to create. */
 export function PlaceSelectionScreen() {
   const setPlace = useCreatePinHandoffStore((s) => s.setPlace);
+  return (
+    <PlacePicker
+      backHref="/create-pin"
+      onPick={(place) => {
+        setPlace(place, "picked");
+        safeBack("/create-pin");
+      }}
+      onUseCurrentLocation={() => {
+        // "auto" makes the create screen follow the device location again.
+        setPlace(null, "auto");
+        safeBack("/create-pin");
+      }}
+    />
+  );
+}
+
+type PlacePickerProps = {
+  /** Where the back button goes when there's no history. */
+  backHref: Href;
+  onPick: (place: PlaceSuggestion) => void;
+  /** `here` is the geocoded current spot (or a bare GPS one), null if unknown. */
+  onUseCurrentLocation: (here: PlaceSuggestion | null) => void;
+};
+
+/** Search, nearby and recent places; shared by the create and edit flows. */
+export function PlacePicker({
+  backHref,
+  onPick,
+  onUseCurrentLocation,
+}: PlacePickerProps) {
   const [query, setQuery] = useState("");
   const trimmed = query.trim();
   const searching = trimmed.length >= MIN_SEARCH_LENGTH;
@@ -119,15 +150,10 @@ export function PlaceSelectionScreen() {
     return places;
   }, [memories]);
 
-  const pick = (place: PlaceSuggestion) => {
-    setPlace(place, "picked");
-    safeBack("/create-pin");
-  };
+  const pick = onPick;
 
   const chooseCurrentLocation = () => {
-    // "auto" makes the create screen follow the device location again.
-    setPlace(null, "auto");
-    safeBack("/create-pin");
+    onUseCurrentLocation(here ?? (coords ? createUnresolvedPlace(coords) : null));
   };
 
   // Typing a name that search doesn't know pins it at the current spot.
@@ -181,7 +207,7 @@ export function PlaceSelectionScreen() {
           <IconCircleButton
             icon="chevron-back"
             accessibilityLabel="Back"
-            onPress={() => safeBack("/create-pin")}
+            onPress={() => safeBack(backHref)}
           />
           <Text style={styles.title}>Choose place</Text>
           <View style={styles.headerSpacer} />

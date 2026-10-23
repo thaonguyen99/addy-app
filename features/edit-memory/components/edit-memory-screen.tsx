@@ -1,49 +1,62 @@
-import Ionicons from "@expo/vector-icons/Ionicons";
-import MaterialIcons from "@expo/vector-icons/MaterialIcons";
-import * as Crypto from "expo-crypto";
-import { Image } from "expo-image";
-import * as ImagePicker from "expo-image-picker";
 import { router } from "expo-router";
-import { useEffect } from "react";
+import * as Crypto from "expo-crypto";
+import * as ImagePicker from "expo-image-picker";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
   Linking,
-  Pressable,
   ScrollView,
   StyleSheet,
   Text,
   TextInput,
+  useWindowDimensions,
   View,
 } from "react-native";
-import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
-import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+import { KeyboardAvoidingView } from "react-native-keyboard-controller";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 import { GlossyButton } from "@/components/ui/glossy-button";
-import { StickerCard } from "@/components/ui/sticker-card";
-import { ToggleRow } from "@/components/ui/toggle-row";
-import { BrandColors } from "@/constants/theme";
-import { MoodScorePicker } from "@/features/camera/components/mood-score-picker";
+import { IconCircleButton } from "@/components/ui/icon-circle-button";
+import { SegmentedControl } from "@/components/ui/segmented-control";
+import { SkyBackground } from "@/components/ui/sky-background";
+import {
+  ADDY_BORDER_WIDTH,
+  AddyColors,
+  AddyFonts,
+  AddyRadius,
+} from "@/constants/theme";
 import { ensureMediaLibraryReadAccess } from "@/features/camera/permissions/media-library-access";
-import { cameraLayout } from "@/features/camera/styles/shared-styles";
+import { AddressBar } from "@/features/create-pin/components/address-bar";
+import { VISIBILITY_OPTIONS } from "@/features/create-pin/components/create-pin-screen";
+import { DraftPhoto } from "@/features/create-pin/components/draft-photo";
+import { MoodRow } from "@/features/create-pin/components/mood-row";
 import { useEditMemorySave } from "@/features/edit-memory/hooks/use-edit-memory-save";
 import {
   type EditPhoto,
+  taggedUsersChanged,
   useEditMemoryStore,
 } from "@/features/edit-memory/store/edit-memory-store";
+import {
+  TagFriendsSheet,
+  type TagFriendsSheetRef,
+} from "@/features/memory/components/tag-friends-sheet";
+import { TaggedFriendsRow } from "@/features/memory/components/tagged-friends-row";
 import { safeBack } from "@/lib/navigation/safe-router";
 import { useMemoryQuery } from "@/lib/query/hooks";
+import type { AddyMemoryImage } from "@/types/addy-memory";
 
 /** Same cap as the server and the multi-upload endpoint. */
 const MAX_PHOTOS = 20;
-const THUMB_SIZE = 88;
+const SIDE_PADDING = 16;
 
 function photoUri(photo: EditPhoto) {
   return photo.kind === "remote" ? photo.url : photo.uri;
 }
 
 export function EditMemoryScreen({ id }: { id: string }) {
-  const insets = useSafeAreaInsets();
+  const { width } = useWindowDimensions();
+  const photoSize = width - SIDE_PADDING * 2;
   const { data: memory, isLoading } = useMemoryQuery(id);
   const { save, saving } = useEditMemorySave(memory);
 
@@ -55,8 +68,30 @@ export function EditMemoryScreen({ id }: { id: string }) {
   const moodScore = useEditMemoryStore((s) => s.moodScore);
   const feeling = useEditMemoryStore((s) => s.feeling);
   const visibility = useEditMemoryStore((s) => s.visibility);
-  const { load, setPhotos, setMoodScore, setFeeling, setVisibility, clear } =
-    useEditMemoryStore.getState();
+  const taggedUsers = useEditMemoryStore((s) => s.taggedUsers);
+  const {
+    load,
+    setPhotos,
+    setMoodScore,
+    setFeeling,
+    setVisibility,
+    setTaggedUsers,
+    clear,
+  } = useEditMemoryStore.getState();
+  const tagSheetRef = useRef<TagFriendsSheetRef>(null);
+  const [adding, setAdding] = useState(false);
+
+  // DraftPhoto works on capture images; edit photos map onto them by key.
+  const draftImages = useMemo<AddyMemoryImage[]>(
+    () =>
+      photos.map((photo) => ({
+        id: photo.key,
+        uri: photoUri(photo),
+        sourceType: "uploaded",
+        createdAt: "",
+      })),
+    [photos],
+  );
 
   useEffect(() => {
     if (memory?.isOwner && loadedId !== memory.id) load(memory);
@@ -70,7 +105,8 @@ export function EditMemoryScreen({ id }: { id: string }) {
       placeChanged ||
       moodScore !== memory.moodScore ||
       feeling.trim() !== (memory.feeling ?? "") ||
-      visibility !== memory.visibility);
+      visibility !== memory.visibility ||
+      taggedUsersChanged(taggedUsers, memory.taggedUsers));
 
   const close = () => safeBack(`/memory/${id}`);
 
@@ -89,12 +125,10 @@ export function EditMemoryScreen({ id }: { id: string }) {
     if (await save()) close();
   };
 
-  const makeCover = (key: string) => {
-    const index = photos.findIndex((p) => p.key === key);
-    if (index <= 0) return;
-    const next = [...photos];
-    const [photo] = next.splice(index, 1);
-    setPhotos([photo, ...next]);
+  const reorderPhotos = (keys: string[]) => {
+    const byKey = new Map(photos.map((photo) => [photo.key, photo]));
+    const next = keys.flatMap((key) => byKey.get(key) ?? []);
+    if (next.length === photos.length) setPhotos(next);
   };
 
   const removePhoto = (key: string) => {
@@ -103,6 +137,10 @@ export function EditMemoryScreen({ id }: { id: string }) {
   };
 
   const addPhotos = async () => {
+    if (photos.length >= MAX_PHOTOS) {
+      Alert.alert("Edit memory", `A memory can hold up to ${MAX_PHOTOS} photos.`);
+      return;
+    }
     const access = await ensureMediaLibraryReadAccess();
     if (access.access === "denied") {
       Alert.alert(
@@ -117,12 +155,13 @@ export function EditMemoryScreen({ id }: { id: string }) {
       );
       return;
     }
+    setAdding(true);
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ["images"],
       allowsMultipleSelection: true,
       selectionLimit: MAX_PHOTOS - photos.length,
       quality: 0.9,
-    });
+    }).finally(() => setAdding(false));
     if (result.canceled) return;
     const added: EditPhoto[] = result.assets.map((asset) => ({
       kind: "local",
@@ -134,217 +173,178 @@ export function EditMemoryScreen({ id }: { id: string }) {
 
   if (isLoading || (memory?.isOwner && loadedId !== memory.id)) {
     return (
-      <SafeAreaView style={[styles.safe, styles.center]}>
-        <ActivityIndicator color={BrandColors.ink} />
-      </SafeAreaView>
+      <SkyBackground>
+        <SafeAreaView style={[styles.flex, styles.center]}>
+          <ActivityIndicator color={AddyColors.ink} size="large" />
+        </SafeAreaView>
+      </SkyBackground>
     );
   }
 
   if (!memory || !memory.isOwner) {
     return (
-      <SafeAreaView style={[styles.safe, styles.center]}>
-        <Text style={styles.emptyTitle}>You can&apos;t edit this memory</Text>
-        <GlossyButton label="Go back" onPress={close} />
-      </SafeAreaView>
+      <SkyBackground>
+        <SafeAreaView style={[styles.flex, styles.center]}>
+          <Text style={styles.emptyTitle}>You can&apos;t edit this memory</Text>
+          <GlossyButton label="Go back" onPress={close} />
+        </SafeAreaView>
+      </SkyBackground>
     );
   }
 
   return (
-    <SafeAreaView style={styles.safe} edges={["top"]}>
-      <View style={styles.header}>
-        <Pressable
-          onPress={confirmClose}
-          hitSlop={cameraLayout.hitSlop}
-          accessibilityRole="button"
-          accessibilityLabel="Close"
-        >
-          <Ionicons name="close" size={26} color={BrandColors.ink} />
-        </Pressable>
-        <Text style={styles.title}>Edit memory</Text>
-        <View style={styles.headerSpacer} />
-      </View>
-
-      <KeyboardAwareScrollView
-        contentContainerStyle={styles.scroll}
-        keyboardShouldPersistTaps="handled"
-        bottomOffset={24}
-      >
-        <View style={styles.section}>
-          <Text style={styles.sectionLabel}>Photos</Text>
-          <Text style={styles.hint}>
-            Tap a photo to make it the cover. The cover shows on the map.
-          </Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            {photos.map((photo, index) => (
-              <Pressable
-                key={photo.key}
-                onPress={() => makeCover(photo.key)}
-                style={styles.thumbWrap}
-                accessibilityRole="button"
-                accessibilityLabel={index === 0 ? "Cover photo" : "Make cover photo"}
-              >
-                <Image source={{ uri: photoUri(photo) }} style={styles.thumb} contentFit="cover" />
-                {index === 0 ? <Text style={styles.coverBadge}>Cover</Text> : null}
-                {photos.length > 1 ? (
-                  <Pressable
-                    onPress={() => removePhoto(photo.key)}
-                    hitSlop={8}
-                    style={styles.removeBtn}
-                    accessibilityRole="button"
-                    accessibilityLabel="Remove photo"
-                  >
-                    <Ionicons name="close" size={14} color={BrandColors.white} />
-                  </Pressable>
-                ) : null}
-              </Pressable>
-            ))}
-            {photos.length < MAX_PHOTOS ? (
-              <Pressable
-                onPress={addPhotos}
-                style={[styles.thumb, styles.addTile]}
-                accessibilityRole="button"
-                accessibilityLabel="Add photos"
-              >
-                <Ionicons name="add" size={28} color={BrandColors.ink} />
-              </Pressable>
-            ) : null}
-          </ScrollView>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionLabel}>Place</Text>
-          <StickerCard style={styles.stretch}>
-            <View style={styles.placeCard}>
-              <MaterialIcons name="place" size={22} color={BrandColors.primary} />
-              <View style={styles.placeText}>
-                <Text style={styles.placeName}>{place?.name}</Text>
-                <Text style={styles.placeAddress}>{place?.address}</Text>
-              </View>
-            </View>
-          </StickerCard>
-          <Pressable onPress={() => router.push("/edit-memory/place")}>
-            <Text style={styles.link}>change place</Text>
-          </Pressable>
-        </View>
-
-        <MoodScorePicker value={moodScore} onChange={setMoodScore} />
-
-        <View style={styles.section}>
-          <Text style={styles.sectionLabel}>What&apos;s on your mind?</Text>
-          <TextInput
-            value={feeling}
-            onChangeText={setFeeling}
-            placeholder="A note about this moment…"
-            placeholderTextColor={BrandColors.neutralMuted}
-            multiline
-            maxLength={500}
-            style={styles.feelingInput}
-            textAlignVertical="top"
+    <SkyBackground>
+      <SafeAreaView style={styles.flex} edges={["top", "bottom"]}>
+        <View style={styles.header}>
+          <IconCircleButton
+            icon="close"
+            accessibilityLabel="Close"
+            onPress={confirmClose}
           />
+          <Text style={styles.title}>Edit memory</Text>
+          <View style={styles.headerSpacer} />
         </View>
 
-        <StickerCard style={styles.stretch}>
-          <View style={styles.visibilityCard}>
-            <ToggleRow
-              label="Share with friends"
-              description="Friends can see this memory on their map. Off = only you."
-              value={visibility === "friends"}
-              onValueChange={(next) => setVisibility(next ? "friends" : "private")}
+        <KeyboardAvoidingView behavior="padding" style={styles.flex}>
+          <ScrollView
+            contentContainerStyle={styles.content}
+            keyboardShouldPersistTaps="handled"
+            keyboardDismissMode="interactive"
+            showsVerticalScrollIndicator={false}
+          >
+            <DraftPhoto
+              images={draftImages}
+              size={photoSize}
+              adding={adding}
+              onReorder={reorderPhotos}
+              onRemove={removePhoto}
+              onAdd={() => void addPhotos()}
+            />
+
+            <AddressBar
+              place={place}
+              source="picked"
+              resolving={false}
+              onPress={() => router.push("/edit-memory/place")}
+            />
+
+            <View style={styles.section}>
+              <Text style={styles.label}>Mood</Text>
+              <MoodRow value={moodScore} onChange={setMoodScore} />
+            </View>
+
+            <TextInput
+              value={feeling}
+              onChangeText={setFeeling}
+              placeholder="add a caption…"
+              placeholderTextColor={AddyColors.inkMuted}
+              multiline
+              maxLength={500}
+              style={styles.input}
+              accessibilityLabel="Caption"
+              textAlignVertical="top"
+            />
+
+            <View style={styles.section}>
+              <Text style={styles.label}>Who can see</Text>
+              <SegmentedControl
+                options={VISIBILITY_OPTIONS}
+                value={visibility}
+                onChange={setVisibility}
+              />
+            </View>
+
+            <View style={styles.section}>
+              <Text style={styles.label}>Tag friends</Text>
+              <TaggedFriendsRow
+                users={taggedUsers}
+                onRemove={(user) =>
+                  setTaggedUsers(taggedUsers.filter((u) => u.id !== user.id))
+                }
+                onAdd={() => tagSheetRef.current?.present()}
+              />
+              {visibility === "private" && taggedUsers.length > 0 ? (
+                <Text style={styles.hint}>
+                  tagged friends can still see it and chat
+                </Text>
+              ) : null}
+            </View>
+          </ScrollView>
+
+          <View style={styles.footer}>
+            <GlossyButton
+              label={saving ? "Saving…" : "Save changes"}
+              loading={saving}
+              disabled={!isDirty || saving}
+              onPress={() => void onSave()}
             />
           </View>
-        </StickerCard>
-      </KeyboardAwareScrollView>
+        </KeyboardAvoidingView>
+      </SafeAreaView>
 
-      <View style={[styles.footer, { paddingBottom: Math.max(20, insets.bottom) }]}>
-        <GlossyButton
-          label={saving ? "Saving…" : "Save changes"}
-          loading={saving}
-          disabled={!isDirty || saving}
-          onPress={onSave}
-        />
-      </View>
-    </SafeAreaView>
+      <TagFriendsSheet
+        ref={tagSheetRef}
+        selected={taggedUsers}
+        onDone={setTaggedUsers}
+      />
+    </SkyBackground>
   );
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: BrandColors.paper },
+  flex: { flex: 1 },
   center: { alignItems: "center", justifyContent: "center", gap: 16, padding: 24 },
   header: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: cameraLayout.screenPaddingHorizontal,
-    paddingVertical: 12,
+    paddingHorizontal: SIDE_PADDING,
+    paddingVertical: 8,
   },
-  headerSpacer: { width: 26 },
-  title: { fontSize: 22, fontFamily: "Baloo2-ExtraBold", color: BrandColors.ink },
-  scroll: {
-    paddingHorizontal: cameraLayout.screenPaddingHorizontal,
-    paddingBottom: 32,
-    gap: 20,
+  title: {
+    fontFamily: AddyFonts.title,
+    fontSize: 20,
+    lineHeight: 30,
+    color: AddyColors.ink,
+  },
+  headerSpacer: { width: 30 },
+  content: {
+    paddingHorizontal: SIDE_PADDING,
+    paddingTop: 4,
+    paddingBottom: 24,
+    gap: 16,
   },
   section: { gap: 8 },
-  sectionLabel: { fontSize: 15, fontWeight: "600", color: BrandColors.neutral },
-  hint: { fontSize: 13, color: BrandColors.neutralMuted },
-  stretch: { alignSelf: "stretch" },
-  thumbWrap: { marginRight: 10, paddingTop: 6, paddingRight: 6 },
-  thumb: { width: THUMB_SIZE, height: THUMB_SIZE, borderRadius: 12 },
-  coverBadge: {
-    position: "absolute",
-    bottom: 6,
-    left: 6,
-    backgroundColor: BrandColors.accentPink,
-    color: BrandColors.white,
-    fontSize: 11,
-    fontWeight: "600",
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 6,
-    overflow: "hidden",
+  label: {
+    fontFamily: AddyFonts.titleSemiBold,
+    fontSize: 14,
+    color: AddyColors.inkMuted,
   },
-  removeBtn: {
-    position: "absolute",
-    top: 0,
-    right: 0,
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    backgroundColor: BrandColors.ink,
-    alignItems: "center",
-    justifyContent: "center",
+  hint: {
+    fontFamily: AddyFonts.body,
+    fontSize: 13,
+    color: AddyColors.inkMuted,
   },
-  addTile: {
-    marginTop: 6,
-    borderWidth: 1,
-    borderStyle: "dashed",
-    borderColor: BrandColors.ink,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: BrandColors.gray100,
-  },
-  placeCard: { flexDirection: "row", alignItems: "flex-start", gap: 12, padding: 14 },
-  placeText: { flex: 1, gap: 4 },
-  placeName: { fontSize: 16, fontWeight: "600", color: BrandColors.ink },
-  placeAddress: { fontSize: 14, color: BrandColors.inkMuted, lineHeight: 20 },
-  link: { fontSize: 14, fontWeight: "600", color: BrandColors.link },
-  feelingInput: {
-    minHeight: 88,
-    borderWidth: 1,
-    borderColor: BrandColors.neutralBorder,
-    borderRadius: cameraLayout.cornerRadiusMd,
-    backgroundColor: BrandColors.placeHolder,
+  input: {
+    minHeight: 80,
     paddingHorizontal: 14,
     paddingVertical: 12,
-    fontSize: 16,
-    color: BrandColors.neutral,
-    lineHeight: 22,
+    borderRadius: AddyRadius.input,
+    borderWidth: ADDY_BORDER_WIDTH,
+    borderColor: AddyColors.line,
+    backgroundColor: AddyColors.white,
+    fontFamily: AddyFonts.body,
+    fontSize: 15,
+    color: AddyColors.ink,
   },
-  visibilityCard: { paddingHorizontal: 14 },
   footer: {
-    paddingHorizontal: cameraLayout.screenPaddingHorizontal,
-    paddingTop: 12,
-    backgroundColor: BrandColors.paper,
+    paddingHorizontal: SIDE_PADDING,
+    paddingTop: 8,
+    paddingBottom: 8,
   },
-  emptyTitle: { fontSize: 18, fontWeight: "600", color: BrandColors.ink },
+  emptyTitle: {
+    fontFamily: AddyFonts.title,
+    fontSize: 18,
+    color: AddyColors.ink,
+  },
 });
