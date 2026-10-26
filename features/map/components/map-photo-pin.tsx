@@ -9,14 +9,17 @@ import {
   AddyFonts,
   AddyShadow,
   BrandColors,
+  PIN_COLOR,
 } from "@/constants/theme";
 import { MapMoodSticker } from "@/features/map/components/map-mood-sticker";
 import { PlaceLabelBubble } from "@/features/map/components/place-label-bubble";
+import { ChatAvatar } from "@/features/memory/chat-avatar";
 import type { QueuedPinStatus } from "@/features/pin-queue/pin-queue-types";
 
 type MapPhotoPinProps = {
   imageUrl?: string;
-  pinColor: string;
+  /** Defaults to the shared `PIN_COLOR`. */
+  pinColor?: string;
   /** Memories sharing this place (real, populated data) — tap opens the
    *  place sheet instead of navigating straight to one memory. */
   placeMemoryCount?: number;
@@ -32,15 +35,19 @@ type MapPhotoPinProps = {
   /** True once this pin sits in the right ~40% of the screen, so the label
    *  flips to grow left instead of running off the edge. */
   flipped?: boolean;
-  /** Marks this as a friend's memory rather than the user's own. */
-  isFriend?: boolean;
+  /** Set on a friend's memory: their avatar on the pin. */
+  friend?: { username: string; avatarUrl: string | null };
   /** Set for a pin still in the offline queue: "waiting" / "couldn't upload" sticker. */
   queueStatus?: QueuedPinStatus;
+  /** The cluster sheet is scrolled to this pin's place: a little bigger, with a lime halo. */
+  highlighted?: boolean;
 };
 
 const PIN_SIZE = 64;
 const PIN_HEIGHT = (PIN_SIZE / 100) * 128;
 const MOOD_SIZE = 28;
+const HALO_SPREAD = 12;
+const FRIEND_AVATAR_SIZE = 18;
 /** Room the place label may grow into — without it the absolutely-positioned
  *  label is squeezed to the pin's own width. The bubble still shrinks to fit. */
 const LABEL_WIDTH = 140;
@@ -51,20 +58,22 @@ const LABEL_WIDTH = 140;
  */
 export const MapPhotoPin = memo(function MapPhotoPin({
   imageUrl,
-  pinColor,
+  pinColor = PIN_COLOR,
   placeMemoryCount,
   extraPhotoCount,
   placeName,
   moodScore,
   showLabel = false,
   flipped = false,
-  isFriend,
+  friend,
   queueStatus,
+  highlighted = false,
 }: MapPhotoPinProps) {
   const moodSide = flipped ? "right" : "left";
 
   return (
-    <View style={styles.wrapper}>
+    <View style={[styles.wrapper, highlighted && styles.highlighted]}>
+      {highlighted ? <View pointerEvents="none" style={styles.halo} /> : null}
       {showLabel ? (
         <PlaceLabelBubble
           placeName={placeName}
@@ -83,8 +92,8 @@ export const MapPhotoPin = memo(function MapPhotoPin({
         style={[
           styles.mood,
           moodSide === "left"
-            ? { left: -(MOOD_SIZE / 2 + 6) }
-            : { right: -(MOOD_SIZE / 2 + 6) },
+            ? { left: -(MOOD_SIZE / 2 + 2) }
+            : { right: -(MOOD_SIZE / 2 + 2) },
         ]}
       />
 
@@ -104,7 +113,11 @@ export const MapPhotoPin = memo(function MapPhotoPin({
         </SoftShadowBox>
       ) : null}
 
-      {isFriend ? <SoftShadowBox radius={8} style={styles.friendDot} /> : null}
+      {friend ? (
+        <View style={styles.friendAvatar} pointerEvents="none">
+          <ChatAvatar user={friend} size={FRIEND_AVATAR_SIZE} />
+        </View>
+      ) : null}
 
       {extraPhotoCount != null && extraPhotoCount > 0 ? (
         <SoftShadowBox radius={12} style={styles.extraPhotoBadge}>
@@ -147,6 +160,17 @@ export const MAP_PHOTO_PIN_HEIGHT = PIN_HEIGHT;
 
 const styles = StyleSheet.create({
   wrapper: { alignItems: "center" },
+  // Grows from the pin's tip so the marker stays anchored to its place.
+  highlighted: { transform: [{ scale: 1.12 }], transformOrigin: "bottom" },
+  halo: {
+    position: "absolute",
+    top: -HALO_SPREAD,
+    width: PIN_SIZE + HALO_SPREAD * 2,
+    height: PIN_SIZE + HALO_SPREAD * 2,
+    borderRadius: (PIN_SIZE + HALO_SPREAD * 2) / 2,
+    backgroundColor: AddyColors.lime,
+    opacity: 0.4,
+  },
   label: {
     position: "absolute",
     bottom: PIN_HEIGHT - 4,
@@ -184,21 +208,17 @@ const styles = StyleSheet.create({
     zIndex: 3,
   },
   countBadgeBase: {
-    minWidth: 24,
-    height: 22,
+    height: 18,
     paddingHorizontal: 6,
     borderRadius: 11,
-    borderWidth: 1.5,
-    borderColor: AddyColors.white,
-    backgroundColor: AddyColors.navy,
+    backgroundColor: AddyColors.ink,
     alignItems: "center",
     justifyContent: "center",
     ...AddyShadow.soft,
   },
   countBadgeText: {
-    color: AddyColors.white,
-    fontSize: 17,
-    lineHeight: 18,
+    color: AddyColors.paper,
+    fontSize: 14,
     fontFamily: AddyFonts.tech,
   },
   queueBadge: {
@@ -219,13 +239,14 @@ const styles = StyleSheet.create({
     lineHeight: 18,
     fontFamily: AddyFonts.tech,
   },
-  friendDot: {
+  friendAvatar: {
     position: "absolute",
-    left: -2,
-    bottom: 24,
-    width: 16,
-    height: 16,
-    backgroundColor: BrandColors.accentPink,
+    left: 0,
+    bottom: 16,
+    borderRadius: FRIEND_AVATAR_SIZE / 2 + 2,
+    borderWidth: 2,
+    borderColor: AddyColors.white,
     zIndex: 3,
+    ...AddyShadow.soft,
   },
 });

@@ -19,6 +19,11 @@ export type MemoryImage = {
 
 export type MemoryVisibility = "private" | "friends";
 
+export type MemorySource = "quick_snap" | "uploaded";
+
+/** Which map layer a pin belongs to: your own memories, or friends' shared ones. */
+export type MapScope = "mine" | "friends";
+
 export type MemoryDetail = {
   id: string;
   images: MemoryImage[];
@@ -31,6 +36,8 @@ export type MemoryDetail = {
   hasReacted: boolean;
   /** Number of chat messages visible to the viewer. */
   messageCount: number;
+  /** In-app camera vs gallery pick; null on memories made before it was recorded. */
+  source: MemorySource | null;
   capturedAt: string;
   createdAt: string;
   place: PlaceSummary;
@@ -63,18 +70,13 @@ export type MemoryPin = {
   longitude: number;
   capturedAt: string;
   imageUrl: string;
-  /** How many memories exist at this place. */
+  /** How many memories this map layer shows at this place — the same count
+   *  POST /memories/by-places returns for it. */
   memoryCount: number;
-  /** Not yet sent by GET /memories/map or /memories/friends-map — the map's
-   *  place-name label stays hidden until the backend populates this. */
   placeName?: string;
-  /** Not yet sent by GET /memories/map or /memories/friends-map — the map's
-   *  mood sticker stays hidden until the backend populates this. */
   moodScore?: number | null;
-  /** Photos on this memory beyond its cover. Not yet sent by GET
-   *  /memories/map or /memories/friends-map — the pin's "+N" tag stays
-   *  hidden until the backend populates this. Distinct from `memoryCount`
-   *  (memories sharing this place), which is already real, populated data. */
+  /** Photos on the cover memory beyond its cover. Distinct from
+   *  `memoryCount` (memories sharing this place). */
   extraPhotoCount?: number;
 };
 
@@ -82,17 +84,27 @@ export type FriendMemoryPin = MemoryPin & {
   author: PublicUser;
 };
 
-/** A single memory shown in the "memories at this place" sheet. */
-export type PlaceMemory = {
+/**
+ * One memory in the map's cluster sheet, from POST /memories/by-places.
+ * Before that loads, each place's cover pin stands in for it, without
+ * `visibility`, `feeling` or (for your own pins) `author`.
+ */
+export type ClusterMemory = {
   id: string;
+  placeId: string;
+  placeName: string;
+  latitude: number;
+  longitude: number;
   imageUrl: string;
-  feeling: string | null;
+  /** Every photo on the memory, cover included. */
+  imageCount: number;
+  moodScore: number | null;
+  feeling?: string | null;
+  visibility?: MemoryVisibility;
+  isOwner: boolean;
   capturedAt: string;
-  author: PublicUser;
+  author?: PublicUser;
 };
-
-/** One memory as shown in a map cluster picker. */
-export type ClusterMemory = { id: string; imageUrl: string; capturedAt: string };
 
 /** One row in the map feed drawer — same shape as MemoryDetail today, kept
  * separate so a lighter list payload can diverge without touching detail. */
@@ -137,6 +149,7 @@ export type CreateMemoryInput = {
   visibility?: MemoryVisibility;
   /** UUID v4 from the offline queue; a repeat create returns the stored memory. */
   clientId?: string;
+  source?: MemorySource;
   taggedUserIds?: string[];
 };
 

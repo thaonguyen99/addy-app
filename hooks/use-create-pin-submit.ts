@@ -108,6 +108,7 @@ export function useCreatePinSubmit(images: readonly AddyMemoryImage[]) {
         // The cover's date: when it was shot (quick snap), else its EXIF
         // capture time, else when it was picked.
         capturedAt: images[0].takenAt ?? images[0].createdAt,
+        source: images[0].sourceType,
         createdAt: now,
         attempts: 0,
         nextAttemptAt: 0,

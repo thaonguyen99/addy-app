@@ -4,6 +4,7 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import { AddyColors, AddyFonts, AddyRadius } from "@/constants/theme";
 import { MoodSticker } from "@/features/feed/mood-sticker";
+import { ChatAvatar } from "@/features/memory/chat-avatar";
 import { pickCover } from "@/utils/pick-cover";
 import { showQueuedPinActions } from "@/features/pin-queue/queued-pin-actions";
 import {
@@ -38,6 +39,13 @@ type MemoryGridTileProps = {
   memory: GridTileMemory;
   size: number;
   onPress: (id: string) => void;
+  onLongPress?: (id: string) => void;
+  /** Bottom-left tech chip, e.g. a date or place name. */
+  chipLabel?: string;
+  /** Top-left poster avatar (a friend's memory); replaces the 🔒 badge. */
+  author?: { username: string; avatarUrl: string | null };
+  /** Photos beyond the cover: a "+N" tag top-right. */
+  extraPhotoCount?: number;
 };
 
 /** Profile grid tile: square cover (thumbnail-sized), mood sticker, no caption. */
@@ -45,12 +53,19 @@ export const MemoryGridTile = memo(function MemoryGridTile({
   memory,
   size,
   onPress,
+  onLongPress,
+  chipLabel,
+  author,
+  extraPhotoCount,
 }: MemoryGridTileProps) {
   return (
     <Pressable
       onPress={() => onPress(memory.id)}
+      onLongPress={onLongPress ? () => onLongPress(memory.id) : undefined}
+      delayLongPress={300}
       accessibilityRole="button"
-      accessibilityLabel={`${memory.locked ? "Private memory" : "Memory"} at ${memory.placeName}`}
+      accessibilityLabel={`${memory.locked ? "Private memory" : "Memory"} at ${memory.placeName}${chipLabel ? `, ${chipLabel}` : ""}`}
+      accessibilityHint={onLongPress ? "Long press to preview" : undefined}
       style={({ pressed }) => [
         styles.tile,
         { width: size, height: size },
@@ -68,9 +83,28 @@ export const MemoryGridTile = memo(function MemoryGridTile({
       ) : (
         <Text style={styles.fallback}>📷</Text>
       )}
-      {memory.locked ? (
+      {author ? (
+        <View style={styles.avatar} pointerEvents="none">
+          <ChatAvatar user={author} size={22} />
+        </View>
+      ) : memory.locked ? (
         <View style={styles.lock} pointerEvents="none">
           <Text style={styles.lockGlyph}>🔒</Text>
+        </View>
+      ) : null}
+      {extraPhotoCount != null && extraPhotoCount > 0 ? (
+        <View style={styles.extra} pointerEvents="none">
+          <Text style={styles.extraText}>+{extraPhotoCount}</Text>
+        </View>
+      ) : null}
+      {chipLabel ? (
+        <View
+          style={[styles.chipWrap, { maxWidth: size - 30 }]}
+          pointerEvents="none"
+        >
+          <Text style={styles.chip} numberOfLines={1}>
+            {chipLabel}
+          </Text>
         </View>
       ) : null}
       <View style={styles.sticker} pointerEvents="none">
@@ -138,6 +172,35 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(255, 255, 255, 0.85)",
   },
   lockGlyph: { fontSize: 11 },
+  avatar: { position: "absolute", top: 4, left: 4 },
+  extra: {
+    position: "absolute",
+    top: 4,
+    right: 4,
+    paddingHorizontal: 5,
+    borderRadius: AddyRadius.chip,
+    backgroundColor: "rgba(255, 255, 255, 0.92)",
+  },
+  extraText: {
+    fontFamily: AddyFonts.tech,
+    fontSize: 15,
+    lineHeight: 17,
+    color: AddyColors.navy,
+  },
+  chipWrap: {
+    position: "absolute",
+    left: 5,
+    bottom: 5,
+    paddingHorizontal: 6,
+    borderRadius: AddyRadius.chip,
+    backgroundColor: "rgba(22, 23, 26, 0.62)",
+  },
+  chip: {
+    fontFamily: AddyFonts.tech,
+    fontSize: 15,
+    lineHeight: 17,
+    color: AddyColors.white,
+  },
   queuedPhoto: { opacity: 0.55 },
   queuedOverlay: {
     ...StyleSheet.absoluteFillObject,

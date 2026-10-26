@@ -12,7 +12,10 @@ import { mapBoundsKey, queryKeys } from "@/services/query/keys";
 import { memoryApi } from "./memories.api";
 import type {
   ClusterMemory,
+  FriendMemoryPin,
   MapBounds,
+  MapScope,
+  MemoryPin,
   MemoryDetail,
   MemoryListItem,
   UpdateMemoryInput,
@@ -126,73 +129,81 @@ export function useFriendsMapQuery(bounds: MapBounds | null) {
   });
 }
 
-export function usePlaceMemoriesQuery(placeId: string | null) {
-  return useQuery({
-    queryKey: queryKeys.placeMemories(placeId ?? "idle"),
-    queryFn: () => memoryApi.getPlaceMemories(placeId!),
-    enabled: Boolean(placeId),
-  });
+/** A map pin tagged with the layer it came from. */
+export type ScopedPin = {
+  pin: MemoryPin | FriendMemoryPin;
+  scope: MapScope;
+};
+
+const SCOPES: readonly MapScope[] = ["mine", "friends"];
+
+/** A place's cover pin standing in for its memories until they load. */
+function pinToClusterMemory({ pin, scope }: ScopedPin): ClusterMemory {
+  return {
+    id: pin.id,
+    placeId: pin.placeId,
+    placeName: pin.placeName ?? "",
+    latitude: pin.latitude,
+    longitude: pin.longitude,
+    imageUrl: pin.imageUrl,
+    imageCount: (pin.extraPhotoCount ?? 0) + 1,
+    moodScore: pin.moodScore ?? null,
+    isOwner: scope === "mine",
+    capturedAt: pin.capturedAt,
+    ...("author" in pin ? { author: pin.author } : {}),
+  };
 }
 
 /**
- * Every memory inside a group of map pins, newest first. A pin that stands
- * for several memories at one place is expanded via its place's list; a
- * single-memory pin is used as-is.
+ * Every memory behind a set of map pins, newest first — one request per map
+ * layer. Each place's cover pin shows right away, so the sheet opens
+ * instantly; the full list replaces it when it arrives (or stays if the
+ * request fails).
  */
-export function useClusterMemoriesQuery(
-  pins: readonly {
-    id: string;
-    placeId: string;
-    imageUrl: string;
-    capturedAt: string;
-    memoryCount: number;
-  }[],
-) {
-  const multi = pins.filter((pin) => pin.memoryCount > 1);
-  const results = useQueries({
-    queries: multi.map((pin) => ({
-      queryKey: queryKeys.placeMemories(pin.placeId),
-      queryFn: () => memoryApi.getPlaceMemories(pin.placeId),
-    })),
-  });
+export function useClusterMemories(pins: readonly ScopedPin[]) {
+  const placeIdsByScope = useMemo(
+    () =>
+      SCOPES.map((scope) =>
+        [
+          ...new Set(
+            pins.filter((p) => p.scope === scope).map((p) => p.pin.placeId),
+          ),
+        ].sort(),
+      ),
+    [pins],
+  );
 
-  const memories = new Map<string, ClusterMemory>();
-  for (const pin of pins) {
-    if (pin.memoryCount <= 1) {
-      memories.set(pin.id, {
-        id: pin.id,
-        imageUrl: pin.imageUrl,
-        capturedAt: pin.capturedAt,
-      });
-    }
-  }
-  results.forEach((result, i) => {
-    const place = result.data;
-    if (!place) {
-      // Until the place list loads (or if it fails), show its cover pin.
-      const pin = multi[i];
-      if (result.isError) {
-        memories.set(pin.id, {
-          id: pin.id,
-          imageUrl: pin.imageUrl,
-          capturedAt: pin.capturedAt,
-        });
-      }
-      return;
-    }
-    for (const memory of place) {
-      memories.set(memory.id, {
-        id: memory.id,
-        imageUrl: memory.imageUrl,
-        capturedAt: memory.capturedAt,
-      });
-    }
+  const results = useQueries({
+    queries: SCOPES.map((scope, i) => {
+      const placeIds = placeIdsByScope[i];
+      return {
+        queryKey: queryKeys.memoriesByPlaces(scope, placeIds.join(",")),
+        queryFn: () => memoryApi.getMemoriesByPlaces(placeIds, scope),
+        enabled: placeIds.length > 0,
+      };
+    }),
   });
+  const mineData = results[0].data;
+  const friendsData = results[1].data;
+
+  const memories = useMemo(() => {
+    const loaded = [mineData, friendsData];
+    const list: ClusterMemory[] = [];
+    SCOPES.forEach((scope, i) => {
+      const data = loaded[i];
+      if (data) {
+        list.push(...data);
+      } else {
+        for (const scoped of pins) {
+          if (scoped.scope === scope) list.push(pinToClusterMemory(scoped));
+        }
+      }
+    });
+    return list.sort((a, b) => b.capturedAt.localeCompare(a.capturedAt));
+  }, [pins, mineData, friendsData]);
 
   return {
-    memories: [...memories.values()].sort((a, b) =>
-      b.capturedAt.localeCompare(a.capturedAt),
-    ),
+    memories,
     isLoading: results.some((result) => result.isLoading),
   };
 }

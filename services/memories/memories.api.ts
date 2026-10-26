@@ -1,12 +1,12 @@
 import {
   apiClient,
   apiDelete,
-  apiGet,
   apiGetPaginated,
   apiPatch,
+  apiPost,
 } from "@/services/api/client";
 import { parseApiResponse } from "@/services/api/errors";
-import type { CreateMemoryInput, FriendMemoryPin, MapBounds, MapPinsResult, MemoryDetail, MemoryListItem, MemoryListParams, MemoryListResult, MemoryPin, PlaceMemory, Reactor, ToggleReactionResult, UpdateMemoryInput } from "./memories.type";
+import type { ClusterMemory, CreateMemoryInput, FriendMemoryPin, MapScope, MapBounds, MapPinsResult, MemoryDetail, MemoryListItem, MemoryListParams, MemoryListResult, MemoryPin, Reactor, ToggleReactionResult, UpdateMemoryInput } from "./memories.type";
 import type { Paginated } from "@/types/api";
 
 const FEED_PAGE_SIZE = 20;
@@ -79,9 +79,10 @@ async function getFriendsMapPins(
   return { pins: items, ...(nextCursor ? { cursor: nextCursor } : {}) };
 }
 
-/** Every memory at a place visible to the viewer — for the "memories here" sheet. */
-async function getPlaceMemories(placeId: string) {
-  return apiGet<PlaceMemory[]>(`/memories/place/${placeId}`);
+/** Every memory one map layer shows at these places — for the cluster sheet.
+ * Matches the pins' `memoryCount`s exactly (same server-side filter). */
+async function getMemoriesByPlaces(placeIds: string[], scope: MapScope) {
+  return apiPost<ClusterMemory[]>("/memories/by-places", { placeIds, scope });
 }
 
 async function updateMemory(id: string, input: UpdateMemoryInput) {
@@ -116,7 +117,7 @@ export const memoryApi = {
   listMemories,
   getMapPins,
   getFriendsMapPins,
-  getPlaceMemories,
+  getMemoriesByPlaces,
   updateMemory,
   deleteMemory,
   untagSelf,

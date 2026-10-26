@@ -11,7 +11,14 @@ import { TourTarget, useTourGuide } from "@wrack/react-native-tour-guide";
 import { router, useLocalSearchParams } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { NativeSyntheticEvent } from "react-native";
-import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
+import {
+  Platform,
+  Pressable,
+  StyleSheet,
+  Text,
+  useWindowDimensions,
+  View,
+} from "react-native";
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -31,26 +38,19 @@ import {
   BrandColors,
 } from "@/constants/theme";
 import {
-  AllMemoriesSheet,
-  type AllMemoriesSheetRef,
-} from "@/features/map/components/all-memories-sheet";
-import {
   ClusterPhotoPin,
   latestPin,
 } from "@/features/map/components/cluster-marker";
 import {
-  ClusterPinsSheet,
-  type ClusterPinsSheetRef,
-} from "@/features/map/components/cluster-pins-sheet";
+  CLUSTER_SHEET_HALF,
+  ClusterSheet,
+  type ClusterSheetRef,
+} from "@/features/map/components/cluster-sheet/cluster-sheet";
 import {
   MAP_PHOTO_PIN_HEIGHT,
   MAP_PHOTO_PIN_WIDTH,
   MapPhotoPin,
 } from "@/features/map/components/map-photo-pin";
-import {
-  PlaceMemoriesSheet,
-  type PlaceMemoriesSheetRef,
-} from "@/features/map/components/place-memories-sheet";
 import { useMapFocusStore } from "@/stores/map-focus.store";
 import { useAddyMapStyle } from "@/services/map";
 import {
@@ -73,8 +73,13 @@ import { userDisplayName } from "@/components/ui/user-row";
 import { useFriendSheetsStore } from "@/stores/friend-sheets.store";
 import { useFriendsMapQuery, useMemoriesMapQuery, useMemoryQuery } from "@/services/memories";
 import { useFriendsQuery } from "@/services/friends";
-import { useStatsQuery } from "@/services/users";
-import type { FriendMemoryPin, MapBounds, MemoryPin } from "@/services/memories";
+import type {
+  FriendMemoryPin,
+  MapBounds,
+  MapScope,
+  MemoryPin,
+  ScopedPin,
+} from "@/services/memories";
 
 // MapPhotoPin's visual footprint (features/map/components/map-photo-pin.tsx),
 // extending UPWARD from the marker's anchor="bottom" point.
@@ -94,6 +99,10 @@ const DEFAULT_BOUNDS: MapBounds = {
 };
 
 const TOAST_VISIBLE_MS = 3000;
+
+/** Camera moves without the cluster sheet open clear any padding it left. */
+const NO_PADDING = { top: 0, right: 0, bottom: 0, left: 0 };
+const FOCUS_PLACE_ZOOM = 16;
 
 function boundsToMapBounds([
   west,
@@ -168,9 +177,9 @@ function SuccessToast({ visible }: { visible: boolean }) {
 export function MemoriesMapScreen() {
   const mapStyle = useAddyMapStyle();
   const cameraRef = useRef<CameraRef>(null);
-  const placeMemoriesSheetRef = useRef<PlaceMemoriesSheetRef>(null);
-  const allMemoriesSheetRef = useRef<AllMemoriesSheetRef>(null);
-  const clusterPinsSheetRef = useRef<ClusterPinsSheetRef>(null);
+  const clusterSheetRef = useRef<ClusterSheetRef>(null);
+  const { height: windowHeight } = useWindowDimensions();
+  const [activePlaceId, setActivePlaceId] = useState<string | null>(null);
   const pendingFocus = useMapFocusStore((s) => s.pendingFocus);
   const setPendingFocus = useMapFocusStore((s) => s.setPendingFocus);
   const showSuccessToast = useMapFocusStore((s) => s.showSuccessToast);
@@ -196,6 +205,7 @@ export function MemoriesMapScreen() {
         cameraRef.current?.flyTo({
           center: [longitude, latitude],
           zoom: 15,
+          padding: NO_PADDING,
           duration: 600,
         });
         setPendingFocus(null);
@@ -231,6 +241,12 @@ export function MemoriesMapScreen() {
       nextStep,
       resumeTour,
     ]),
+  );
+
+  // The cluster sheet sits in the root modal portal: close it whenever the
+  // map loses focus (tab switch, a pushed screen) so it never covers them.
+  useFocusEffect(
+    useCallback(() => () => clusterSheetRef.current?.dismiss(), []),
   );
 
   // Auto-dismiss the success toast
@@ -284,6 +300,7 @@ export function MemoriesMapScreen() {
     cameraRef.current?.flyTo({
       center: [focusMemory.place.longitude, focusMemory.place.latitude],
       zoom: 13,
+      padding: NO_PADDING,
       duration: 600,
     });
   }, [focusFriendId, focusMemory]);
@@ -332,8 +349,20 @@ export function MemoriesMapScreen() {
   const allQueuedPins = usePinQueueStore((s) => s.entries);
   const queuedPins = focusFriendId ? [] : allQueuedPins;
 
-  const { data: stats, isLoading: isStatsLoading } = useStatsQuery();
-  const totalMemories = stats?.totalMemories;
+  // Everything the map is showing, tagged by layer. The top chip counts this
+  // and opens the cluster sheet on it, so its number is the sheet's number.
+  const inViewPins = useMemo<ScopedPin[]>(
+    () => [
+      ...pins.map((pin) => ({ pin, scope: "mine" as const })),
+      ...friendPins.map((pin) => ({ pin, scope: "friends" as const })),
+    ],
+    [pins, friendPins],
+  );
+  const inViewCount = useMemo(
+    () => inViewPins.reduce((sum, p) => sum + Math.max(1, p.pin.memoryCount), 0),
+    [inViewPins],
+  );
+  const isInViewLoading = !data && !isError;
 
   // Own-pins-only, unclustered, so the line reflects true pin-to-pin
   // chronological order rather than cluster centroids.
@@ -346,38 +375,88 @@ export function MemoriesMapScreen() {
     [friendPins, zoom],
   );
 
-  const openFeed = useCallback(() => {
-    allMemoriesSheetRef.current?.present();
-  }, []);
+  const openInView = useCallback(() => {
+    if (inViewPins.length === 0) return;
+    clusterSheetRef.current?.present({
+      kind: "inView",
+      pins: inViewPins,
+      center: {
+        latitude: (bounds.north + bounds.south) / 2,
+        longitude: (bounds.east + bounds.west) / 2,
+      },
+    });
+  }, [inViewPins, bounds]);
 
-  const onSelectSheetPin = useCallback(
-    (latitude: number, longitude: number) => {
-      setPendingFocus({ latitude, longitude });
-    },
-    [setPendingFocus],
+  /** Pads the map's bottom by the half sheet so `center` lands in the
+   *  visible strip above it. */
+  const sheetPadding = useMemo(
+    () => ({ ...NO_PADDING, bottom: windowHeight * CLUSTER_SHEET_HALF }),
+    [windowHeight],
   );
 
+  const onFocusSheetPlace = useCallback(
+    (latitude: number, longitude: number) => {
+      cameraRef.current?.flyTo({
+        center: [longitude, latitude],
+        zoom: Math.max(zoom, FOCUS_PLACE_ZOOM),
+        padding: sheetPadding,
+        duration: 600,
+      });
+    },
+    [zoom, sheetPadding],
+  );
+
+  const onShowSheetMemoryOnMap = useCallback(
+    (latitude: number, longitude: number) => {
+      cameraRef.current?.flyTo({
+        center: [longitude, latitude],
+        zoom: Math.max(zoom, FOCUS_PLACE_ZOOM),
+        padding: NO_PADDING,
+        duration: 600,
+      });
+    },
+    [zoom],
+  );
+
+  // A grouped pin opens the cluster sheet right away, at any zoom. The map
+  // only pans (never zooms) so the cluster sits above the half sheet.
+  const onClusterPress = useCallback(
+    (group: ClusterGroup<MemoryPin | FriendMemoryPin>, scope: MapScope) => {
+      // The marker sits on the newest pin, not the group's centroid.
+      const marker = latestPin(group.pins);
+      cameraRef.current?.easeTo({
+        center: [marker.longitude, marker.latitude],
+        padding: sheetPadding,
+        duration: 350,
+      });
+      clusterSheetRef.current?.present({
+        kind: "cluster",
+        pins: group.pins.map((pin) => ({ pin, scope })),
+        center: { latitude: group.latitude, longitude: group.longitude },
+      });
+    },
+    [sheetPadding],
+  );
+
+  // A pin holding several memories at one place opens the same sheet (as a
+  // single-place cluster); a lone memory opens straight away.
   const openPin = useCallback(
-    (pin: { id: string; placeId: string; memoryCount: number }) => {
+    (pin: MemoryPin | FriendMemoryPin, scope: MapScope) => {
       if (pin.memoryCount > 1) {
-        placeMemoriesSheetRef.current?.present(pin.placeId);
+        onClusterPress(
+          { latitude: pin.latitude, longitude: pin.longitude, pins: [pin] },
+          scope,
+        );
       } else {
         router.push(`/memory/${pin.id}`);
       }
     },
-    [],
+    [onClusterPress],
   );
 
-  // A grouped pin opens a picker of the memories inside it, newest first.
-  const onClusterPress = useCallback(
-    (group: ClusterGroup<MemoryPin | FriendMemoryPin>) => {
-      const newestFirst = [...group.pins].sort((a, b) =>
-        b.capturedAt.localeCompare(a.capturedAt),
-      );
-      clusterPinsSheetRef.current?.present(newestFirst);
-    },
-    [],
-  );
+  const isActive =(groupPins: readonly MemoryPin[]) =>
+    activePlaceId !== null &&
+    groupPins.some((pin) => pin.placeId === activePlaceId);
 
   if (Platform.OS === "web") {
     return (
@@ -416,27 +495,30 @@ export function MemoriesMapScreen() {
                   latestPin(group.pins).latitude,
                 ]}
                 anchor="bottom"
-                onPress={() => onClusterPress(group)}
+                onPress={() => onClusterPress(group, "friends")}
               >
-                <ClusterPhotoPin pins={group.pins} />
+                <ClusterPhotoPin
+                  pins={group.pins}
+                  highlighted={isActive(group.pins)}
+                  friend={latestPin(group.pins).author}
+                />
               </Marker>
             ) : (
               <Marker
                 key={`friend-${group.pins[0].id}`}
                 lngLat={[group.pins[0].longitude, group.pins[0].latitude]}
                 anchor="bottom"
-                onPress={() => openPin(group.pins[0])}
+                onPress={() => openPin(group.pins[0], "friends")}
               >
                 <MapPhotoPin
                   imageUrl={group.pins[0].imageUrl}
-                  pinColor={"#5FCBFF"}
                   placeMemoryCount={group.pins[0].memoryCount}
-                  extraPhotoCount={group.pins[0].extraPhotoCount}
                   placeName={group.pins[0].placeName}
                   moodScore={group.pins[0].moodScore}
                   showLabel={showLabels}
                   flipped={isNearRightEdge(group.pins[0].longitude, bounds)}
-                  isFriend
+                  friend={group.pins[0].author}
+                  highlighted={isActive(group.pins)}
                 />
               </Marker>
             ),
@@ -450,26 +532,28 @@ export function MemoriesMapScreen() {
                   latestPin(group.pins).latitude,
                 ]}
                 anchor="bottom"
-                onPress={() => onClusterPress(group)}
+                onPress={() => onClusterPress(group, "mine")}
               >
-                <ClusterPhotoPin pins={group.pins} />
+                <ClusterPhotoPin
+                  pins={group.pins}
+                  highlighted={isActive(group.pins)}
+                />
               </Marker>
             ) : (
               <Marker
                 key={group.pins[0].id}
                 lngLat={[group.pins[0].longitude, group.pins[0].latitude]}
                 anchor="bottom"
-                onPress={() => openPin(group.pins[0])}
+                onPress={() => openPin(group.pins[0], "mine")}
               >
                 <MapPhotoPin
                   imageUrl={group.pins[0].imageUrl}
-                  pinColor={"#5FCBFF"}
                   placeMemoryCount={group.pins[0].memoryCount}
-                  extraPhotoCount={group.pins[0].extraPhotoCount}
                   placeName={group.pins[0].placeName}
                   moodScore={group.pins[0].moodScore}
                   showLabel={showLabels}
                   flipped={isNearRightEdge(group.pins[0].longitude, bounds)}
+                  highlighted={isActive(group.pins)}
                 />
               </Marker>
             ),
@@ -485,7 +569,6 @@ export function MemoriesMapScreen() {
               >
                 <MapPhotoPin
                   imageUrl={pin.photoPaths[0]}
-                  pinColor={"#5FCBFF"}
                   placeName={queuedPinPlaceName(pin)}
                   moodScore={pin.moodScore}
                   showLabel={showLabels}
@@ -524,17 +607,15 @@ export function MemoriesMapScreen() {
           <TechChip
             tone="dark"
             label={
-              totalMemories == null
-                ? isStatsLoading
-                  ? "loading…"
-                  : `${pins.length} memories`
-                : totalMemories === 1
+              isInViewLoading
+                ? "loading…"
+                : inViewCount === 1
                   ? "1 memory"
-                  : `${totalMemories} memories`
+                  : `${inViewCount} memories`
             }
-            trailing={isError && totalMemories == null ? "· offline ›" : "›"}
-            onPress={openFeed}
-            accessibilityLabel="Show all your memories"
+            trailing={isError && !data ? "· offline ›" : "›"}
+            onPress={openInView}
+            accessibilityLabel="Show the memories in view"
           />
           {focusFriendId ? (
             <TechChip
@@ -584,14 +665,12 @@ export function MemoriesMapScreen() {
         ) : null}
       </SafeAreaView>
 
-      <PlaceMemoriesSheet ref={placeMemoriesSheetRef} />
-      <AllMemoriesSheet
-        ref={allMemoriesSheetRef}
-        onSelectPin={onSelectSheetPin}
-      />
-      <ClusterPinsSheet
-        ref={clusterPinsSheetRef}
-        onSelectMemory={(memoryId) => router.push(`/memory/${memoryId}`)}
+      <ClusterSheet
+        ref={clusterSheetRef}
+        onOpenMemory={(memoryId) => router.push(`/memory/${memoryId}`)}
+        onFocusPlace={onFocusSheetPlace}
+        onShowOnMap={onShowSheetMemoryOnMap}
+        onActivePlaceChange={setActivePlaceId}
       />
     </View>
   );

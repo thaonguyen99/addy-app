@@ -119,8 +119,9 @@ export const AddyColors = {
   danger: "#FF5C5C",
 };
 
-/** The one map pin color (see `getPinColor`). */
-export const PIN_COLOR = "#5FCBFF";
+/** The one map pin color (see `getPinColor`): paper, so the photo, mood
+ *  sticker and (on friends' pins) avatar carry the color. */
+export const PIN_COLOR = AddyColors.paperDim;
 
 /** Font family names as registered in app/_layout.tsx. */
 export const AddyFonts = {

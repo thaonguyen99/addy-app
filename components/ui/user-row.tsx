@@ -113,6 +113,10 @@ const styles = StyleSheet.create({
     lineHeight: 21,
     color: AddyColors.ink,
   },
-  handle: { fontFamily: AddyFonts.tech, fontSize: 16, color: AddyColors.inkMuted },
+  handle: {
+    fontFamily: AddyFonts.tech,
+    fontSize: 16,
+    color: AddyColors.inkMuted,
+  },
   right: { marginLeft: "auto" },
 });

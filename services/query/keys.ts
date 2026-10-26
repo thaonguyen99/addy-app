@@ -6,8 +6,12 @@ export const queryKeys = {
   map: (boundsKey: string) => ["memories", "map", boundsKey] as const,
   friendsMap: (boundsKey: string) =>
     ["memories", "friends-map", boundsKey] as const,
-  placeMemories: (placeId: string) =>
-    ["memories", "place", placeId] as const,
+  /** `placeIdsKey`: the sorted place ids, joined. */
+  memoriesByPlaces: (scope: string, placeIdsKey: string) =>
+    ["memories", "by-places", scope, placeIdsKey] as const,
+  /** Coordinates rounded to ~100 m so nearby clusters share one lookup. */
+  areaName: (lat: number, lng: number) =>
+    ["places", "area", lat.toFixed(3), lng.toFixed(3)] as const,
   memoryReactions: (id: string) => ["memories", "reactions", id] as const,
   memoryMessages: (id: string) => ["memories", "messages", id] as const,
   memoryMentionable: (id: string) =>

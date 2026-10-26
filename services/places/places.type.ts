@@ -35,6 +35,8 @@ export type ReverseGeocodeResult = {
   latitude: number;
   longitude: number;
   types: string[];
+  /** Ward/commune, else district, at the point (e.g. "Phường Sài Gòn"). */
+  area?: string;
 };
 
 export type PlaceInput = {

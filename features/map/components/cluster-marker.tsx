@@ -24,6 +24,9 @@ export function clusterMemoryCount(pins: readonly ClusterablePin[]): number {
 
 type ClusterPhotoPinProps = {
   pins: readonly ClusterablePin[];
+  highlighted?: boolean;
+  /** The cover's poster, on the friends layer. */
+  friend?: { username: string; avatarUrl: string | null };
 };
 
 /**
@@ -32,6 +35,8 @@ type ClusterPhotoPinProps = {
  */
 export const ClusterPhotoPin = memo(function ClusterPhotoPin({
   pins,
+  highlighted,
+  friend,
 }: ClusterPhotoPinProps) {
   const cover = latestPin(pins);
   return (
@@ -39,6 +44,8 @@ export const ClusterPhotoPin = memo(function ClusterPhotoPin({
       imageUrl={cover.imageUrl}
       pinColor={getPinColor(cover)}
       placeMemoryCount={clusterMemoryCount(pins)}
+      highlighted={highlighted}
+      friend={friend}
     />
   );
 });

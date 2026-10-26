@@ -159,11 +159,13 @@ async function uploadEntry(entry: QueuedPin): Promise<"ok" | "stop"> {
       ...(entry.taggedUserIds?.length
         ? { taggedUserIds: entry.taggedUserIds }
         : {}),
+      ...(entry.source ? { source: entry.source } : {}),
     });
 
     uploadedMemoryIds.set(entry.clientId, memory.id);
     await remove(entry.clientId);
     queryClient.invalidateQueries({ queryKey: ["memories", "map"] });
+    queryClient.invalidateQueries({ queryKey: ["memories", "by-places"] });
     queryClient.invalidateQueries({ queryKey: queryKeys.memoriesFeed });
     queryClient.invalidateQueries({ queryKey: queryKeys.stats });
     queryClient.invalidateQueries({ queryKey: ["users", "profile"] });

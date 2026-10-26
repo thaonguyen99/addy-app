@@ -11,6 +11,48 @@ import type { PlaceSuggestion } from "./places.type";
 const DEBOUNCE_MS = 350;
 const MIN_QUERY_LENGTH = 2;
 
+/** Vietnamese admin-unit prefixes, shortened the way street signs do. */
+const AREA_PREFIXES: [RegExp, string][] = [
+  [/^Phường\s+/i, "P. "],
+  [/^Quận\s+/i, "Q. "],
+  [/^Xã\s+/i, "X. "],
+  [/^Thị trấn\s+/i, "TT. "],
+  [/^Huyện\s+/i, "H. "],
+];
+
+export function abbreviateArea(area: string): string {
+  const trimmed = area.trim();
+  for (const [prefix, short] of AREA_PREFIXES) {
+    if (prefix.test(trimmed)) return trimmed.replace(prefix, short);
+  }
+  return trimmed;
+}
+
+/**
+ * The ward (or district) around a point, abbreviated ("P. Sài Gòn"). Cached
+ * per ~100 m for the session; null while loading or if the lookup fails.
+ */
+export function useAreaName(
+  latitude: number | null,
+  longitude: number | null,
+): string | null {
+  const enabled = latitude != null && longitude != null;
+  const { data } = useQuery({
+    queryKey: enabled
+      ? queryKeys.areaName(latitude, longitude)
+      : ["places", "area", "idle"],
+    queryFn: async () => {
+      const result = await placeApi.reverseGeocode(latitude!, longitude!);
+      return result.area ? abbreviateArea(result.area) : null;
+    },
+    enabled,
+    staleTime: Infinity,
+    gcTime: Infinity,
+    retry: 1,
+  });
+  return data ?? null;
+}
+
 export function useNearbyPlacesQuery(coords: Coordinates | null) {
   return useQuery({
     queryKey: coords

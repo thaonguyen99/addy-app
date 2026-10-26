@@ -1,4 +1,4 @@
-import type { MemoryVisibility } from "@/services/memories";
+import type { MemorySource, MemoryVisibility } from "@/services/memories";
 import type { PlaceInput } from "@/services/places";
 
 /**
@@ -26,6 +26,8 @@ export type QueuedPin = {
   /** Optional: entries queued by older builds don't have it. */
   taggedUserIds?: string[];
   capturedAt: string;
+  /** How the cover was captured. Optional: older builds' entries don't have it. */
+  source?: MemorySource;
   createdAt: string;
   attempts: number;
   /** Epoch ms before which automatic retries skip this entry. */
