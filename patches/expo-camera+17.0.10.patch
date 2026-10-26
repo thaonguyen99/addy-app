@@ -1,0 +1,20 @@
+diff --git a/node_modules/expo-camera/android/src/main/java/expo/modules/camera/ExpoCameraView.kt b/node_modules/expo-camera/android/src/main/java/expo/modules/camera/ExpoCameraView.kt
+index fc56526..f4357f5 100644
+--- a/node_modules/expo-camera/android/src/main/java/expo/modules/camera/ExpoCameraView.kt
++++ b/node_modules/expo-camera/android/src/main/java/expo/modules/camera/ExpoCameraView.kt
+@@ -588,7 +588,14 @@ class ExpoCameraView(
+   }
+ 
+   private fun setCameraZoom(value: Float) {
+-    val maxZoomRatio = camera?.cameraInfo?.zoomState?.value?.maxZoomRatio ?: 1f
++    val zoomState = camera?.cameraInfo?.zoomState?.value
++    // Addy patch: a negative zoom asks for the widest the camera allows —
++    // 0.5x-ish on phones whose logical back camera includes an ultra-wide.
++    if (value < 0f) {
++      camera?.cameraControl?.setZoomRatio(zoomState?.minZoomRatio ?: 1f)
++      return
++    }
++    val maxZoomRatio = zoomState?.maxZoomRatio ?: 1f
+     val targetZoomRatio = max(1f, min(maxZoomRatio, value.coerceIn(0f, 1f) * maxZoomRatio))
+     camera?.cameraControl?.setZoomRatio(targetZoomRatio)
+   }

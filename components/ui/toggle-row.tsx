@@ -1,13 +1,8 @@
+import type { ReactNode } from "react";
 import { useEffect, useRef } from "react";
-import {
-  Animated,
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
+import { Animated, Pressable, StyleSheet, Text, View } from "react-native";
 
-import { BrandColors } from "@/constants/theme";
+import { AddyColors, AddyFonts } from "@/constants/theme";
 
 type ToggleRowProps = {
   label: string;
@@ -15,16 +10,19 @@ type ToggleRowProps = {
   value: boolean;
   onValueChange: (next: boolean) => void;
   disabled?: boolean;
+  /** Extra control between the text and the switch (e.g. a time chip). */
+  accessory?: ReactNode;
 };
 
-const TRACK_WIDTH = 46;
-const TRACK_HEIGHT = 28;
-const KNOB = 22;
+const TRACK_WIDTH = 52;
+const TRACK_HEIGHT = 32;
+const KNOB = 26;
+const TRACK_OFF = "#D9DCE3";
 
 /**
- * A `Pressable`-based two-state switch. The app has no `Switch` primitive and
- * RN core `Switch` fights the dark theme, so this is the shared control for
- * settings toggles (memory visibility, notification preferences).
+ * A `Pressable`-based two-state switch row. The app has no `Switch`
+ * primitive and RN core `Switch` doesn't take the Addy look, so this is the
+ * shared control for settings toggles.
  */
 export function ToggleRow({
   label,
@@ -32,6 +30,7 @@ export function ToggleRow({
   value,
   onValueChange,
   disabled = false,
+  accessory,
 }: ToggleRowProps) {
   const progress = useRef(new Animated.Value(value ? 1 : 0)).current;
 
@@ -49,7 +48,7 @@ export function ToggleRow({
   });
   const trackColor = progress.interpolate({
     inputRange: [0, 1],
-    outputRange: [BrandColors.gray500, BrandColors.primary],
+    outputRange: [TRACK_OFF, AddyColors.limeDeep],
   });
 
   return (
@@ -59,6 +58,7 @@ export function ToggleRow({
       accessibilityRole="switch"
       accessibilityState={{ checked: value, disabled }}
       accessibilityLabel={label}
+      accessibilityHint={description}
     >
       <View style={styles.textCol}>
         <Text style={styles.label}>{label}</Text>
@@ -66,6 +66,7 @@ export function ToggleRow({
           <Text style={styles.description}>{description}</Text>
         ) : null}
       </View>
+      {accessory}
       <Animated.View style={[styles.track, { backgroundColor: trackColor }]}>
         <Animated.View
           style={[styles.knob, { transform: [{ translateX }] }]}
@@ -79,21 +80,22 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
-    gap: 16,
-    paddingVertical: 10,
+    gap: 12,
+    paddingVertical: 12,
   },
   disabled: { opacity: 0.5 },
-  textCol: { flex: 1, gap: 2 },
+  textCol: { flex: 1, gap: 0 },
   label: {
-    fontSize: 15,
-    fontWeight: "600",
-    color: BrandColors.neutral,
+    fontFamily: AddyFonts.title,
+    fontSize: 17,
+    lineHeight: 24,
+    color: AddyColors.ink,
   },
   description: {
-    fontSize: 13,
-    color: BrandColors.neutralMuted,
-    lineHeight: 18,
+    fontFamily: AddyFonts.tech,
+    fontSize: 16,
+    lineHeight: 19,
+    color: AddyColors.inkMuted,
   },
   track: {
     width: TRACK_WIDTH,
@@ -105,6 +107,7 @@ const styles = StyleSheet.create({
     width: KNOB,
     height: KNOB,
     borderRadius: KNOB / 2,
-    backgroundColor: BrandColors.white,
+    backgroundColor: AddyColors.white,
+    boxShadow: "0 1px 3px rgba(40, 44, 92, 0.25)",
   },
 });

@@ -17,20 +17,24 @@ export const ChatAvatar = memo(function ChatAvatar({
   user,
   size = 30,
 }: ChatAvatarProps) {
-  return (
-    <View
-      style={[
-        styles.avatar,
-        { width: size, height: size, borderRadius: size / 2 },
-      ]}
-    >
-      {user?.avatarUrl ? (
+  const radius = { borderRadius: size / 2 };
+  if (user?.avatarUrl) {
+    // Photo edge to edge with the ring drawn over it: a border + background
+    // behind a dark photo shows as light slivers at the rounded edge.
+    return (
+      <View style={[{ width: size, height: size }, radius]}>
         <Image
           source={{ uri: cloudinaryThumb(user.avatarUrl, size) }}
-          style={styles.image}
+          style={[StyleSheet.absoluteFill, radius]}
           contentFit="cover"
         />
-      ) : user ? (
+        <View pointerEvents="none" style={[StyleSheet.absoluteFill, styles.ring, radius]} />
+      </View>
+    );
+  }
+  return (
+    <View style={[styles.avatar, { width: size, height: size }, radius]}>
+      {user ? (
         <Text style={[styles.initial, { fontSize: size * 0.42 }]}>
           {user.username.charAt(0).toUpperCase()}
         </Text>
@@ -50,6 +54,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     overflow: "hidden",
   },
-  image: { width: "100%", height: "100%" },
+  ring: { borderWidth: ADDY_BORDER_WIDTH, borderColor: AddyColors.line },
   initial: { fontFamily: AddyFonts.title, color: AddyColors.ink },
 });

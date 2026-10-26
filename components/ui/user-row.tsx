@@ -23,24 +23,28 @@ export function UserAvatar({
   size?: number;
 }) {
   const initial = userDisplayName(user).charAt(0).toUpperCase();
-  return (
-    <View
-      style={[
-        styles.avatar,
-        { width: size, height: size, borderRadius: size / 2 },
-      ]}
-    >
-      {user.avatarUrl ? (
+  const radius = { borderRadius: size / 2 };
+  if (user.avatarUrl) {
+    // Ring drawn over the photo, not around it — see ChatAvatar.
+    return (
+      <View style={[{ width: size, height: size }, radius]}>
         <Image
           source={{ uri: cloudinaryThumb(user.avatarUrl, size) }}
-          style={styles.avatarImage}
+          style={[StyleSheet.absoluteFill, radius]}
           contentFit="cover"
         />
-      ) : (
-        <Text style={[styles.avatarInitial, { fontSize: size * 0.4 }]}>
-          {initial}
-        </Text>
-      )}
+        <View
+          pointerEvents="none"
+          style={[StyleSheet.absoluteFill, styles.avatarRing, radius]}
+        />
+      </View>
+    );
+  }
+  return (
+    <View style={[styles.avatar, { width: size, height: size }, radius]}>
+      <Text style={[styles.avatarInitial, { fontSize: size * 0.4 }]}>
+        {initial}
+      </Text>
     </View>
   );
 }
@@ -100,7 +104,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     overflow: "hidden",
   },
-  avatarImage: { width: "100%", height: "100%" },
+  avatarRing: { borderWidth: ADDY_BORDER_WIDTH, borderColor: AddyColors.line },
   avatarInitial: { fontFamily: AddyFonts.title, color: AddyColors.ink },
   text: { flex: 1, gap: 1 },
   name: {

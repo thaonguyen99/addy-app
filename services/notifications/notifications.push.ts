@@ -6,6 +6,15 @@ import { Platform } from "react-native";
 import { notificationApi } from "./notifications.api";
 import type { DevicePlatform } from "./notifications.type";
 
+/** The phone's IANA zone ("Asia/Ho_Chi_Minh"), so On this day fires at local time. */
+export function deviceTimezone(): string | undefined {
+  try {
+    return Intl.DateTimeFormat().resolvedOptions().timeZone || undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 let lastRegisteredToken: string | null = null;
 
 /**
@@ -57,7 +66,11 @@ export async function registerForPush(): Promise<void> {
     });
     if (!token || token === lastRegisteredToken) return;
 
-    await notificationApi.registerDeviceToken(token, Platform.OS as DevicePlatform);
+    await notificationApi.registerDeviceToken(
+      token,
+      Platform.OS as DevicePlatform,
+      deviceTimezone(),
+    );
     lastRegisteredToken = token;
   } catch (error) {
     console.warn("[push] registration failed", error);

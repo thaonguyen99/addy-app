@@ -2,9 +2,11 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { queryKeys } from "@/services/query/keys";
 import { notificationApi } from "./notifications.api";
+import { deviceTimezone } from "./notifications.push";
 import type {
   DevicePlatform,
   NotificationPreferences,
+  NotificationPreferencesPatch,
 } from "./notifications.type";
 
 export function useNotificationPreferencesQuery(enabled = true) {
@@ -18,7 +20,7 @@ export function useNotificationPreferencesQuery(enabled = true) {
 export function useUpdateNotificationPreferencesMutation() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (patch: Partial<NotificationPreferences>) =>
+    mutationFn: (patch: NotificationPreferencesPatch) =>
       notificationApi.updateNotificationPreferences(patch),
     onMutate: async (patch) => {
       const key = queryKeys.notificationPreferences;
@@ -49,6 +51,10 @@ export function useUpdateNotificationPreferencesMutation() {
 export function useRegisterDeviceTokenMutation() {
   return useMutation({
     mutationFn: (input: { token: string; platform: DevicePlatform }) =>
-      notificationApi.registerDeviceToken(input.token, input.platform),
+      notificationApi.registerDeviceToken(
+        input.token,
+        input.platform,
+        deviceTimezone(),
+      ),
   });
 }

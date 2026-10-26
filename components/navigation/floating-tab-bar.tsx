@@ -4,8 +4,16 @@ import { Image } from "expo-image";
 import * as Haptics from "expo-haptics";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
-import { memo } from "react";
+import { memo, type ReactNode, useEffect, useRef } from "react";
 import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
+import Animated, {
+  useAnimatedStyle,
+  useReducedMotion,
+  useSharedValue,
+  withSequence,
+  withSpring,
+  withTiming,
+} from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { GlossyOrb } from "@/components/ui/glossy-orb";
@@ -42,7 +50,14 @@ const RIGHT_SLOTS: TabSlot[] = [
   { route: "index", emoji: "", label: "You" },
 ];
 
-function tapHaptic() {
+/** Left to right as the bar shows them, camera orb included — the swipe order. */
+export const SWIPE_ORDER = [
+  ...LEFT_SLOTS.map((s) => s.route),
+  "capture",
+  ...RIGHT_SLOTS.map((s) => s.route),
+];
+
+export function tapHaptic() {
   if (Platform.OS === "ios") {
     void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
   }
@@ -83,11 +98,13 @@ export function FloatingTabBar({ state, navigation }: BottomTabBarProps) {
         style={styles.slot}
       >
         {slot.route === "index" ? (
-          <AvatarIcon focused={focused} />
+          <TabIconMotion focused={focused}>
+            <AvatarIcon focused={focused} />
+          </TabIconMotion>
         ) : (
-          <View style={[styles.bubble, focused && styles.bubbleActive]}>
+          <TabIconMotion focused={focused} highlight>
             <Text style={styles.emoji}>{slot.emoji}</Text>
-          </View>
+          </TabIconMotion>
         )}
       </Pressable>
     );
@@ -137,6 +154,67 @@ export function FloatingTabBar({ state, navigation }: BottomTabBarProps) {
     </View>
   );
 }
+
+/**
+ * Selection motion for one tab: the icon pops when its tab becomes active,
+ * and with `highlight` the lime bubble grows in behind it (and shrinks away
+ * on the tab being left). No pop on first render or with reduced motion.
+ */
+const TabIconMotion = memo(function TabIconMotion({
+  focused,
+  highlight = false,
+  children,
+}: {
+  focused: boolean;
+  highlight?: boolean;
+  children: ReactNode;
+}) {
+  const reducedMotion = useReducedMotion();
+  const selected = useSharedValue(focused ? 1 : 0);
+  const pop = useSharedValue(1);
+  const mounted = useRef(false);
+
+  useEffect(() => {
+    if (!mounted.current) {
+      mounted.current = true;
+      return;
+    }
+    if (reducedMotion) {
+      selected.value = focused ? 1 : 0;
+      return;
+    }
+    selected.value = withTiming(focused ? 1 : 0, { duration: 220 });
+    if (focused) {
+      pop.value = withSequence(
+        withTiming(1.2, { duration: 110 }),
+        withSpring(1, { damping: 9, stiffness: 220 }),
+      );
+    }
+  }, [focused, reducedMotion, selected, pop]);
+
+  const iconStyle = useAnimatedStyle(() => ({
+    transform: [
+      { scale: pop.value },
+      { translateY: -2 * selected.value },
+    ],
+  }));
+  const bubbleStyle = useAnimatedStyle(() => ({
+    opacity: selected.value,
+    transform: [{ scale: 0.55 + 0.45 * selected.value }],
+  }));
+
+  return (
+    <View style={highlight ? styles.bubble : undefined}>
+      {highlight ? (
+        <Animated.View
+          pointerEvents="none"
+          style={[StyleSheet.absoluteFill, styles.bubbleActive, bubbleStyle]}
+        />
+      ) : null}
+      <Animated.View style={iconStyle}>{children}</Animated.View>
+    </View>
+  );
+});
 
 const AvatarIcon = memo(function AvatarIcon({ focused }: { focused: boolean }) {
   const avatarUrl = useAuthStore((s) => s.user?.avatarUrl);
@@ -188,7 +266,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  bubbleActive: { backgroundColor: AddyColors.lime },
+  bubbleActive: { backgroundColor: AddyColors.lime, borderRadius: 18 },
   emoji: { fontSize: 20 },
   orbButton: {
     position: "absolute",

@@ -1,3 +1,4 @@
+import { TabSwipe } from '@/components/navigation/tab-swipe';
 import { IconCircleButton } from '@/components/ui/icon-circle-button';
 import { AddyCameraView } from '@/features/camera/components/addy-camera-view';
 import { CameraPermissionGatePanel } from '@/features/camera/components/camera-permission-gate-ui';
@@ -30,42 +31,44 @@ export function AddyCameraScreen() {
     );
   }
 
-  if (gatePanel) {
-    // The live view draws its own close button; the gate panels need one too.
-    return (
-      <View style={styles.root}>
-        {gatePanel}
-        <SafeAreaView edges={['top']} style={styles.closeRow} pointerEvents="box-none">
-          <IconCircleButton
-            icon="close"
-            size={36}
-            accessibilityLabel="Close camera"
-            onPress={closeCamera}
-          />
-        </SafeAreaView>
-      </View>
-    );
-  }
-
+  // The camera sits between Map and Friends in the tab bar; swipe to either.
+  // Paused mid-capture so a stray swipe can't drop the photo.
   return (
-    <AddyCameraView
-      cameraRef={camera.cameraRef}
-      isBusy={camera.isBusy}
-      onCameraReady={camera.onCameraReady}
-      onCapture={() => void camera.captureAndCreate()}
-      onOpenGallery={() => void camera.pickFromGalleryAndCreate()}
-      onClose={closeCamera}
-      flash={camera.flash}
-      onCycleFlash={camera.cycleFlash}
-      facing={camera.facing}
-      onFlipCamera={camera.flipCamera}
-      zoom={camera.zoom}
-      onZoomSet={camera.setZoomNormalized}
-      availableLenses={camera.availableLenses}
-      selectedLens={camera.selectedLens}
-      onSelectLens={camera.setSelectedLens}
-      onAvailableLensesChanged={camera.onAvailableLensesChanged}
-    />
+    <TabSwipe routeName="capture" disabled={camera.isBusy}>
+      {gatePanel ? (
+        // The live view draws its own close button; the gate panels need one too.
+        <View style={styles.root}>
+          {gatePanel}
+          <SafeAreaView edges={['top']} style={styles.closeRow} pointerEvents="box-none">
+            <IconCircleButton
+              icon="close"
+              size={36}
+              accessibilityLabel="Close camera"
+              onPress={closeCamera}
+            />
+          </SafeAreaView>
+        </View>
+      ) : (
+        <AddyCameraView
+          cameraRef={camera.cameraRef}
+          isBusy={camera.isBusy}
+          onCameraReady={camera.onCameraReady}
+          onCapture={() => void camera.captureAndCreate()}
+          onOpenGallery={() => void camera.pickFromGalleryAndCreate()}
+          onClose={closeCamera}
+          flash={camera.flash}
+          onCycleFlash={camera.cycleFlash}
+          facing={camera.facing}
+          onFlipCamera={camera.flipCamera}
+          zoom={camera.zoom}
+          onZoomSet={camera.setZoomNormalized}
+          availableLenses={camera.availableLenses}
+          selectedLens={camera.selectedLens}
+          onSelectLens={camera.setSelectedLens}
+          onAvailableLensesChanged={camera.onAvailableLensesChanged}
+        />
+      )}
+    </TabSwipe>
   );
 }
 

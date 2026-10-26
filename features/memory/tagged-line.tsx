@@ -3,21 +3,25 @@ import { Pressable, StyleSheet, Text } from "react-native";
 import { ADDY_BORDER_WIDTH, AddyColors, AddyFonts, AddyRadius } from "@/constants/theme";
 import type { PublicUser } from "@/services/users";
 
-/** Past this many names the rest collapse into "N others". */
-const MAX_NAMES = 3;
+const PINK_TINT = "#FFE6F2";
+const PINK_EDGE = "#FFB3D7";
+const PINK_INK = "#B8236F";
+
+/** Names shown before the rest collapse into "+N". */
+const MAX_NAMES = 2;
 
 function joinNames(names: string[]): string {
-  if (names.length <= 1) return names[0] ?? "";
   if (names.length > MAX_NAMES) {
-    const rest = names.length - (MAX_NAMES - 1);
-    return `${names.slice(0, MAX_NAMES - 1).join(", ")} and ${rest} others`;
+    const rest = names.length - MAX_NAMES;
+    return `${names.slice(0, MAX_NAMES).join(", ")} +${rest}`;
   }
-  return `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}`;
+  return names.join(" and ");
 }
 
 /**
  * "✦ taetae99 tagged hanni and sekre_van", written for whoever is reading:
- * the owner sees "you tagged …", a tagged friend sees "… tagged you and …".
+ * the owner sees "you tagged …", a tagged friend sees "… tagged you and …"
+ * ("you" always first). Past two names: "tagged you, sekre_van +2".
  */
 export function taggedSentence(
   author: PublicUser,
@@ -44,6 +48,8 @@ export function TaggedLine({
 }) {
   if (tagged.length === 0) return null;
   const sentence = taggedSentence(author, tagged, viewerId);
+  // Pink when it's about you, so a tagged friend spots themself.
+  const mine = tagged.some((user) => user.id === viewerId);
   return (
     <Pressable
       onPress={onPress}
@@ -51,9 +57,13 @@ export function TaggedLine({
       accessibilityRole={onPress ? "button" : undefined}
       accessibilityLabel={sentence}
       accessibilityHint={onPress ? "Shows who's tagged" : undefined}
-      style={({ pressed }) => [styles.pill, pressed && styles.pressed]}
+      style={({ pressed }) => [
+        styles.pill,
+        mine && styles.pillMine,
+        pressed && styles.pressed,
+      ]}
     >
-      <Text style={styles.text} numberOfLines={2}>
+      <Text style={[styles.text, mine && styles.textMine]} numberOfLines={2}>
         ✦ {sentence}
         {onPress ? " ›" : ""}
       </Text>
@@ -72,6 +82,7 @@ const styles = StyleSheet.create({
     borderColor: AddyColors.line,
     backgroundColor: AddyColors.white,
   },
+  pillMine: { backgroundColor: PINK_TINT, borderColor: PINK_EDGE },
   pressed: { opacity: 0.7 },
   text: {
     fontFamily: AddyFonts.tech,
@@ -80,4 +91,5 @@ const styles = StyleSheet.create({
     textAlign: "center",
     color: AddyColors.inkMuted,
   },
+  textMine: { color: PINK_INK },
 });

@@ -1,13 +1,19 @@
 import { apiDelete, apiGet, apiPatch, apiPost } from "@/services/api/client";
-import type { DevicePlatform, NotificationPreferences } from "./notifications.type";
+import type {
+  DevicePlatform,
+  NotificationPreferences,
+  NotificationPreferencesPatch,
+} from "./notifications.type";
 
 async function registerDeviceToken(
   token: string,
   platform: DevicePlatform,
+  timezone?: string,
 ) {
   return apiPost<{ registered: boolean }>("/notifications/device-tokens", {
     token,
     platform,
+    ...(timezone ? { timezone } : {}),
   });
 }
 
@@ -22,7 +28,7 @@ async function getNotificationPreferences() {
 }
 
 async function updateNotificationPreferences(
-  patch: Partial<NotificationPreferences>,
+  patch: NotificationPreferencesPatch,
 ) {
   return apiPatch<NotificationPreferences>(
     "/notifications/preferences",

@@ -105,7 +105,9 @@ export function useCreatePinSubmit(images: readonly AddyMemoryImage[]) {
         moodScore,
         visibility,
         taggedUserIds: taggedUsers.map((user) => user.id),
-        capturedAt: images[0].createdAt,
+        // The cover's date: when it was shot (quick snap), else its EXIF
+        // capture time, else when it was picked.
+        capturedAt: images[0].takenAt ?? images[0].createdAt,
         createdAt: now,
         attempts: 0,
         nextAttemptAt: 0,

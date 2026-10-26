@@ -7,6 +7,7 @@ import { prepareUploadImage } from "@/features/media/prepare-upload-image";
 import { checkImageSafety } from "@/features/moderation/check-image-safety";
 import { getApiErrorMessage } from "@/services/api/errors";
 import { useUploadAvatarMutation } from "@/services/media";
+import { cropCenterSquare } from "@/utils/crop-square";
 
 const AVATAR_PICKER_OPTIONS: ImagePicker.ImagePickerOptions = {
   mediaTypes: ["images"],
@@ -46,8 +47,11 @@ export function useAvatarUpload() {
 
     setBusy(true);
     try {
+      // The picker's square crop isn't guaranteed (iOS can hand back the
+      // full photo), so square it here. Already-square picks pass through.
+      const square = await cropCenterSquare(result.assets[0].uri);
       // Re-encode first: strips EXIF/GPS before the photo leaves the device.
-      const { uri: localUri } = await prepareUploadImage(result.assets[0].uri);
+      const { uri: localUri } = await prepareUploadImage(square);
       const safety = await checkImageSafety(localUri);
       if (!safety.safe) {
         Alert.alert(

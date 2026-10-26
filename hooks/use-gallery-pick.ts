@@ -4,6 +4,7 @@ import { Alert } from "react-native";
 
 import { ensureMediaLibraryReadAccess } from "@/features/camera/permissions/media-library-access";
 import { cropCenterSquare } from "@/utils/crop-square";
+import { exifTakenAt } from "@/utils/exif-taken-at";
 import { persistImageToDrafts } from "@/features/drafts/draft-image-storage";
 import type { AddyMemoryImage } from "@/types/addy-memory";
 
@@ -34,12 +35,18 @@ export function useGalleryPick() {
           mediaTypes: ["images"],
           quality: 0.9,
           allowsMultipleSelection: true,
+          // Only read for the capture date; the re-encode strips it.
+          exif: true,
         });
         if (result.canceled) return [];
 
         return await Promise.all(
           (result.assets ?? []).map(async (asset) =>
-            persistImageToDrafts(await cropCenterSquare(asset.uri), "uploaded"),
+            persistImageToDrafts(
+              await cropCenterSquare(asset.uri),
+              "uploaded",
+              exifTakenAt(asset.exif),
+            ),
           ),
         );
       } finally {

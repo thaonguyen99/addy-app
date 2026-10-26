@@ -6,18 +6,30 @@ import { safeBack } from "@/lib/safe-router";
 
 type ProfileSubHeaderProps = Readonly<{
   title: string;
+  /** Where Back goes when there's no history. Defaults to Settings. */
+  fallback?: Parameters<typeof safeBack>[0];
 }>;
 
-/** Shared back+title header for the Account/Security/Notifications sub-screens. */
-export function ProfileSubHeader({ title }: ProfileSubHeaderProps) {
+const BACK_SIZE = 40;
+
+/** Back + centered title header for Settings and its sub-screens. */
+export function ProfileSubHeader({
+  title,
+  fallback = "/(app)/profile",
+}: ProfileSubHeaderProps) {
   return (
     <View style={styles.row}>
       <IconCircleButton
         icon="chevron-back"
-        accessibilityLabel="Back to profile settings"
-        onPress={() => safeBack("/(app)/profile")}
+        size={BACK_SIZE}
+        accessibilityLabel="Back"
+        onPress={() => safeBack(fallback)}
       />
-      <Text style={styles.title}>{title}</Text>
+      <Text style={styles.title} numberOfLines={1} accessibilityRole="header">
+        {title}
+      </Text>
+      {/* Balances the back button so the title stays centered. */}
+      <View style={styles.spacer} />
     </View>
   );
 }
@@ -31,9 +43,12 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   title: {
+    flex: 1,
+    textAlign: "center",
     fontFamily: AddyFonts.title,
-    fontSize: 20,
-    lineHeight: 30,
+    fontSize: 26,
+    lineHeight: 36,
     color: AddyColors.ink,
   },
+  spacer: { width: BACK_SIZE },
 });

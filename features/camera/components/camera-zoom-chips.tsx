@@ -11,6 +11,11 @@ const zoomForFactor = (factor: number) => (factor - 1) / 4;
 const ULTRA_WIDE = /ultra wide/i;
 const WIDE = "Back Camera";
 
+/** Android has no lens list: this stands in for "widest zoom" (the patched
+ *  expo-camera reads a negative zoom as the camera's minimum ratio). */
+export const ANDROID_ULTRA_WIDE = "android-ultra-wide";
+export const ANDROID_ULTRA_WIDE_ZOOM = -1;
+
 type CameraZoomChipsProps = Readonly<{
   facing: CameraType;
   zoom: number;
@@ -23,8 +28,10 @@ type CameraZoomChipsProps = Readonly<{
 type Chip = { key: string; label: string; active: boolean; onPress: () => void };
 
 /**
- * `.5 · 1× · 2` zoom chips. ".5" only appears when the device reports an
- * ultra-wide back lens (iOS); the rest is digital zoom.
+ * `.5 · 1× · 2` zoom chips. On iOS ".5" appears when the device reports an
+ * ultra-wide back lens; on Android it's the back camera's widest zoom (true
+ * 0.5× on phones with an ultra-wide, the same as 1× elsewhere). The rest is
+ * digital zoom.
  */
 function CameraZoomChipsInner({
   facing,
@@ -34,10 +41,13 @@ function CameraZoomChipsInner({
   selectedLens,
   onSelectLens,
 }: CameraZoomChipsProps) {
-  const ultraWide =
-    Platform.OS === "ios" && facing === "back"
-      ? availableLenses.find((lens) => ULTRA_WIDE.test(lens))
-      : undefined;
+  let ultraWide: string | undefined;
+  if (facing === "back") {
+    ultraWide =
+      Platform.OS === "ios"
+        ? availableLenses.find((lens) => ULTRA_WIDE.test(lens))
+        : ANDROID_ULTRA_WIDE;
+  }
   const wide = availableLenses.includes(WIDE) ? WIDE : undefined;
   const onUltraWide = ultraWide !== undefined && selectedLens === ultraWide;
 

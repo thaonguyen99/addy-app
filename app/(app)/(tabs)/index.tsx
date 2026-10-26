@@ -129,7 +129,7 @@ export default function YouScreen() {
         }
         right={
           <IconCircleButton
-            accessibilityLabel="Profile settings"
+            accessibilityLabel="Settings"
             size={36}
             onPress={() => router.push("/profile")}
           >

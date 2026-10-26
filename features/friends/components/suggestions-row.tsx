@@ -1,5 +1,7 @@
 import { useState } from "react";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
+// RNGH's ScrollView, so scrolling the row wins over the tab swipe.
+import { ScrollView } from "react-native-gesture-handler";
 import { create } from "zustand";
 
 import { UserAvatar, userDisplayName } from "@/components/ui/user-row";

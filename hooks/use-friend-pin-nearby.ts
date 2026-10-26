@@ -3,6 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useCurrentLocation } from "@/hooks/use-current-location";
 import { haversineDistanceMeters } from "@/utils/haversine-distance";
 import { useFriendsMapQuery } from "@/services/memories";
+import { useNotificationPreferencesQuery } from "@/services/notifications";
 import type { FriendMemoryPin } from "@/services/memories";
 
 /** How close a friend's pin needs to be to surface the nearby banner. */
@@ -13,19 +14,23 @@ const BOUNDS_DELTA = 0.01;
 /**
  * One-shot check (not a polling timer): on mount, grabs the device location
  * once and looks for the nearest friend pin within `NEARBY_THRESHOLD_METERS`.
+ * Off when Settings › Notifications › Friends nearby is off — then it doesn't
+ * even ask for the location.
  */
 export function useFriendPinNearby() {
   const { coords, refresh } = useCurrentLocation();
   const requestedRef = useRef(false);
   const [dismissed, setDismissed] = useState(false);
+  const { data: prefs } = useNotificationPreferencesQuery();
+  const enabled = prefs?.friendsNearby ?? false;
 
   useEffect(() => {
-    if (requestedRef.current) return;
+    if (!enabled || requestedRef.current) return;
     requestedRef.current = true;
     void refresh();
-  }, [refresh]);
+  }, [enabled, refresh]);
 
-  const bounds = coords
+  const bounds = enabled && coords
     ? {
         north: coords.latitude + BOUNDS_DELTA,
         south: coords.latitude - BOUNDS_DELTA,
@@ -53,7 +58,7 @@ export function useFriendPinNearby() {
   }, [coords, data]);
 
   return {
-    pin: dismissed ? null : nearestPin,
+    pin: dismissed || !enabled ? null : nearestPin,
     dismiss: () => setDismissed(true),
   };
 }

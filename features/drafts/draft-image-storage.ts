@@ -13,6 +13,7 @@ type DraftIndexEntry = {
   uri: string;
   sourceType: MemoryImageSourceType;
   createdAt: string;
+  takenAt?: string;
 };
 
 async function ensureDraftDir() {
@@ -48,6 +49,7 @@ export async function loadDraftImages(): Promise<AddyMemoryImage[]> {
         uri: entry.uri,
         sourceType: entry.sourceType,
         createdAt: entry.createdAt,
+        takenAt: entry.takenAt,
       });
     }
   }
@@ -59,6 +61,7 @@ export async function loadDraftImages(): Promise<AddyMemoryImage[]> {
         uri: v.uri,
         sourceType: v.sourceType,
         createdAt: v.createdAt,
+        takenAt: v.takenAt,
       }))
     );
   }
@@ -70,7 +73,9 @@ export async function loadDraftImages(): Promise<AddyMemoryImage[]> {
 
 export async function persistImageToDrafts(
   sourceUri: string,
-  sourceType: MemoryImageSourceType
+  sourceType: MemoryImageSourceType,
+  /** EXIF capture time, read before the re-encode below strips it. */
+  takenAt?: string | null
 ): Promise<AddyMemoryImage> {
   await ensureDraftDir();
   const id = createMemoryImageId();
@@ -85,6 +90,7 @@ export async function persistImageToDrafts(
     uri: dest,
     sourceType,
     createdAt: new Date().toISOString(),
+    ...(takenAt ? { takenAt } : {}),
   };
 
   const index = await readIndex();
@@ -93,6 +99,7 @@ export async function persistImageToDrafts(
     uri: image.uri,
     sourceType: image.sourceType,
     createdAt: image.createdAt,
+    takenAt: image.takenAt,
   });
   await writeIndex(index);
 

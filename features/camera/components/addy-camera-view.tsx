@@ -15,7 +15,11 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { GlossyOrb } from "@/components/ui/glossy-orb";
 import { TechChip } from "@/components/ui/tech-chip";
 import { AddyColors } from "@/constants/theme";
-import { CameraZoomChips } from "@/features/camera/components/camera-zoom-chips";
+import {
+  ANDROID_ULTRA_WIDE,
+  ANDROID_ULTRA_WIDE_ZOOM,
+  CameraZoomChips,
+} from "@/features/camera/components/camera-zoom-chips";
 import { useLastLibraryPhoto } from "@/hooks/use-last-library-photo";
 import { useCameraShutterSound } from "@/hooks/use-camera-shutter-sound";
 import { ONBOARDING_ADD_MEMORY_STEP_ID } from "@/features/onboarding/onboarding-tour";
@@ -142,9 +146,13 @@ function AddyCameraViewInner({
 
   const pinchBaseRef = useRef(0);
 
+  const onAndroidUltraWide = selectedLens === ANDROID_ULTRA_WIDE;
+
   const markPinchBase = useCallback(() => {
     pinchBaseRef.current = zoomRef.current;
-  }, []);
+    // Pinching leaves Android's .5 for regular zoom (iOS zooms the lens itself).
+    if (onAndroidUltraWide) onSelectLens(undefined);
+  }, [onAndroidUltraWide, onSelectLens]);
 
   const applyPinchScale = useCallback(
     (scale: number) => {
@@ -222,8 +230,8 @@ function AddyCameraViewInner({
               mode="picture"
               animateShutter
               flash={flash}
-              zoom={zoom}
-              selectedLens={selectedLens}
+              zoom={onAndroidUltraWide ? ANDROID_ULTRA_WIDE_ZOOM : zoom}
+              selectedLens={onAndroidUltraWide ? undefined : selectedLens}
               onAvailableLensesChanged={onAvailableLensesChanged}
               onCameraReady={onCameraReady}
             />
@@ -388,7 +396,8 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     paddingHorizontal: 36,
     paddingTop: 8,
-    paddingBottom: 56,
+    // Raised off the bottom edge so the shutter sits under a resting thumb.
+    paddingBottom: 96,
   },
   galleryTile: {
     width: 48,
