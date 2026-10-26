@@ -29,10 +29,10 @@ import {
   AddyFonts,
   AddyRadius,
 } from "@/constants/theme";
-import { formatRelativeTime } from "@/features/feed/utils/format-relative-time";
-import { cloudinaryThumb } from "@/lib/image/cloudinary-thumb";
-import { useClusterMemoriesQuery } from "@/lib/query/hooks";
-import type { FriendMemoryPin, MemoryPin } from "@/types/api";
+import { formatRelativeTime } from "@/utils/format-relative-time";
+import { cloudinaryThumb } from "@/lib/cloudinary-thumb";
+import { useClusterMemoriesQuery } from "@/services/memories";
+import type { FriendMemoryPin, MemoryPin } from "@/services/memories";
 
 type ClusterPin = MemoryPin | FriendMemoryPin;
 

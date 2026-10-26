@@ -1,9 +1,9 @@
 import { Redirect, router } from "expo-router";
 import { useEffect } from "react";
 
-import { useAuthStore } from "@/features/auth/store/auth-store";
+import { useAuthStore } from "@/stores/auth.store";
 import { setPendingInviteToken } from "@/features/friends/pending-invite";
-import { openInvite } from "@/features/friends/store/friend-sheets-store";
+import { openInvite } from "@/stores/friend-sheets.store";
 
 /**
  * Landing route for invite links (`https://addy.app/i/<token>` and

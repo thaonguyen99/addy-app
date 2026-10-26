@@ -25,19 +25,15 @@ import {
 } from "@/constants/theme";
 import { AuthTextField } from "@/features/auth/components/auth-text-field";
 import { ProfileSubHeader } from "@/features/profile/components/profile-sub-header";
-import { useAvatarUpload } from "@/features/profile/hooks/use-avatar-upload";
+import { useAvatarUpload } from "@/hooks/use-avatar-upload";
 import {
   type ProfileForm,
   USERNAME_PATTERN,
   profileFormSchema,
 } from "@/features/profile/schema";
-import { getApiErrorMessage } from "@/lib/api/errors";
-import {
-  useCheckUsernameMutation,
-  useProfileQuery,
-  useUpdateProfileMutation,
-} from "@/lib/query/hooks";
-import { safeBack } from "@/lib/navigation/safe-router";
+import { getApiErrorMessage } from "@/services/api/errors";
+import { useCheckUsernameMutation, useProfileQuery, useUpdateProfileMutation } from "@/services/users";
+import { safeBack } from "@/lib/safe-router";
 import { Image } from "expo-image";
 
 type UsernameStatus = "idle" | "checking" | "available" | "taken" | "invalid";

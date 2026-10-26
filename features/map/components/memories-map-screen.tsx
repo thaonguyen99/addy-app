@@ -51,18 +51,18 @@ import {
   PlaceMemoriesSheet,
   type PlaceMemoriesSheetRef,
 } from "@/features/map/components/place-memories-sheet";
-import { useMapFocusStore } from "@/features/map/store/map-focus-store";
-import { useAddyMapStyle } from "@/features/map/utils/addy-map-style";
+import { useMapFocusStore } from "@/stores/map-focus.store";
+import { useAddyMapStyle } from "@/services/map";
 import {
   clusterPins,
   type ClusterGroup,
-} from "@/features/map/utils/cluster-pins";
+} from "@/utils/cluster-pins";
 import {
   ONBOARDING_ADD_MEMORY_STEP_ID,
   ONBOARDING_MAP_PIN_TARGET_ID,
   ONBOARDING_TOUR_ID,
 } from "@/features/onboarding/onboarding-tour";
-import { usePinQueueStore } from "@/features/pin-queue/pin-queue-store";
+import { usePinQueueStore } from "@/stores/pin-queue.store";
 import {
   queuedPinCoordinates,
   queuedPinPlaceName,
@@ -70,15 +70,11 @@ import {
 import { showQueuedPinActions } from "@/features/pin-queue/queued-pin-actions";
 import { IconCircleButton } from "@/components/ui/icon-circle-button";
 import { userDisplayName } from "@/components/ui/user-row";
-import { useFriendSheetsStore } from "@/features/friends/store/friend-sheets-store";
-import {
-  useFriendsMapQuery,
-  useFriendsQuery,
-  useMemoriesMapQuery,
-  useMemoryQuery,
-  useStatsQuery,
-} from "@/lib/query/hooks";
-import type { FriendMemoryPin, MapBounds, MemoryPin } from "@/types/api";
+import { useFriendSheetsStore } from "@/stores/friend-sheets.store";
+import { useFriendsMapQuery, useMemoriesMapQuery, useMemoryQuery } from "@/services/memories";
+import { useFriendsQuery } from "@/services/friends";
+import { useStatsQuery } from "@/services/users";
+import type { FriendMemoryPin, MapBounds, MemoryPin } from "@/services/memories";
 
 // MapPhotoPin's visual footprint (features/map/components/map-photo-pin.tsx),
 // extending UPWARD from the marker's anchor="bottom" point.

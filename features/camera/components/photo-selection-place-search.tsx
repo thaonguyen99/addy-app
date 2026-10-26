@@ -3,7 +3,7 @@ import { memo } from "react";
 import { StyleSheet, TextInput, View } from "react-native";
 
 import { BrandColors } from "@/constants/theme";
-import { cameraLayout } from "@/features/camera/styles/shared-styles";
+import { cameraLayout } from "@/features/camera/shared-styles";
 
 export type PhotoSelectionPlaceSearchProps = Readonly<{
   value: string;

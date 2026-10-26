@@ -18,19 +18,19 @@ import { IconCircleButton } from "@/components/ui/icon-circle-button";
 import { SkyBackground } from "@/components/ui/sky-background";
 import { TechChip } from "@/components/ui/tech-chip";
 import { AddyColors, AddyFonts } from "@/constants/theme";
-import { useAuthStore } from "@/features/auth/store/auth-store";
 import {
   MemoryGridTile,
   QueuedGridTile,
-} from "@/features/feed/components/memory-grid-tile";
-import { useMemoryFeed } from "@/features/feed/hooks/use-memory-feed";
-import { useMapFocusStore } from "@/features/map/store/map-focus-store";
-import { ChatAvatar } from "@/features/memory/components/chat-avatar";
-import { usePinQueueStore } from "@/features/pin-queue/pin-queue-store";
+} from "@/features/feed/memory-grid-tile";
+import { ChatAvatar } from "@/features/memory/chat-avatar";
 import type { QueuedPin } from "@/features/pin-queue/pin-queue-types";
-import { useFriendPinNearby } from "@/features/social/hooks/use-friend-pin-nearby";
-import { useStatsQuery } from "@/lib/query/hooks";
-import type { MemoryListItem } from "@/types/api";
+import { useFriendPinNearby } from "@/hooks/use-friend-pin-nearby";
+import type { MemoryListItem } from "@/services/memories";
+import { useMemoryFeed } from "@/services/memories";
+import { useStatsQuery } from "@/services/users";
+import { useAuthStore } from "@/stores/auth.store";
+import { useMapFocusStore } from "@/stores/map-focus.store";
+import { usePinQueueStore } from "@/stores/pin-queue.store";
 
 const GRID_COLUMNS = 3;
 const GRID_GAP = 3;
@@ -56,10 +56,16 @@ export default function YouScreen() {
   const queuedPins = usePinQueueStore((s) => s.entries);
   const gridItems = useMemo<GridItem[]>(
     () => [
-      ...[...queuedPins]
-        .reverse()
-        .map((pin) => ({ kind: "queued" as const, key: `queued-${pin.clientId}`, pin })),
-      ...memories.map((memory) => ({ kind: "memory" as const, key: memory.id, memory })),
+      ...[...queuedPins].reverse().map((pin) => ({
+        kind: "queued" as const,
+        key: `queued-${pin.clientId}`,
+        pin,
+      })),
+      ...memories.map((memory) => ({
+        kind: "memory" as const,
+        key: memory.id,
+        memory,
+      })),
     ],
     [queuedPins, memories],
   );
@@ -95,7 +101,11 @@ export default function YouScreen() {
       item.kind === "queued" ? (
         <QueuedGridTile pin={item.pin} size={tileSize} />
       ) : (
-        <MemoryGridTile memory={item.memory} size={tileSize} onPress={openMemory} />
+        <MemoryGridTile
+          memory={item.memory}
+          size={tileSize}
+          onPress={openMemory}
+        />
       ),
     [openMemory, tileSize],
   );
@@ -103,7 +113,10 @@ export default function YouScreen() {
   const header = (
     <View style={styles.headerContent}>
       <View style={styles.profileRow}>
-        <ChatAvatar user={user ? { username, avatarUrl: user.avatarUrl } : null} size={52} />
+        <ChatAvatar
+          user={user ? { username, avatarUrl: user.avatarUrl } : null}
+          size={52}
+        />
         <View style={styles.profileText}>
           <Text style={styles.username} numberOfLines={1}>
             {username}
@@ -168,7 +181,10 @@ export default function YouScreen() {
           renderItem={renderItem}
           numColumns={GRID_COLUMNS}
           columnWrapperStyle={styles.column}
-          contentContainerStyle={[styles.content, { paddingBottom: tabBarInset }]}
+          contentContainerStyle={[
+            styles.content,
+            { paddingBottom: tabBarInset },
+          ]}
           showsVerticalScrollIndicator={false}
           ListHeaderComponent={header}
           ItemSeparatorComponent={GridSeparator}

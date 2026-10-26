@@ -43,15 +43,12 @@ import {
   openInvite,
   type QrSide,
   useFriendSheetsStore,
-} from "@/features/friends/store/friend-sheets-store";
+} from "@/stores/friend-sheets.store";
 import { shareInviteLink } from "@/features/invite/share-invite";
-import { showToast } from "@/features/toast/toast-store";
-import { getApiErrorMessage } from "@/lib/api/errors";
-import {
-  useInviteQuery,
-  useProfileQuery,
-  useRotateInviteMutation,
-} from "@/lib/query/hooks";
+import { showToast } from "@/stores/toast.store";
+import { getApiErrorMessage } from "@/services/api/errors";
+import { useInviteQuery, useRotateInviteMutation } from "@/services/social";
+import { useProfileQuery } from "@/services/users";
 
 const SIDES = [
   { value: "code", label: "My code" },

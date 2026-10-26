@@ -23,11 +23,11 @@ import {
   AddyRadius,
   AddyShadow,
 } from "@/constants/theme";
-import { useAuthStore } from "@/features/auth/store/auth-store";
-import { clearPinQueue, usePinQueueStore } from "@/features/pin-queue/pin-queue-store";
-import { getApiErrorMessage } from "@/lib/api/errors";
-import { safeBack } from "@/lib/navigation/safe-router";
-import { useDeleteAccountMutation, useProfileQuery } from "@/lib/query/hooks";
+import { useAuthStore } from "@/stores/auth.store";
+import { clearPinQueue, usePinQueueStore } from "@/stores/pin-queue.store";
+import { getApiErrorMessage } from "@/services/api/errors";
+import { safeBack } from "@/lib/safe-router";
+import { useDeleteAccountMutation, useProfileQuery } from "@/services/users";
 
 type MenuItem = {
   key: string;

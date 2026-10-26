@@ -2,7 +2,7 @@ import { StyleSheet, Text } from "react-native";
 
 import { ChatBubbleBanner } from "@/components/ui/chat-bubble-banner";
 import { BrandColors } from "@/constants/theme";
-import { useToastStore } from "@/features/toast/toast-store";
+import { useToastStore } from "@/stores/toast.store";
 
 /** Mounted once at the app root; shows whatever `showToast` last queued. */
 export function AppToastHost() {

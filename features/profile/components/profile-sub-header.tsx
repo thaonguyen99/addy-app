@@ -2,7 +2,7 @@ import { StyleSheet, Text, View } from "react-native";
 
 import { IconCircleButton } from "@/components/ui/icon-circle-button";
 import { AddyColors, AddyFonts } from "@/constants/theme";
-import { safeBack } from "@/lib/navigation/safe-router";
+import { safeBack } from "@/lib/safe-router";
 
 type ProfileSubHeaderProps = Readonly<{
   title: string;

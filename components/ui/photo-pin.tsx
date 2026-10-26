@@ -10,7 +10,7 @@ import Svg, {
 } from "react-native-svg";
 
 import { BrandColors } from "@/constants/theme";
-import { cloudinaryThumb } from "@/lib/image/cloudinary-thumb";
+import { cloudinaryThumb } from "@/lib/cloudinary-thumb";
 
 // 100x128 viewBox reference teardrop path — the one consistent pin
 // silhouette.

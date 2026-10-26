@@ -4,7 +4,7 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 import { StickerCard } from "@/components/ui/sticker-card";
 import { BrandColors } from "@/constants/theme";
 import { StickerRadius } from "@/constants/sticker-style";
-import type { PlaceSuggestion } from "@/types/api";
+import type { PlaceSuggestion } from "@/services/places";
 
 type PlaceSuggestionRowProps = Readonly<{
   place: PlaceSuggestion;

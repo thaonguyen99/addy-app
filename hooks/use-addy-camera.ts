@@ -1,0 +1,109 @@
+import { CAMERA_ZOOM_STEP } from '@/features/camera/constants/layout';
+import { useCameraPermissionGate } from '@/hooks/use-camera-permission-gate';
+import { useOnboardingCaptureStore } from '@/stores/onboarding-capture.store';
+import type { CameraType, CameraView, FlashMode } from 'expo-camera';
+import { useCallback, useRef, useState } from 'react';
+
+const CAPTURE_QUALITY = 0.92;
+
+const FLASH_CYCLE: readonly FlashMode[] = ['off', 'on', 'auto'];
+
+export function useAddyCamera() {
+  const cameraRef = useRef<CameraView | null>(null);
+  const { gate, requestPermission, refreshPermission } = useCameraPermissionGate();
+  const [isCameraReady, setIsCameraReady] = useState(false);
+  const [isCapturing, setIsCapturing] = useState(false);
+  const [flash, setFlash] = useState<FlashMode>('off');
+  const [facing, setFacing] = useState<CameraType>('back');
+  const [zoom, setZoom] = useState(0);
+  // iOS only: lenses on the current camera, e.g. "Back Ultra Wide Camera".
+  const [availableLenses, setAvailableLenses] = useState<readonly string[]>([]);
+  const [selectedLens, setSelectedLens] = useState<string | undefined>(undefined);
+
+  const onCameraReady = useCallback(() => {
+    setIsCameraReady(true);
+    useOnboardingCaptureStore.getState().setCameraReady(true);
+  }, []);
+
+  const cycleFlash = useCallback(() => {
+    setFlash((prev) => {
+      const i = FLASH_CYCLE.indexOf(prev);
+      const next = FLASH_CYCLE[(i + 1) % FLASH_CYCLE.length];
+      return next;
+    });
+  }, []);
+
+  const flipCamera = useCallback(() => {
+    setFacing((prev) => (prev === 'back' ? 'front' : 'back'));
+    setSelectedLens(undefined);
+    setZoom(0);
+  }, []);
+
+  const onAvailableLensesChanged = useCallback(
+    (event: { lenses: string[] }) => {
+      setAvailableLenses(event.lenses);
+    },
+    []
+  );
+
+  const nudgeZoom = useCallback((delta: number) => {
+    setZoom((z) => Math.min(1, Math.max(0, z + delta * CAMERA_ZOOM_STEP)));
+  }, []);
+
+  const zoomOut = useCallback(() => {
+    nudgeZoom(-1);
+  }, [nudgeZoom]);
+
+  const zoomIn = useCallback(() => {
+    nudgeZoom(1);
+  }, [nudgeZoom]);
+
+  const setZoomNormalized = useCallback((value: number) => {
+    const clamped = Math.min(1, Math.max(0, value));
+    setZoom(clamped);
+  }, []);
+
+  const capturePhoto = useCallback(async (): Promise<string | null> => {
+    const cam = cameraRef.current;
+    if (!cam || !isCameraReady) {
+      return null;
+    }
+    setIsCapturing(true);
+    try {
+      const photo = await cam.takePictureAsync({
+        quality: CAPTURE_QUALITY,
+        // The OS default click is replaced by useCameraShutterSound's custom
+        // sound, which is the one that respects silent/ringer mode.
+        shutterSound: false,
+      });
+      return photo?.uri ?? null;
+    } catch {
+      return null;
+    } finally {
+      setIsCapturing(false);
+    }
+  }, [isCameraReady]);
+
+  return {
+    cameraRef,
+    gate,
+    requestPermission,
+    refreshPermission,
+    onCameraReady,
+    isCameraReady,
+    capturePhoto,
+    isCapturing,
+    flash,
+    facing,
+    flipCamera,
+    zoom,
+    cycleFlash,
+    zoomOut,
+    zoomIn,
+    setZoomNormalized,
+    availableLenses,
+    selectedLens,
+    setSelectedLens,
+    onAvailableLensesChanged,
+  };
+}

@@ -3,7 +3,7 @@ import { StyleSheet, Text, View } from "react-native";
 
 import { ADDY_BORDER_WIDTH, AddyColors, AddyFonts } from "@/constants/theme";
 import { ORB_COLORS, ShareOrb } from "@/features/friends/components/share-orb";
-import { useInviteStory } from "@/features/invite/hooks/use-invite-story";
+import { useInviteStory } from "@/hooks/use-invite-story";
 import { shareInviteLink, shareInviteViaZalo } from "@/features/invite/share-invite";
 
 /** The slim lime invite once you have at least one friend. */

@@ -3,12 +3,11 @@ import { Alert, Platform } from "react-native";
 import { router } from "expo-router";
 
 import { AuthPrimaryButton } from "@/features/auth/components/auth-primary-button";
-import { getGoogleIdToken } from "@/features/auth/google/google-sign-in";
-import { getAuthErrorMessage } from "@/features/auth/hooks/use-auth-form-error";
-import { useAuthStore } from "@/features/auth/store/auth-store";
-import { warmUpApi } from "@/lib/api/client";
-import { ApiClientError } from "@/lib/api/errors";
-import { useGoogleSignInMutation } from "@/lib/query/hooks";
+import { getGoogleIdToken, useGoogleSignInMutation } from "@/services/auth";
+import { getAuthErrorMessage } from "@/hooks/use-auth-form-error";
+import { useAuthStore } from "@/stores/auth.store";
+import { warmUpApi } from "@/services/api/client";
+import { ApiClientError } from "@/services/api/errors";
 
 export function GoogleSignInButton() {
   const [loading, setLoading] = useState(false);

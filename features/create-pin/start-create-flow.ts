@@ -1,6 +1,6 @@
 import { router } from "expo-router";
 
-import { useCreatePinHandoffStore } from "@/features/create-pin/store/create-pin-handoff-store";
+import { useCreatePinHandoffStore } from "@/stores/create-pin-handoff.store";
 import type { AddyMemoryImage } from "@/types/addy-memory";
 
 /**

@@ -1,7 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as FileSystem from "expo-file-system/legacy";
 
-import { createMemoryImageId } from "@/features/camera/utils/id";
+import { createMemoryImageId } from "@/utils/memory-image-id";
 import { prepareUploadImage } from "@/features/media/prepare-upload-image";
 import type { AddyMemoryImage, MemoryImageSourceType } from "@/types/addy-memory";
 

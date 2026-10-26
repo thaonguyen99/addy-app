@@ -3,10 +3,13 @@ import { useLocalSearchParams } from "expo-router";
 import {
   MemoryDetailScreen,
   type MemoryReveal,
-} from "@/features/memory/components/memory-detail-screen";
+} from "@/features/memory/memory-detail-screen";
 
 export default function MemoryDetailRoute() {
-  const { id, reveal } = useLocalSearchParams<{ id: string; reveal?: string }>();
+  const { id, reveal } = useLocalSearchParams<{
+    id: string;
+    reveal?: string;
+  }>();
   return (
     <MemoryDetailScreen
       id={id ?? ""}

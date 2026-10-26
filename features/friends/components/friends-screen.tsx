@@ -24,7 +24,7 @@ import {
   AddyRadius,
   AddyShadow,
 } from "@/constants/theme";
-import { formatRelativeTime } from "@/features/feed/utils/format-relative-time";
+import { formatRelativeTime } from "@/utils/format-relative-time";
 import {
   FriendSearchBar,
   FriendSearchResults,
@@ -37,22 +37,23 @@ import { PillButton } from "@/features/friends/components/pill-button";
 import { SectionHeader } from "@/features/friends/components/section-header";
 import { SkeletonRow } from "@/features/friends/components/skeleton-row";
 import { SuggestionsRow } from "@/features/friends/components/suggestions-row";
-import {
-  celebrateFriend,
-  useFriendSheetsStore,
-} from "@/features/friends/store/friend-sheets-store";
-import { showToast } from "@/features/toast/toast-store";
-import { getApiErrorMessage } from "@/lib/api/errors";
+import { getApiErrorMessage } from "@/services/api/errors";
+import type { Friend, FriendRequest } from "@/services/friends";
 import {
   useAcceptFriendRequestMutation,
   useDeclineFriendRequestMutation,
   useFriendRequestsQuery,
   useFriendSuggestionsQuery,
   useFriendsQuery,
-  useInviteQuery,
-  useProfileQuery,
-} from "@/lib/query/hooks";
-import type { Friend, FriendRequest, PublicUser } from "@/types/api";
+} from "@/services/friends";
+import { useInviteQuery } from "@/services/social";
+import type { PublicUser } from "@/services/users";
+import { useProfileQuery } from "@/services/users";
+import {
+  celebrateFriend,
+  useFriendSheetsStore,
+} from "@/stores/friend-sheets.store";
+import { showToast } from "@/stores/toast.store";
 
 const SIDE_PADDING = 16;
 const SEARCH_DEBOUNCE_MS = 400;
@@ -87,8 +88,7 @@ export function FriendsScreen() {
   const incoming = incomingQuery.data?.pages.flatMap((p) => p.items) ?? [];
   const link = inviteQuery.data?.webUrl ?? "";
   const searching =
-    term.length >= SEARCH_MIN_CHARS &&
-    input.trim().length >= SEARCH_MIN_CHARS;
+    term.length >= SEARCH_MIN_CHARS && input.trim().length >= SEARCH_MIN_CHARS;
   const loading = friendsQuery.isLoading || incomingQuery.isLoading;
 
   // Debounce the search term so each keystroke doesn't hit the server.
@@ -155,7 +155,9 @@ export function FriendsScreen() {
         if (action === "accept") celebrateFriend(request.user);
       },
       onError: (error) =>
-        showToast(getApiErrorMessage(error, "Something went wrong. Try again.")),
+        showToast(
+          getApiErrorMessage(error, "Something went wrong. Try again."),
+        ),
       onSettled: () => setPendingRequestId(null),
     });
   };
@@ -391,7 +393,11 @@ const styles = StyleSheet.create({
     borderColor: AddyColors.line,
     backgroundColor: AddyColors.white,
   },
-  qrPillText: { fontFamily: AddyFonts.title, fontSize: 16, color: AddyColors.ink },
+  qrPillText: {
+    fontFamily: AddyFonts.title,
+    fontSize: 16,
+    color: AddyColors.ink,
+  },
   searchWrap: { paddingHorizontal: SIDE_PADDING, paddingBottom: 12 },
   list: { paddingHorizontal: SIDE_PADDING, paddingTop: 4, flexGrow: 1 },
   listHeader: { marginBottom: 10 },

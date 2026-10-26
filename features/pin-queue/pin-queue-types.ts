@@ -1,4 +1,5 @@
-import type { MemoryVisibility, PlaceInput } from "@/types/api";
+import type { MemoryVisibility } from "@/services/memories";
+import type { PlaceInput } from "@/services/places";
 
 /**
  * Where a queued pin is. `coords` = the user pinned offline with only a GPS

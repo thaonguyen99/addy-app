@@ -9,7 +9,7 @@ import {
   AddyRadius,
   AddyShadow,
 } from "@/constants/theme";
-import type { PublicUser } from "@/types/api";
+import type { PublicUser } from "@/services/users";
 
 type PersonRowProps = {
   user: PublicUser;

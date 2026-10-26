@@ -27,9 +27,10 @@ import { GlossyButton } from "@/components/ui/glossy-button";
 import { UserAvatar, userDisplayName } from "@/components/ui/user-row";
 import { AddyColors, AddyFonts } from "@/constants/theme";
 import { markFriendCelebrated } from "@/features/friends/celebrated-friends";
-import { useFriendSheetsStore } from "@/features/friends/store/friend-sheets-store";
-import { useFriendsQuery, useProfileQuery } from "@/lib/query/hooks";
-import type { PublicUser } from "@/types/api";
+import { useFriendSheetsStore } from "@/stores/friend-sheets.store";
+import { useFriendsQuery } from "@/services/friends";
+import { useProfileQuery } from "@/services/users";
+import type { PublicUser } from "@/services/users";
 
 const AVATAR = 120;
 

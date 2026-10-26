@@ -8,8 +8,8 @@ import {
   AddyRadius,
   AddyShadow,
 } from "@/constants/theme";
-import { cloudinaryThumb } from "@/lib/image/cloudinary-thumb";
-import type { PublicUser } from "@/types/api";
+import { cloudinaryThumb } from "@/lib/cloudinary-thumb";
+import type { PublicUser } from "@/services/users";
 
 export function userDisplayName(user: PublicUser): string {
   return user.name ?? user.username ?? "Addy user";

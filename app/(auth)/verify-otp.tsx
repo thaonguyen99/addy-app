@@ -6,13 +6,13 @@ import { Alert, Pressable, StyleSheet, Text } from "react-native";
 import { AuthPrimaryButton } from "@/features/auth/components/auth-primary-button";
 import { AuthScreen } from "@/features/auth/components/auth-screen";
 import { AuthTextField } from "@/features/auth/components/auth-text-field";
-import { getAuthErrorMessage } from "@/features/auth/hooks/use-auth-form-error";
+import { getAuthErrorMessage } from "@/hooks/use-auth-form-error";
 import {
   verifyOtpSchema,
   type VerifyOtpForm,
-} from "@/features/auth/schemas/auth-schemas";
-import { useAuthStore } from "@/features/auth/store/auth-store";
-import { useResendOtpMutation, useVerifyOtpMutation } from "@/lib/query/hooks";
+} from "@/features/auth/auth-schemas";
+import { useAuthStore } from "@/stores/auth.store";
+import { useResendOtpMutation, useVerifyOtpMutation } from "@/services/auth";
 import { BrandColors } from "@/constants/theme";
 
 export default function VerifyOtpScreen() {

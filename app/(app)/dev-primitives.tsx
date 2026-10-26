@@ -19,8 +19,8 @@ import {
   PIN_COLOR,
 } from "@/constants/theme";
 import { MOOD_SCORE_OPTIONS } from "@/features/camera/constants/mood-score";
-import { MoodSticker } from "@/features/feed/components/mood-sticker";
-import { safeBack } from "@/lib/navigation/safe-router";
+import { MoodSticker } from "@/features/feed/mood-sticker";
+import { safeBack } from "@/lib/safe-router";
 
 /** Dev-only showcase of the revamp primitives. Open addyapp:///dev-primitives. */
 export default function DevPrimitivesScreen() {

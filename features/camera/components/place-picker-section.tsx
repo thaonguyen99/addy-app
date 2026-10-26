@@ -11,10 +11,10 @@ import { StickerCard } from "@/components/ui/sticker-card";
 import { BrandColors } from "@/constants/theme";
 import { StickerRadius } from "@/constants/sticker-style";
 import { PlaceSuggestionRow } from "@/features/camera/components/place-suggestion-row";
-import { cameraLayout } from "@/features/camera/styles/shared-styles";
-import { useSuggestedPlaces } from "@/features/location/hooks/use-suggested-places";
+import { cameraLayout } from "@/features/camera/shared-styles";
+import { useSuggestedPlaces } from "@/services/places";
 import type { Coordinates } from "@/features/location/get-current-coordinates";
-import type { PlaceSuggestion } from "@/types/api";
+import type { PlaceSuggestion } from "@/services/places";
 
 const MIN_SEARCH_LENGTH = 2;
 
@@ -154,7 +154,7 @@ export function PlacePickerSection({
       ) : isSearchActive && !hasSearchResults ? (
         <View style={styles.emptyWrap}>
           <Text style={styles.emptyText}>
-            No places found for "{trimmedQuery}".
+            No places found for &quot;{trimmedQuery}&quot;.
           </Text>
         </View>
       ) : suggested.isError && hasNearbyResults && !isSearchActive ? (

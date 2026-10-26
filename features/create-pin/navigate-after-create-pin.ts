@@ -1,7 +1,7 @@
 import * as Haptics from "expo-haptics";
 import { router } from "expo-router";
 
-import { useMapFocusStore } from "@/features/map/store/map-focus-store";
+import { useMapFocusStore } from "@/stores/map-focus.store";
 
 /**
  * After a pin is saved: stash the map focus coords, close the whole create flow

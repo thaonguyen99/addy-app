@@ -1,7 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Notifications from "expo-notifications";
 
-import { useFriendSheetsStore } from "@/features/friends/store/friend-sheets-store";
+import { useFriendSheetsStore } from "@/stores/friend-sheets.store";
 
 const KEY = "addy.celebratedFriendIds";
 /** Plenty for "once per friend"; keeps the stored list from growing forever. */

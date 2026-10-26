@@ -1,7 +1,7 @@
 import * as Clipboard from "expo-clipboard";
 import { Linking, Platform, Share } from "react-native";
 
-import { showToast } from "@/features/toast/toast-store";
+import { showToast } from "@/stores/toast.store";
 
 export function inviteMessage(link: string): string {
   return `Come pin memories with me on Addy: ${link}`;

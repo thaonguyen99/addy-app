@@ -16,10 +16,10 @@ import { GlossyOrb } from "@/components/ui/glossy-orb";
 import { TechChip } from "@/components/ui/tech-chip";
 import { AddyColors } from "@/constants/theme";
 import { CameraZoomChips } from "@/features/camera/components/camera-zoom-chips";
-import { useLastLibraryPhoto } from "@/features/camera/hooks/use-last-library-photo";
-import { useCameraShutterSound } from "@/features/camera/hooks/useCameraShutterSound";
+import { useLastLibraryPhoto } from "@/hooks/use-last-library-photo";
+import { useCameraShutterSound } from "@/hooks/use-camera-shutter-sound";
 import { ONBOARDING_ADD_MEMORY_STEP_ID } from "@/features/onboarding/onboarding-tour";
-import { useOnboardingCaptureStore } from "@/features/onboarding/store/onboarding-capture-store";
+import { useOnboardingCaptureStore } from "@/stores/onboarding-capture.store";
 
 import {
   CameraShutterFlash,

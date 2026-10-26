@@ -14,10 +14,10 @@ import { GlossyButton } from "@/components/ui/glossy-button";
 import { StickerCard } from "@/components/ui/sticker-card";
 import { StickerRadius } from "@/constants/sticker-style";
 import { BrandColors } from "@/constants/theme";
-import { showToast } from "@/features/toast/toast-store";
-import { ApiClientError, getApiErrorMessage } from "@/lib/api/errors";
-import { useCreateReportMutation } from "@/lib/query/hooks";
-import type { ReportReason, ReportTargetType } from "@/types/api";
+import { showToast } from "@/stores/toast.store";
+import { ApiClientError, getApiErrorMessage } from "@/services/api/errors";
+import { useCreateReportMutation } from "@/services/reports";
+import type { ReportReason, ReportTargetType } from "@/services/reports";
 
 const NOTE_MAX_LENGTH = 500;
 

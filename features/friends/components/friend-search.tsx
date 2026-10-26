@@ -20,18 +20,13 @@ import {
 import { PersonRow } from "@/features/friends/components/person-row";
 import { PillButton } from "@/features/friends/components/pill-button";
 import { SectionHeader } from "@/features/friends/components/section-header";
-import { celebrateFriend } from "@/features/friends/store/friend-sheets-store";
+import { celebrateFriend } from "@/stores/friend-sheets.store";
 import { shareInviteLink } from "@/features/invite/share-invite";
-import { showToast } from "@/features/toast/toast-store";
-import { getApiErrorMessage } from "@/lib/api/errors";
-import {
-  useAcceptFriendRequestMutation,
-  useCancelFriendRequestMutation,
-  useFriendRequestsQuery,
-  useSendFriendRequestMutation,
-  useUserSearchQuery,
-} from "@/lib/query/hooks";
-import type { UserSearchResult } from "@/types/api";
+import { showToast } from "@/stores/toast.store";
+import { getApiErrorMessage } from "@/services/api/errors";
+import { useAcceptFriendRequestMutation, useCancelFriendRequestMutation, useFriendRequestsQuery, useSendFriendRequestMutation } from "@/services/friends";
+import { useUserSearchQuery } from "@/services/social";
+import type { UserSearchResult } from "@/services/social";
 
 export const SEARCH_MIN_CHARS = 2;
 

@@ -5,7 +5,7 @@ import { SkyBackground } from "@/components/ui/sky-background";
 import { AddyColors } from "@/constants/theme";
 import { ChangePasswordSection } from "@/features/profile/components/change-password-section";
 import { ProfileSubHeader } from "@/features/profile/components/profile-sub-header";
-import { useProfileQuery } from "@/lib/query/hooks";
+import { useProfileQuery } from "@/services/users";
 
 export function SecurityScreen() {
   const { data: profile, isLoading } = useProfileQuery();

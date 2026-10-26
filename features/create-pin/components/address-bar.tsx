@@ -9,8 +9,8 @@ import {
   AddyRadius,
   AddyShadow,
 } from "@/constants/theme";
-import type { PlaceSource } from "@/features/create-pin/store/create-pin-handoff-store";
-import type { PlaceSuggestion } from "@/types/api";
+import type { PlaceSource } from "@/stores/create-pin-handoff.store";
+import type { PlaceSuggestion } from "@/services/places";
 
 type AddressBarProps = {
   place: PlaceSuggestion | null;

@@ -4,7 +4,7 @@ import { StickerCard } from "@/components/ui/sticker-card";
 import { StickerRadius } from "@/constants/sticker-style";
 import { BrandColors } from "@/constants/theme";
 import { MOOD_SCORE_OPTIONS } from "@/features/camera/constants/mood-score";
-import { cameraLayout } from "@/features/camera/styles/shared-styles";
+import { cameraLayout } from "@/features/camera/shared-styles";
 
 type MoodScorePickerProps = Readonly<{
   value: number | null;

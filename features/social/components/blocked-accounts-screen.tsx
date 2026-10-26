@@ -12,11 +12,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { BrandColors } from "@/constants/theme";
 import { UserRow, userDisplayName } from "@/components/ui/user-row";
 import { ScreenHeader } from "@/features/friends/components/screen-header";
-import {
-  useBlockedUsersQuery,
-  useUnblockUserMutation,
-} from "@/lib/query/hooks";
-import type { BlockedUser } from "@/types/api";
+import { useBlockedUsersQuery, useUnblockUserMutation } from "@/services/social";
+import type { BlockedUser } from "@/services/social";
 
 export function BlockedAccountsScreen() {
   const query = useBlockedUsersQuery();

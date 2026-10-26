@@ -1,6 +1,6 @@
 import { Alert } from "react-native";
 
-import { usePinQueueStore } from "@/features/pin-queue/pin-queue-store";
+import { usePinQueueStore } from "@/stores/pin-queue.store";
 import type { QueuedPin } from "@/features/pin-queue/pin-queue-types";
 import {
   processPinQueue,

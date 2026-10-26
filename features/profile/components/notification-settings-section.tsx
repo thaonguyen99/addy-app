@@ -2,11 +2,8 @@ import { StyleSheet, Text, View } from "react-native";
 
 import { BrandColors } from "@/constants/theme";
 import { ToggleRow } from "@/components/ui/toggle-row";
-import {
-  useNotificationPreferencesQuery,
-  useUpdateNotificationPreferencesMutation,
-} from "@/lib/query/hooks";
-import type { NotificationPreferences } from "@/types/api";
+import { useNotificationPreferencesQuery, useUpdateNotificationPreferencesMutation } from "@/services/notifications";
+import type { NotificationPreferences } from "@/services/notifications";
 
 const ROWS: { key: keyof NotificationPreferences; label: string }[] = [
   { key: "friendRequestReceived", label: "Friend request received" },

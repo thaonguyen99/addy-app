@@ -16,8 +16,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { BrandColors } from "@/constants/theme";
 import { UserRow } from "@/components/ui/user-row";
-import { useReactorsQuery } from "@/lib/query/hooks";
-import type { Reactor } from "@/types/api";
+import { useReactorsQuery } from "@/services/memories";
+import type { Reactor } from "@/services/memories";
 
 export type ReactorsSheetRef = {
   present: () => void;

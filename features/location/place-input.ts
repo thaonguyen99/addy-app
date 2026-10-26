@@ -1,5 +1,5 @@
 import { createHoChiMinhCityPlace } from "@/features/location/fallback-places";
-import type { PlaceInput, PlaceSuggestion } from "@/types/api";
+import type { PlaceInput, PlaceSuggestion } from "@/services/places";
 
 export function placeSuggestionToPlaceInput(s: PlaceSuggestion): PlaceInput {
   const name = s.name?.trim() || "Ho Chi Minh City";

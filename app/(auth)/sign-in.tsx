@@ -8,14 +8,14 @@ import { AuthPrimaryButton } from "@/features/auth/components/auth-primary-butto
 import { AuthScreen } from "@/features/auth/components/auth-screen";
 import { AuthTextField } from "@/features/auth/components/auth-text-field";
 import { GoogleSignInButton } from "@/features/auth/components/google-sign-in-button";
-import { getAuthErrorMessage } from "@/features/auth/hooks/use-auth-form-error";
+import { getAuthErrorMessage } from "@/hooks/use-auth-form-error";
 import {
   signInSchema,
   type SignInForm,
-} from "@/features/auth/schemas/auth-schemas";
-import { useAuthStore } from "@/features/auth/store/auth-store";
-import { ApiClientError } from "@/lib/api/errors";
-import { useLoginMutation } from "@/lib/query/hooks";
+} from "@/features/auth/auth-schemas";
+import { useAuthStore } from "@/stores/auth.store";
+import { ApiClientError } from "@/services/api/errors";
+import { useLoginMutation } from "@/services/auth";
 
 export default function SignInScreen() {
   const setSession = useAuthStore((s) => s.setSession);

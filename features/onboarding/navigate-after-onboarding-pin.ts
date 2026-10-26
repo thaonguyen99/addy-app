@@ -1,5 +1,5 @@
 import { navigateAfterCreatePin } from "@/features/create-pin/navigate-after-create-pin";
-import { useOnboardingCaptureStore } from "@/features/onboarding/store/onboarding-capture-store";
+import { useOnboardingCaptureStore } from "@/stores/onboarding-capture.store";
 
 /**
  * Called instead of navigateAfterCreatePin when a pin is saved while the

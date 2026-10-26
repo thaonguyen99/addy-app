@@ -28,14 +28,14 @@ import { KeyboardProvider } from "react-native-keyboard-controller";
 import "react-native-reanimated";
 
 import { BrandColors } from "@/constants/theme";
-import { UpdateReadyBanner } from "@/features/app-update/components/update-ready-banner";
-import { useAuthStore } from "@/features/auth/store/auth-store";
-import { InAppNotificationBanner } from "@/features/notifications/components/in-app-notification-banner";
-import { configureNotificationHandler } from "@/features/notifications/push-registration";
-import { useNotificationRouter } from "@/features/notifications/use-notification-router";
+import { UpdateReadyBanner } from "@/features/app-update/update-ready-banner";
+import { InAppNotificationBanner } from "@/features/notifications/in-app-notification-banner";
 import { AnimatedSplashScreen } from "@/features/splash/components/animated-splash-screen";
 import { AppToastHost } from "@/features/toast/app-toast-host";
-import { queryClient } from "@/lib/query/client";
+import { useNotificationRouter } from "@/hooks/use-notification-router";
+import { configureNotificationHandler } from "@/services/notifications";
+import { queryClient } from "@/services/query/client";
+import { useAuthStore } from "@/stores/auth.store";
 
 configureNotificationHandler();
 
@@ -122,11 +122,17 @@ export default function RootLayout() {
                   {/* Invite links: open the Add sheet, then step aside. */}
                   <Stack.Screen
                     name="add-friend"
-                    options={{ presentation: "transparentModal", animation: "none" }}
+                    options={{
+                      presentation: "transparentModal",
+                      animation: "none",
+                    }}
                   />
                   <Stack.Screen
                     name="i/[token]"
-                    options={{ presentation: "transparentModal", animation: "none" }}
+                    options={{
+                      presentation: "transparentModal",
+                      animation: "none",
+                    }}
                   />
                   <Stack.Screen
                     name="modal"

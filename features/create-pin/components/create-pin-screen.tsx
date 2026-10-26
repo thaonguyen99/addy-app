@@ -27,21 +27,21 @@ import {
   AddyFonts,
   AddyRadius,
 } from "@/constants/theme";
-import { useCameraSession } from "@/features/camera/context/camera-session-context";
-import { useGalleryPick } from "@/features/camera/hooks/use-gallery-pick";
+import { useCameraSession } from "@/features/camera/camera-session-context";
+import { useGalleryPick } from "@/hooks/use-gallery-pick";
 import { AddressBar } from "@/features/create-pin/components/address-bar";
 import { DraftPhoto } from "@/features/create-pin/components/draft-photo";
 import { MoodRow } from "@/features/create-pin/components/mood-row";
-import { useAutoPlace } from "@/features/create-pin/hooks/use-auto-place";
-import { useCreatePinSubmit } from "@/features/create-pin/hooks/use-create-pin-submit";
-import { useCreatePinHandoffStore } from "@/features/create-pin/store/create-pin-handoff-store";
+import { useAutoPlace } from "@/hooks/use-auto-place";
+import { useCreatePinSubmit } from "@/hooks/use-create-pin-submit";
+import { useCreatePinHandoffStore } from "@/stores/create-pin-handoff.store";
 import {
   TagFriendsSheet,
   type TagFriendsSheetRef,
-} from "@/features/memory/components/tag-friends-sheet";
-import { TaggedFriendsRow } from "@/features/memory/components/tagged-friends-row";
-import { safeBack } from "@/lib/navigation/safe-router";
-import type { MemoryVisibility } from "@/types/api";
+} from "@/features/memory/tag-friends-sheet";
+import { TaggedFriendsRow } from "@/features/memory/tagged-friends-row";
+import { safeBack } from "@/lib/safe-router";
+import type { MemoryVisibility } from "@/services/memories";
 
 const SIDE_PADDING = 16;
 

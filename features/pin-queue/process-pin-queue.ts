@@ -1,16 +1,16 @@
 import NetInfo from "@react-native-community/netinfo";
 import * as FileSystem from "expo-file-system/legacy";
 
-import { useAuthStore } from "@/features/auth/store/auth-store";
-import { usePinQueueStore } from "@/features/pin-queue/pin-queue-store";
 import type { QueuedPin } from "@/features/pin-queue/pin-queue-types";
-import { ApiClientError, toApiClientError } from "@/lib/api/errors";
-import { uploadImages } from "@/lib/api/media";
-import { createMemory } from "@/lib/api/memories";
-import { reverseGeocode } from "@/lib/api/places";
-import { queryClient } from "@/lib/query/client";
-import { queryKeys } from "@/lib/query/keys";
-import type { PlaceInput } from "@/types/api";
+import { ApiClientError, toApiClientError } from "@/services/api/errors";
+import { MediaApi } from "@/services/media";
+import { MemoryApi } from "@/services/memories";
+import type { PlaceInput } from "@/services/places";
+import { PlaceApi } from "@/services/places";
+import { queryClient } from "@/services/query/client";
+import { queryKeys } from "@/services/query/keys";
+import { useAuthStore } from "@/stores/auth.store";
+import { usePinQueueStore } from "@/stores/pin-queue.store";
 
 const BACKOFF_BASE_MS = 5_000;
 const BACKOFF_MAX_MS = 10 * 60_000;
@@ -39,7 +39,9 @@ export function getUploadedMemoryId(clientId: string) {
  * reconnect, foreground, manual retry) so pending entries go right away
  * instead of waiting out their backoff.
  */
-export function processPinQueue(options?: { ignoreBackoff?: boolean }): Promise<void> {
+export function processPinQueue(options?: {
+  ignoreBackoff?: boolean;
+}): Promise<void> {
   const ignoreBackoff = options?.ignoreBackoff ?? false;
   if (running) {
     rerunRequested = true;
@@ -135,13 +137,13 @@ async function uploadEntry(entry: QueuedPin): Promise<"ok" | "stop"> {
 
     const place = await resolvePlace(entry);
     assertOwner(entry);
-    const uploaded = await uploadImages(entry.photoPaths, {
+    const uploaded = await MediaApi.uploadImages(entry.photoPaths, {
       clientId: entry.clientId,
       index: 0,
     });
 
     assertOwner(entry);
-    const memory = await createMemory({
+    const memory = await MemoryApi.createMemory({
       clientId: entry.clientId,
       place,
       images: uploaded.map((image, index) => ({
@@ -170,7 +172,10 @@ async function uploadEntry(entry: QueuedPin): Promise<"ok" | "stop"> {
 
     const error = toApiClientError(rawError);
     if (isPermanentFailure(error)) {
-      await update(entry.clientId, { status: "failed", lastError: error.message });
+      await update(entry.clientId, {
+        status: "failed",
+        lastError: error.message,
+      });
       return "ok"; // this draft is rejected; others may still go through
     }
 
@@ -204,7 +209,7 @@ async function resolvePlace(entry: QueuedPin): Promise<PlaceInput> {
 
   const { latitude, longitude, name } = entry.place;
   try {
-    const result = await reverseGeocode(latitude, longitude);
+    const result = await PlaceApi.reverseGeocode(latitude, longitude);
     return {
       externalPlaceId: result.externalPlaceId,
       name: name ?? result.name,

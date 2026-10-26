@@ -19,8 +19,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { StickerCard } from "@/components/ui/sticker-card";
 import { BrandColors } from "@/constants/theme";
 import { StickerBorderWidth, StickerRadius } from "@/constants/sticker-style";
-import { usePlaceMemoriesQuery } from "@/lib/query/hooks";
-import type { PlaceMemory } from "@/types/api";
+import { usePlaceMemoriesQuery } from "@/services/memories";
+import type { PlaceMemory } from "@/services/memories";
 
 export type PlaceMemoriesSheetRef = {
   present: (placeId: string) => void;

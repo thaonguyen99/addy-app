@@ -9,7 +9,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { CameraUi } from "@/features/camera/constants/layout";
-import { sharedInteractionStyles } from "@/features/camera/styles/shared-styles";
+import { sharedInteractionStyles } from "@/features/camera/shared-styles";
 import { BrandColors } from "@/constants/theme";
 
 type PendingProps = Readonly<{ variant: "pending" }>;

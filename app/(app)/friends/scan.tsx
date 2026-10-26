@@ -1,7 +1,7 @@
 import { Redirect } from "expo-router";
 import { useEffect } from "react";
 
-import { useFriendSheetsStore } from "@/features/friends/store/friend-sheets-store";
+import { useFriendSheetsStore } from "@/stores/friend-sheets.store";
 
 /** Old Scan screen: opens the QR sheet on its Scan side over the Friends tab. */
 export default function ScanRoute() {

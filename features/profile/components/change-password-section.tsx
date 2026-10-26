@@ -10,8 +10,8 @@ import {
   type ChangePasswordForm,
   changePasswordFormSchema,
 } from "@/features/profile/schema";
-import { getApiErrorMessage } from "@/lib/api/errors";
-import { useChangePasswordMutation } from "@/lib/query/hooks";
+import { getApiErrorMessage } from "@/services/api/errors";
+import { useChangePasswordMutation } from "@/services/users";
 
 type ChangePasswordSectionProps = {
   /** False for Google-only accounts that never set a password. */

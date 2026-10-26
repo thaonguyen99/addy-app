@@ -1,5 +1,5 @@
 import type { Coordinates } from "@/features/location/get-current-coordinates";
-import type { PlaceSuggestion } from "@/types/api";
+import type { PlaceSuggestion } from "@/services/places";
 
 /** Stable manual id so repeated dev pins upsert the same place row. */
 export const HCM_MANUAL_PLACE_ID = "manual:hcmc-vietnam";

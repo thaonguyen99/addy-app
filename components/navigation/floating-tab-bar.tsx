@@ -16,7 +16,7 @@ import {
   AddyGradients,
   AddyShadow,
 } from "@/constants/theme";
-import { useAuthStore } from "@/features/auth/store/auth-store";
+import { useAuthStore } from "@/stores/auth.store";
 import { ONBOARDING_ADD_FRIEND_TARGET_ID } from "@/features/onboarding/onboarding-tour";
 
 export const TAB_BAR_HEIGHT = 52;

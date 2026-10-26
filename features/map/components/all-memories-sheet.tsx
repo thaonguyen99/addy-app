@@ -20,9 +20,9 @@ import { StickerCard } from "@/components/ui/sticker-card";
 import { BrandColors } from "@/constants/theme";
 import { StickerRadius } from "@/constants/sticker-style";
 import { MOOD_SCORE_OPTIONS } from "@/features/camera/constants/mood-score";
-import { useMemoryFeed } from "@/features/feed/hooks/use-memory-feed";
-import { pickCover } from "@/features/feed/utils/pick-cover";
-import type { MemoryListItem } from "@/types/api";
+import { useMemoryFeed } from "@/services/memories";
+import { pickCover } from "@/utils/pick-cover";
+import type { MemoryListItem } from "@/services/memories";
 
 export type AllMemoriesSheetRef = {
   present: () => void;

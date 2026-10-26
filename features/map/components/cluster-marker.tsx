@@ -1,7 +1,7 @@
 import { memo } from "react";
 
 import { MapPhotoPin } from "@/features/map/components/map-photo-pin";
-import { getPinColor } from "@/features/map/utils/pin-color";
+import { getPinColor } from "@/utils/pin-color";
 
 type ClusterablePin = {
   id: string;

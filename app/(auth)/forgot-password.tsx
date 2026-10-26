@@ -6,13 +6,13 @@ import { Alert } from "react-native";
 import { AuthPrimaryButton } from "@/features/auth/components/auth-primary-button";
 import { AuthScreen } from "@/features/auth/components/auth-screen";
 import { AuthTextField } from "@/features/auth/components/auth-text-field";
-import { getAuthErrorMessage } from "@/features/auth/hooks/use-auth-form-error";
+import { getAuthErrorMessage } from "@/hooks/use-auth-form-error";
 import {
   forgotPasswordSchema,
   type ForgotPasswordForm,
-} from "@/features/auth/schemas/auth-schemas";
-import { useAuthStore } from "@/features/auth/store/auth-store";
-import { useForgotPasswordMutation } from "@/lib/query/hooks";
+} from "@/features/auth/auth-schemas";
+import { useAuthStore } from "@/stores/auth.store";
+import { useForgotPasswordMutation } from "@/services/auth";
 
 export default function ForgotPasswordScreen() {
   const setPendingVerification = useAuthStore((s) => s.setPendingVerification);

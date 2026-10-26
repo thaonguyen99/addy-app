@@ -3,16 +3,16 @@ import { useEffect } from "react";
 import { View } from "react-native";
 
 import { AddyColors } from "@/constants/theme";
-import { CameraSessionProvider } from "@/features/camera/context/camera-session-context";
-import { useAuthStore } from "@/features/auth/store/auth-store";
+import { CameraSessionProvider } from "@/features/camera/camera-session-context";
+import { useAuthStore } from "@/stores/auth.store";
 import { celebrateFromDeliveredPushes } from "@/features/friends/celebrated-friends";
 import { FriendSheetsHost } from "@/features/friends/components/friend-sheets-host";
 import { takePendingInviteToken } from "@/features/friends/pending-invite";
-import { openInvite } from "@/features/friends/store/friend-sheets-store";
+import { openInvite } from "@/stores/friend-sheets.store";
 import { useOnboardingTour } from "@/features/onboarding/onboarding-tour";
-import { registerForPush } from "@/features/notifications/push-registration";
-import { useInAppNotifications } from "@/features/notifications/use-in-app-notifications";
-import { usePinQueueRunner } from "@/features/pin-queue/use-pin-queue-runner";
+import { registerForPush } from "@/services/notifications";
+import { useInAppNotifications } from "@/hooks/use-in-app-notifications";
+import { usePinQueueRunner } from "@/hooks/use-pin-queue-runner";
 
 // Deep links and the launch redirect to /capture keep the tabs underneath,
 // so closing the camera lands on the map instead of an empty stack.

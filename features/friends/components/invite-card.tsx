@@ -9,7 +9,7 @@ import {
   AddyShadow,
 } from "@/constants/theme";
 import { ORB_COLORS, ShareOrb } from "@/features/friends/components/share-orb";
-import { useInviteStory } from "@/features/invite/hooks/use-invite-story";
+import { useInviteStory } from "@/hooks/use-invite-story";
 import {
   copyInviteLink,
   shareInviteLink,
@@ -17,7 +17,7 @@ import {
   shareInviteViaSms,
   shareInviteViaZalo,
 } from "@/features/invite/share-invite";
-import type { PublicUser } from "@/types/api";
+import type { PublicUser } from "@/services/users";
 
 /** The big invite card for an empty friends list: you in the middle, two open slots. */
 export function InviteCard({

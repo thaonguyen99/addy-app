@@ -11,13 +11,10 @@ import {
 } from "@/constants/theme";
 import { PillButton } from "@/features/friends/components/pill-button";
 import { SectionHeader } from "@/features/friends/components/section-header";
-import { showToast } from "@/features/toast/toast-store";
-import { getApiErrorMessage } from "@/lib/api/errors";
-import {
-  useFriendSuggestionsQuery,
-  useSendFriendRequestMutation,
-} from "@/lib/query/hooks";
-import type { FriendSuggestion } from "@/types/api";
+import { showToast } from "@/stores/toast.store";
+import { getApiErrorMessage } from "@/services/api/errors";
+import { useFriendSuggestionsQuery, useSendFriendRequestMutation } from "@/services/friends";
+import type { FriendSuggestion } from "@/services/friends";
 
 /**
  * Hiding lasts for this app session only (in memory, not persisted), so the

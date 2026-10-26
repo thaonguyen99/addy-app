@@ -1,4 +1,4 @@
-import { MemoriesScreen } from "@/features/feed/components/memories-screen";
+import { MemoriesScreen } from "@/features/feed/memories-screen";
 
 export default function Memories() {
   return <MemoriesScreen />;

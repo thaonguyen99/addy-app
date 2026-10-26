@@ -10,7 +10,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { ThemedText } from "@/components/ui/themed-text";
 import { BrandColors } from "@/constants/theme";
-import { warmUpApi } from "@/lib/api/client";
+import { warmUpApi } from "@/services/api/client";
 
 type AuthScreenProps = {
   title: string;

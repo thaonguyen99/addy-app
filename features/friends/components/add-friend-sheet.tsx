@@ -24,24 +24,17 @@ import {
   type AddTarget,
   celebrateFriend,
   useFriendSheetsStore,
-} from "@/features/friends/store/friend-sheets-store";
+} from "@/stores/friend-sheets.store";
 import {
   ReportSheet,
   type ReportSheetRef,
 } from "@/features/reports/components/report-sheet";
-import { showToast } from "@/features/toast/toast-store";
-import { getApiErrorMessage } from "@/lib/api/errors";
-import {
-  useAcceptFriendRequestMutation,
-  useAcceptInviteMutation,
-  useBlockUserMutation,
-  useCancelFriendRequestMutation,
-  useFriendRequestsQuery,
-  useFriendsQuery,
-  useInvitePreviewQuery,
-  useSendFriendRequestMutation,
-} from "@/lib/query/hooks";
-import type { FriendRelationship, PublicUser } from "@/types/api";
+import { showToast } from "@/stores/toast.store";
+import { getApiErrorMessage } from "@/services/api/errors";
+import { useAcceptFriendRequestMutation, useCancelFriendRequestMutation, useFriendRequestsQuery, useFriendsQuery, useSendFriendRequestMutation } from "@/services/friends";
+import { useAcceptInviteMutation, useBlockUserMutation, useInvitePreviewQuery } from "@/services/social";
+import type { FriendRelationship } from "@/services/friends";
+import type { PublicUser } from "@/services/users";
 
 /** One sheet for every way in: link, QR, search result, suggestion. */
 export function AddFriendSheet() {

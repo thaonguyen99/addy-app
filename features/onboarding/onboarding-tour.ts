@@ -6,12 +6,12 @@ import {
 import { router } from "expo-router";
 import { useEffect, useMemo, useRef } from "react";
 
-import { useAuthStore } from "@/features/auth/store/auth-store";
+import { useAuthStore } from "@/stores/auth.store";
 import { renderClippedTooltip } from "@/features/onboarding/components/clipped-tooltip";
 import { needsOnboarding } from "@/features/onboarding/needs-onboarding";
 import { onboardingTourTheme } from "@/features/onboarding/onboarding-theme";
-import { useOnboardingCaptureStore } from "@/features/onboarding/store/onboarding-capture-store";
-import { useCompleteOnboardingMutation } from "@/lib/query/hooks";
+import { useOnboardingCaptureStore } from "@/stores/onboarding-capture.store";
+import { useCompleteOnboardingMutation } from "@/services/users";
 
 export const ONBOARDING_TOUR_ID = "onboarding-v1";
 

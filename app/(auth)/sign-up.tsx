@@ -8,14 +8,15 @@ import { AuthPrimaryButton } from "@/features/auth/components/auth-primary-butto
 import { AuthScreen } from "@/features/auth/components/auth-screen";
 import { AuthTextField } from "@/features/auth/components/auth-text-field";
 import { GoogleSignInButton } from "@/features/auth/components/google-sign-in-button";
-import { getAuthErrorMessage } from "@/features/auth/hooks/use-auth-form-error";
+import { getAuthErrorMessage } from "@/hooks/use-auth-form-error";
 import {
   signUpSchema,
   type SignUpForm,
-} from "@/features/auth/schemas/auth-schemas";
-import { useAuthStore } from "@/features/auth/store/auth-store";
-import { ApiClientError } from "@/lib/api/errors";
-import { useCheckUsernameMutation, useRegisterMutation } from "@/lib/query/hooks";
+} from "@/features/auth/auth-schemas";
+import { useAuthStore } from "@/stores/auth.store";
+import { ApiClientError } from "@/services/api/errors";
+import { useCheckUsernameMutation } from "@/services/users";
+import { useRegisterMutation } from "@/services/auth";
 import { BrandColors } from "@/constants/theme";
 
 type UsernameStatus = "idle" | "checking" | "available" | "taken" | "invalid";

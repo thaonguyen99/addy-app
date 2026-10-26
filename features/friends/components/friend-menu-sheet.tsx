@@ -17,16 +17,17 @@ import {
   AddyRadius,
 } from "@/constants/theme";
 import {
-  type FriendMenuTarget,
-  useFriendSheetsStore,
-} from "@/features/friends/store/friend-sheets-store";
-import {
   ReportSheet,
   type ReportSheetRef,
 } from "@/features/reports/components/report-sheet";
-import { showToast } from "@/features/toast/toast-store";
-import { getApiErrorMessage } from "@/lib/api/errors";
-import { useBlockUserMutation, useUnfriendMutation } from "@/lib/query/hooks";
+import { getApiErrorMessage } from "@/services/api/errors";
+import { useUnfriendMutation } from "@/services/friends";
+import { useBlockUserMutation } from "@/services/social";
+import {
+  type FriendMenuTarget,
+  useFriendSheetsStore,
+} from "@/stores/friend-sheets.store";
+import { showToast } from "@/stores/toast.store";
 
 /** "friends since Sep 2026" */
 function friendsSinceLabel(iso: string | undefined): string | null {
