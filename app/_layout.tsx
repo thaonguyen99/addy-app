@@ -134,6 +134,8 @@ export default function RootLayout() {
                       animation: "none",
                     }}
                   />
+                  {/* Profile links: hand off to the profile in the app stack. */}
+                  <Stack.Screen name="u/[username]" options={{ animation: "none" }} />
                   <Stack.Screen
                     name="modal"
                     options={{ presentation: "modal", title: "Modal" }}

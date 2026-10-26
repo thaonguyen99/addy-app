@@ -34,6 +34,8 @@ type MessageBubbleProps = {
   onToggleLike?: (message: MemoryMessage) => void;
   onLongPress?: (message: MemoryMessage) => void;
   onRetry?: (clientId: string) => void;
+  /** Tap the author's avatar or name, or an @mention, to open that profile. */
+  onOpenProfile?: (username: string) => void;
 };
 
 function variantFor(
@@ -50,6 +52,7 @@ export const MessageBubble = memo(function MessageBubble({
   onToggleLike,
   onLongPress,
   onRetry,
+  onOpenProfile,
 }: MessageBubbleProps) {
   const variant = variantFor(item, viewerId);
   const mine = variant === "mine";
@@ -59,6 +62,10 @@ export const MessageBubble = memo(function MessageBubble({
   const failed = item.kind === "pending" && item.status === "failed";
   const sending = item.kind === "pending" && item.status === "sending";
   const likeCount = message?.likeCount ?? 0;
+  // A null author blocked the viewer: nothing to open.
+  const author = message?.author ?? null;
+  const openAuthor =
+    author && onOpenProfile ? () => onOpenProfile(author.username) : undefined;
 
   const toggleLike = useCallback(() => {
     if (message) onToggleLike?.(message);
@@ -73,7 +80,18 @@ export const MessageBubble = memo(function MessageBubble({
   const text = message
     ? splitMentions(message.text, message.mentions ?? []).map((segment, i) =>
         segment.mention ? (
-          <Text key={i} style={styles.mention}>
+          // Fires on tap-up, before the bubble's double-tap / long-press
+          // gestures activate, so a long press still opens the menu.
+          <Text
+            key={i}
+            style={styles.mention}
+            onPress={
+              onOpenProfile
+                ? () => onOpenProfile(segment.text.slice(1))
+                : undefined
+            }
+            accessibilityRole="link"
+          >
             {segment.text}
           </Text>
         ) : (
@@ -93,17 +111,23 @@ export const MessageBubble = memo(function MessageBubble({
       ]}
     >
       {mine ? null : (
-        <View style={styles.avatarSlot}>
-          <ChatAvatar user={message?.author ?? null} size={AVATAR_SIZE} />
-        </View>
+        <Pressable
+          onPress={openAuthor}
+          disabled={!openAuthor}
+          accessibilityRole={openAuthor ? "button" : undefined}
+          accessibilityLabel={author ? `Open ${author.username}'s profile` : undefined}
+          style={styles.avatarSlot}
+        >
+          <ChatAvatar user={author} size={AVATAR_SIZE} />
+        </Pressable>
       )}
       <View
         style={[styles.column, mine ? styles.columnRight : styles.columnLeft]}
       >
         <View style={styles.metaRow}>
           {mine ? null : (
-            <Text style={styles.name} numberOfLines={1}>
-              {message?.author?.username ?? "someone"}
+            <Text style={styles.name} numberOfLines={1} onPress={openAuthor}>
+              {author?.username ?? "someone"}
             </Text>
           )}
           {!mine && message?.isOwnerOfMemory ? (

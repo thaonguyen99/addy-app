@@ -6,7 +6,6 @@ import { ensureMediaLibraryReadAccess } from "@/features/camera/permissions/medi
 import { prepareUploadImage } from "@/features/media/prepare-upload-image";
 import { checkImageSafety } from "@/features/moderation/check-image-safety";
 import { getApiErrorMessage } from "@/services/api/errors";
-import { useUpdateProfileMutation } from "@/services/users";
 import { useUploadAvatarMutation } from "@/services/media";
 
 const AVATAR_PICKER_OPTIONS: ImagePicker.ImagePickerOptions = {
@@ -16,13 +15,17 @@ const AVATAR_PICKER_OPTIONS: ImagePicker.ImagePickerOptions = {
   quality: 0.85,
 };
 
-/** Pick one image, upload it to the avatar folder, then persist it on the profile. */
+export type UploadedAvatar = { avatarUrl: string; avatarPublicId: string };
+
+/**
+ * Pick one image and upload it to the avatar folder. It isn't on the profile
+ * until the caller saves it, so the Edit sheet can still be cancelled.
+ */
 export function useAvatarUpload() {
   const uploadAvatar = useUploadAvatarMutation();
-  const updateProfile = useUpdateProfileMutation();
   const [busy, setBusy] = useState(false);
 
-  const pickAndUpload = useCallback(async () => {
+  const pickAvatar = useCallback(async (): Promise<UploadedAvatar | null> => {
     const access = await ensureMediaLibraryReadAccess();
     if (access.access === "denied") {
       Alert.alert(
@@ -31,14 +34,14 @@ export function useAvatarUpload() {
           ? "Allow photo access when prompted to choose a picture."
           : "Photo access is off for Addy. You can turn it on in Settings.",
       );
-      return;
+      return null;
     }
 
     const result = await ImagePicker.launchImageLibraryAsync(
       AVATAR_PICKER_OPTIONS,
     );
     if (result.canceled || !result.assets?.[0]) {
-      return;
+      return null;
     }
 
     setBusy(true);
@@ -51,23 +54,24 @@ export function useAvatarUpload() {
           "Photo",
           "This photo looks like it may violate our content guidelines. Please choose a different one.",
         );
-        return;
+        return null;
       }
 
       const uploaded = await uploadAvatar.mutateAsync(localUri);
-      await updateProfile.mutateAsync({
+      return {
         avatarUrl: uploaded.imageUrl,
         avatarPublicId: uploaded.imagePublicId,
-      });
+      };
     } catch (error) {
       Alert.alert(
         "Avatar",
         getApiErrorMessage(error, "Could not update your picture."),
       );
+      return null;
     } finally {
       setBusy(false);
     }
-  }, [uploadAvatar, updateProfile]);
+  }, [uploadAvatar]);
 
-  return { pickAndUpload, busy };
+  return { pickAvatar, busy };
 }

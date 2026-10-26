@@ -2,7 +2,7 @@ import { Redirect, router } from "expo-router";
 import { useEffect } from "react";
 
 import { useAuthStore } from "@/stores/auth.store";
-import { setPendingInviteToken } from "@/features/friends/pending-invite";
+import { setPendingLink } from "@/features/friends/pending-link";
 import { openInvite } from "@/stores/friend-sheets.store";
 
 /**
@@ -16,7 +16,7 @@ export function InviteLinkRoute({ token }: { token: string | undefined }) {
 
   useEffect(() => {
     if (status === "unauthenticated" && token) {
-      void setPendingInviteToken(token);
+      void setPendingLink({ kind: "invite", token });
     }
     if (status !== "authenticated") return;
     if (token) openInvite(token);

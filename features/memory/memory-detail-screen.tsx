@@ -8,6 +8,7 @@ import {
   FlatList,
   type NativeScrollEvent,
   type NativeSyntheticEvent,
+  Pressable,
   StyleSheet,
   Text,
   View,
@@ -33,6 +34,11 @@ import { MessageComposer } from "@/features/memory/message-composer";
 import { MessageThreadHeader } from "@/features/memory/message-thread-header";
 import { RevealFlash } from "@/features/memory/reveal-flash";
 import { TaggedLine } from "@/features/memory/tagged-line";
+import {
+  TaggedPeopleSheet,
+  type TaggedPeopleSheetRef,
+} from "@/features/memory/tagged-people-sheet";
+import { openProfile } from "@/features/profile/open-profile";
 import { ONBOARDING_MEMORY_DETAIL_TARGET_ID } from "@/features/onboarding/onboarding-tour";
 import type { ReactorsSheetRef } from "@/features/reactions/components/reactors-sheet";
 import { ReactorsSheet } from "@/features/reactions/components/reactors-sheet";
@@ -91,6 +97,7 @@ export function MemoryDetailScreen({ id, reveal }: MemoryDetailScreenProps) {
   const reactorsSheet = useRef<ReactorsSheetRef>(null);
   const optionsSheet = useRef<MemoryOptionsSheetRef>(null);
   const reportSheet = useRef<ReportSheetRef>(null);
+  const taggedSheet = useRef<TaggedPeopleSheetRef>(null);
   const listRef = useRef<FlatList<ThreadItem>>(null);
   const viewerId = useAuthStore((s) => s.user?.id);
   const likeHint = useFirstTimeHint("double-tap-like");
@@ -185,6 +192,7 @@ export function MemoryDetailScreen({ id, reveal }: MemoryDetailScreenProps) {
         onToggleLike={onToggleMessageLike}
         onRetry={thread.retry}
         onLongPress={onMessageLongPress}
+        onOpenProfile={openProfile}
       />
     ),
     [viewerId, onToggleMessageLike, thread.retry, onMessageLongPress],
@@ -245,19 +253,26 @@ export function MemoryDetailScreen({ id, reveal }: MemoryDetailScreenProps) {
           />
           {data ? (
             <>
-              <ChatAvatar user={data.author} size={34} />
-              <View style={styles.headerText}>
-                <Text style={styles.headerName} numberOfLines={1}>
-                  {ownerName}
-                </Text>
-                <Text style={styles.headerMeta} numberOfLines={1}>
-                  📍 {data.place.name}
-                  <Text style={styles.headerTime}>
-                    {" · "}
-                    {formatRelativeTime(data.capturedAt)}
+              <Pressable
+                onPress={() => openProfile(data.author.username)}
+                accessibilityRole="button"
+                accessibilityLabel={`Open ${ownerName}'s profile`}
+                style={styles.headerOwner}
+              >
+                <ChatAvatar user={data.author} size={34} />
+                <View style={styles.headerText}>
+                  <Text style={styles.headerName} numberOfLines={1}>
+                    {ownerName}
                   </Text>
-                </Text>
-              </View>
+                  <Text style={styles.headerMeta} numberOfLines={1}>
+                    📍 {data.place.name}
+                    <Text style={styles.headerTime}>
+                      {" · "}
+                      {formatRelativeTime(data.capturedAt)}
+                    </Text>
+                  </Text>
+                </View>
+              </Pressable>
               <IconCircleButton
                 icon="ellipsis-horizontal"
                 accessibilityLabel="Memory options"
@@ -324,6 +339,7 @@ export function MemoryDetailScreen({ id, reveal }: MemoryDetailScreenProps) {
                       onToggleLike={onTogglePostLike}
                       onOpenReactors={onOpenReactors}
                       onLongPress={onPostLongPress}
+                      onPressAuthor={openProfile}
                     />
                   </TourTarget>
                   {data.taggedUsers.length > 0 ? (
@@ -332,6 +348,7 @@ export function MemoryDetailScreen({ id, reveal }: MemoryDetailScreenProps) {
                         author={data.author}
                         tagged={data.taggedUsers}
                         viewerId={viewerId}
+                        onPress={() => taggedSheet.current?.present()}
                       />
                     </View>
                   ) : null}
@@ -402,6 +419,7 @@ export function MemoryDetailScreen({ id, reveal }: MemoryDetailScreenProps) {
         }
       />
       <ReportSheet ref={reportSheet} />
+      <TaggedPeopleSheet ref={taggedSheet} users={data?.taggedUsers ?? []} />
     </SkyBackground>
   );
 }
@@ -417,6 +435,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: ADDY_BORDER_WIDTH,
     borderBottomColor: AddyColors.line,
   },
+  headerOwner: { flex: 1, flexDirection: "row", alignItems: "center", gap: 10 },
   headerText: { flex: 1, gap: 0 },
   headerName: {
     fontFamily: AddyFonts.title,

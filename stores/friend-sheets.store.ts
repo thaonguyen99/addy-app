@@ -1,23 +1,11 @@
 import { create } from "zustand";
 
-import type { FriendRelationship } from "@/services/friends";
 import type { PublicUser } from "@/services/users";
 
 export type QrSide = "code" | "scan";
 
-/**
- * Who the Add sheet is about. A token (link or QR) adds instantly; a person
- * from search or suggestions gets a friend request.
- */
-export type AddTarget =
-  | { kind: "token"; token: string }
-  | {
-      kind: "user";
-      user: PublicUser;
-      /** What the opener knew; the sheet refreshes it from the request lists. */
-      relationship?: FriendRelationship;
-      mutualCount?: number;
-    };
+/** Who the Add sheet is about: an invite token (link or QR) adds instantly. */
+export type AddTarget = { kind: "token"; token: string };
 
 /** The new friend to celebrate; push-driven ones only know the id. */
 export type CelebrateTarget = { userId: string; user?: PublicUser };

@@ -7,7 +7,9 @@ import { CameraSessionProvider } from "@/features/camera/camera-session-context"
 import { useAuthStore } from "@/stores/auth.store";
 import { celebrateFromDeliveredPushes } from "@/features/friends/celebrated-friends";
 import { FriendSheetsHost } from "@/features/friends/components/friend-sheets-host";
-import { takePendingInviteToken } from "@/features/friends/pending-invite";
+import { EditProfileSheet } from "@/features/profile/components/edit-profile-sheet";
+import { takePendingLink } from "@/features/friends/pending-link";
+import { openProfile } from "@/features/profile/open-profile";
 import { openInvite } from "@/stores/friend-sheets.store";
 import { useOnboardingTour } from "@/features/onboarding/onboarding-tour";
 import { registerForPush } from "@/services/notifications";
@@ -29,9 +31,10 @@ export default function AppLayout() {
     if (status !== "authenticated") return;
     void registerForPush();
     void celebrateFromDeliveredPushes();
-    // Resume a friend-invite deep link that arrived while signed out.
-    void takePendingInviteToken().then((token) => {
-      if (token) openInvite(token);
+    // Resume an invite or profile deep link that arrived while signed out.
+    void takePendingLink().then((link) => {
+      if (link?.kind === "invite") openInvite(link.token);
+      else if (link?.kind === "profile") openProfile(link.username);
     });
   }, [status]);
 
@@ -68,6 +71,7 @@ export default function AppLayout() {
             options={{ presentation: "modal", animation: "slide_from_bottom" }}
           />
           <Stack.Screen name="memory/[id]" />
+          <Stack.Screen name="user/[username]" />
           <Stack.Screen
             name="edit-memory/[id]"
             options={{ presentation: "modal", animation: "slide_from_bottom" }}
@@ -77,7 +81,6 @@ export default function AppLayout() {
             options={{ presentation: "modal", animation: "slide_from_right" }}
           />
           <Stack.Screen name="profile/index" />
-          <Stack.Screen name="profile/account" />
           <Stack.Screen name="profile/security" />
           <Stack.Screen name="profile/notifications" />
           <Stack.Screen name="privacy-policy" />
@@ -85,6 +88,7 @@ export default function AppLayout() {
           <Stack.Screen name="dev-primitives" />
         </Stack>
         <FriendSheetsHost />
+        <EditProfileSheet />
       </View>
     </CameraSessionProvider>
   );

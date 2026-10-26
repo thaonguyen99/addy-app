@@ -1,6 +1,7 @@
 import * as Clipboard from "expo-clipboard";
 import { Linking, Platform, Share } from "react-native";
 
+import { LINK_HOST } from "@/lib/env";
 import { showToast } from "@/stores/toast.store";
 
 export function inviteMessage(link: string): string {
@@ -39,4 +40,16 @@ export function shareInviteViaMessenger(link: string): void {
 /** Zalo has no public share URL scheme, so it goes through the share sheet. */
 export function shareInviteViaZalo(link: string): void {
   shareInviteLink(link);
+}
+
+export function profileShareUrl(username: string): string {
+  return `https://${LINK_HOST}/u/${encodeURIComponent(username)}`;
+}
+
+/** Share your profile link through the system share sheet, like the invite. */
+export function shareProfileLink(username: string): void {
+  if (!username) return;
+  void Share.share({
+    message: `Find me on Addy: ${profileShareUrl(username)}`,
+  });
 }

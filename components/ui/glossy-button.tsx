@@ -21,8 +21,11 @@ import {
 type GlossyButtonProps = {
   label: string;
   onPress: () => void;
-  /** primary = lime gloss pill; secondary = white pill with a dashed border. */
-  variant?: "primary" | "secondary";
+  /**
+   * primary = lime gloss pill; secondary = white pill with a dashed border;
+   * ghost = white pill with a solid hairline; cyan = flat cyan (Accept).
+   */
+  variant?: "primary" | "secondary" | "ghost" | "cyan";
   disabled?: boolean;
   loading?: boolean;
   style?: StyleProp<ViewStyle>;
@@ -48,8 +51,8 @@ export function GlossyButton({
       accessibilityState={{ disabled: disabled || loading, busy: loading }}
       style={({ pressed }) => [
         styles.pill,
-        isPrimary ? styles.primary : styles.secondary,
-        isPrimary && AddyShadow.soft,
+        styles[variant],
+        (isPrimary || variant === "cyan") && AddyShadow.soft,
         pressed && styles.pressed,
         disabled && styles.disabled,
         style,
@@ -68,7 +71,9 @@ export function GlossyButton({
       {loading ? (
         <ActivityIndicator color={AddyColors.ink} />
       ) : (
-        <Text style={styles.label}>{label}</Text>
+        <Text style={styles.label} numberOfLines={1}>
+          {label}
+        </Text>
       )}
     </Pressable>
   );
@@ -90,6 +95,8 @@ const styles = StyleSheet.create({
     borderColor: AddyColors.line,
     borderStyle: "dashed",
   },
+  ghost: { backgroundColor: AddyColors.white, borderColor: AddyColors.line },
+  cyan: { backgroundColor: AddyColors.cyan, borderColor: "#3FB6F0" },
   highlight: {
     position: "absolute",
     top: 2,

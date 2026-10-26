@@ -60,6 +60,8 @@ export function invalidateSocialLists(
   queryClient.invalidateQueries({ queryKey: ["users", "search"] });
   queryClient.invalidateQueries({ queryKey: ["memories", "friends-map"] });
   queryClient.invalidateQueries({ queryKey: queryKeys.blockedUsers });
+  queryClient.invalidateQueries({ queryKey: ["users", "profile"] });
+  queryClient.invalidateQueries({ queryKey: ["users", "profile-memories"] });
 }
 
 export function useSendFriendRequestMutation() {

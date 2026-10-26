@@ -1,6 +1,11 @@
 import { z } from "zod";
 
+import { graphemeLength } from "@/utils/grapheme-length";
+
 export const USERNAME_PATTERN = /^[a-z0-9_.]+$/;
+
+/** Matches the API: counted by grapheme, so an emoji is 1. */
+export const BIO_MAX = 300;
 
 export const profileFormSchema = z.object({
   name: z.string().trim().max(100, "Keep it under 100 characters"),
@@ -13,7 +18,12 @@ export const profileFormSchema = z.object({
       USERNAME_PATTERN,
       "Only lowercase letters, numbers, underscores and dots",
     ),
-  bio: z.string().trim().max(300, "Keep it under 300 characters"),
+  bio: z
+    .string()
+    .trim()
+    .refine((value) => graphemeLength(value) <= BIO_MAX, {
+      message: `Keep it under ${BIO_MAX} characters`,
+    }),
 });
 
 export type ProfileForm = z.infer<typeof profileFormSchema>;

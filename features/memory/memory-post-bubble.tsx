@@ -3,6 +3,7 @@ import { memo, useCallback, useEffect, useMemo, useState } from "react";
 import {
   type NativeScrollEvent,
   type NativeSyntheticEvent,
+  Pressable,
   ScrollView,
   StyleSheet,
   Text,
@@ -56,6 +57,8 @@ type MemoryPostBubbleProps = {
   onToggleLike: () => void;
   onOpenReactors: () => void;
   onLongPress: () => void;
+  /** Tap the owner's avatar or name to open their profile. */
+  onPressAuthor?: (username: string) => void;
   /** Play the "on this day" arrival: photo reveals top-to-bottom, then the
    *  mood sticker lands. Skipped when the OS asks for reduced motion. */
   reveal?: boolean;
@@ -72,6 +75,7 @@ export const MemoryPostBubble = memo(function MemoryPostBubble({
   onToggleLike,
   onOpenReactors,
   onLongPress,
+  onPressAuthor,
   reveal = false,
 }: MemoryPostBubbleProps) {
   const { width } = useWindowDimensions();
@@ -127,14 +131,28 @@ export const MemoryPostBubble = memo(function MemoryPostBubble({
       ]}
     >
       {mine ? null : (
-        <View style={styles.avatarSlot}>
+        <Pressable
+          onPress={() => onPressAuthor?.(memory.author.username)}
+          disabled={!onPressAuthor}
+          accessibilityRole="button"
+          accessibilityLabel={`Open ${memory.author.username}'s profile`}
+          style={styles.avatarSlot}
+        >
           <ChatAvatar user={memory.author} size={AVATAR_SIZE} />
-        </View>
+        </Pressable>
       )}
       <View style={mine ? styles.columnRight : styles.columnLeft}>
         <View style={styles.metaRow}>
           {mine ? null : (
-            <Text style={styles.name} numberOfLines={1}>
+            <Text
+              style={styles.name}
+              numberOfLines={1}
+              onPress={
+                onPressAuthor
+                  ? () => onPressAuthor(memory.author.username)
+                  : undefined
+              }
+            >
               {memory.author.name ?? memory.author.username}
             </Text>
           )}

@@ -1,6 +1,5 @@
 import {
   ActivityIndicator,
-  Alert,
   FlatList,
   Pressable,
   StyleSheet,
@@ -12,6 +11,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { BrandColors } from "@/constants/theme";
 import { UserRow, userDisplayName } from "@/components/ui/user-row";
 import { ScreenHeader } from "@/features/friends/components/screen-header";
+import { confirmUnblock } from "@/features/social/confirm-block";
 import { useBlockedUsersQuery, useUnblockUserMutation } from "@/services/social";
 import type { BlockedUser } from "@/services/social";
 
@@ -21,19 +21,10 @@ export function BlockedAccountsScreen() {
   const blocked: BlockedUser[] =
     query.data?.pages.flatMap((p) => p.items) ?? [];
 
-  const confirmUnblock = (item: BlockedUser) => {
-    Alert.alert(
-      `Unblock ${userDisplayName(item.user)}?`,
-      "They'll be able to find you and send a friend request again. This does not restore a previous friendship.",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Unblock",
-          onPress: () => unblock.mutate(item.user.id),
-        },
-      ],
+  const onUnblock = (item: BlockedUser) =>
+    confirmUnblock(userDisplayName(item.user), () =>
+      unblock.mutate(item.user.id),
     );
-  };
 
   return (
     <SafeAreaView style={styles.safe} edges={["top", "bottom"]}>
@@ -52,7 +43,7 @@ export function BlockedAccountsScreen() {
               user={item.user}
               right={
                 <Pressable
-                  onPress={() => confirmUnblock(item)}
+                  onPress={() => onUnblock(item)}
                   style={styles.btn}
                 >
                   <Text style={styles.btnText}>Unblock</Text>

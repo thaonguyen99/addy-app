@@ -1,4 +1,5 @@
 import {
+  keepPreviousData,
   useInfiniteQuery,
   useMutation,
   useQueries,
@@ -95,16 +96,22 @@ export function useDeleteMemoryMutation(id: string) {
       // its place's "memories here" sheet, and lifetime stats all at once.
       queryClient.invalidateQueries({ queryKey: ["memories"] });
       queryClient.invalidateQueries({ queryKey: queryKeys.stats });
+      queryClient.invalidateQueries({ queryKey: ["users", "profile"] });
     },
   });
 }
 
+/**
+ * Each pan is a new key. Keep showing the last viewport's pins until the new
+ * ones arrive — otherwise every marker unmounts mid-fetch and the map blinks.
+ */
 export function useMemoriesMapQuery(bounds: MapBounds | null) {
   const key = bounds ? mapBoundsKey(bounds) : "idle";
   return useQuery({
     queryKey: queryKeys.map(key),
     queryFn: () => memoryApi.getMapPins(bounds!),
     enabled: Boolean(bounds),
+    placeholderData: keepPreviousData,
   });
 }
 
@@ -114,6 +121,8 @@ export function useFriendsMapQuery(bounds: MapBounds | null) {
     queryKey: queryKeys.friendsMap(key),
     queryFn: () => memoryApi.getFriendsMapPins(bounds!),
     enabled: Boolean(bounds),
+    // Same as above: no blink while a pan's friend pins load.
+    placeholderData: keepPreviousData,
   });
 }
 

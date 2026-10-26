@@ -24,6 +24,7 @@ import {
   AddyShadow,
 } from "@/constants/theme";
 import { useAuthStore } from "@/stores/auth.store";
+import { openEditProfile } from "@/stores/edit-profile.store";
 import { clearPinQueue, usePinQueueStore } from "@/stores/pin-queue.store";
 import { getApiErrorMessage } from "@/services/api/errors";
 import { safeBack } from "@/lib/safe-router";
@@ -112,9 +113,9 @@ export function ProfileMenuScreen() {
       key: "account",
       icon: "person",
       label: "Account",
-      sublabel: "username, name, avatar",
+      sublabel: "name, username, avatar, bio",
       color: AddyColors.lime,
-      onPress: () => router.push("/(app)/profile/account"),
+      onPress: () => openEditProfile(),
     },
     {
       key: "security",
@@ -206,7 +207,7 @@ export function ProfileMenuScreen() {
           >
             <View style={styles.avatarWrap}>
               <Pressable
-                onPress={() => router.push("/(app)/profile/account")}
+                onPress={() => openEditProfile()}
                 accessibilityRole="button"
                 accessibilityLabel="Edit your profile"
                 style={[styles.avatar, AddyShadow.soft]}
@@ -227,6 +228,7 @@ export function ProfileMenuScreen() {
               </Pressable>
               <Text style={styles.name}>{profile.name || profile.username}</Text>
               <Text style={styles.username}>@{profile.username}</Text>
+              <Text style={styles.email}>{profile.email}</Text>
             </View>
 
             <View style={styles.menuList}>
@@ -367,6 +369,11 @@ const styles = StyleSheet.create({
   username: {
     fontFamily: AddyFonts.tech,
     fontSize: 17,
+    color: AddyColors.inkMuted,
+  },
+  email: {
+    fontFamily: AddyFonts.body,
+    fontSize: 13,
     color: AddyColors.inkMuted,
   },
   menuList: { gap: 10 },

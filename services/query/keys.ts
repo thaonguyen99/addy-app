@@ -19,6 +19,11 @@ export const queryKeys = {
     ["friends", "requests", direction] as const,
   friendSuggestions: ["friends", "suggestions"] as const,
   userSearch: (q: string) => ["users", "search", q] as const,
+  /** Prefixes: `["users", "profile"]` and `["users", "profile-memories"]`. */
+  userProfile: (username: string) =>
+    ["users", "profile", username.toLowerCase()] as const,
+  userMemories: (username: string) =>
+    ["users", "profile-memories", username.toLowerCase()] as const,
   invite: ["users", "invite"] as const,
   blockedUsers: ["blocks"] as const,
   notificationPreferences: ["notifications", "preferences"] as const,

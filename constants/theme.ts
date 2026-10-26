@@ -168,6 +168,11 @@ export const AddyGradients = {
     colors: ["#B9E4FF", "#E3F4FF", "#FBFBF6"] as const,
     locations: [0, 0.3, 0.58] as const,
   },
+  /** The same sky, drained of color — profiles that aren't available. */
+  skyGrey: {
+    colors: ["#C9CCD5", "#E6E7EC", "#FBFBF6"] as const,
+    locations: [0, 0.3, 0.58] as const,
+  },
   /** Primary pill button — vertical lime gloss. */
   limeGloss: ["#DDFA72", "#C7F23A", "#9FE000"] as const,
   /** Icon buttons and the tab bar. */

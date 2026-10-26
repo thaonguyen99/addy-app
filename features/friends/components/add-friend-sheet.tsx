@@ -4,7 +4,7 @@ import {
   BottomSheetModal,
   BottomSheetView,
 } from "@gorhom/bottom-sheet";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -31,12 +31,11 @@ import {
 } from "@/features/reports/components/report-sheet";
 import { showToast } from "@/stores/toast.store";
 import { getApiErrorMessage } from "@/services/api/errors";
-import { useAcceptFriendRequestMutation, useCancelFriendRequestMutation, useFriendRequestsQuery, useFriendsQuery, useSendFriendRequestMutation } from "@/services/friends";
+import { confirmBlock } from "@/features/social/confirm-block";
 import { useAcceptInviteMutation, useBlockUserMutation, useInvitePreviewQuery } from "@/services/social";
-import type { FriendRelationship } from "@/services/friends";
 import type { PublicUser } from "@/services/users";
 
-/** One sheet for every way in: link, QR, search result, suggestion. */
+/** Opening someone's invite link or QR code: add them in one tap. */
 export function AddFriendSheet() {
   const insets = useSafeAreaInsets();
   const sheetRef = useRef<BottomSheetModal>(null);
@@ -80,17 +79,9 @@ export function AddFriendSheet() {
         <BottomSheetView
           style={[styles.content, { paddingBottom: insets.bottom + 12 }]}
         >
-          {shown?.kind === "token" ? (
+          {shown ? (
             <TokenBody
               token={shown.token}
-              onClose={close}
-              onReport={(user) =>
-                reportSheet.current?.present({ type: "USER", id: user.id })
-              }
-            />
-          ) : shown?.kind === "user" ? (
-            <UserBody
-              target={shown}
               onClose={close}
               onReport={(user) =>
                 reportSheet.current?.present({ type: "USER", id: user.id })
@@ -180,120 +171,6 @@ function TokenBody({ token, onClose, onReport }: BodyProps & { token: string }) 
   );
 }
 
-/** From search or a suggestion: a friend request, with its states. */
-function UserBody({
-  target,
-  onClose,
-  onReport,
-}: BodyProps & { target: Extract<AddTarget, { kind: "user" }> }) {
-  const { user } = target;
-  const name = userDisplayName(user);
-  const { relationship, requestId, ready } = useLiveRelationship(
-    user.id,
-    target.relationship,
-  );
-  const send = useSendFriendRequestMutation();
-  const accept = useAcceptFriendRequestMutation();
-  const cancel = useCancelFriendRequestMutation();
-  const busy = send.isPending || accept.isPending || cancel.isPending;
-  const onError = (error: unknown) =>
-    showToast(getApiErrorMessage(error, "Something went wrong. Try again."));
-
-  let action: React.ReactNode;
-  if (!ready) {
-    action = <ActivityIndicator color={AddyColors.ink} style={styles.actionLoading} />;
-  } else if (relationship === "friend") {
-    action = (
-      <GlossyButton label="Friends ✓" variant="secondary" disabled onPress={onClose} style={styles.stretch} />
-    );
-  } else if (relationship === "request_received") {
-    action = (
-      <GlossyButton
-        label={`Accept ${name}`}
-        loading={busy}
-        disabled={!requestId}
-        onPress={() =>
-          requestId &&
-          accept.mutate(requestId, {
-            onSuccess: () => {
-              onClose();
-              celebrateFriend(user);
-            },
-            onError,
-          })
-        }
-        style={styles.stretch}
-      />
-    );
-  } else if (relationship === "request_sent") {
-    action = (
-      <View style={styles.sentBlock}>
-        <GlossyButton label="Request sent ✓" variant="secondary" disabled onPress={onClose} style={styles.stretch} />
-        <Pressable
-          onPress={() => requestId && cancel.mutate(requestId, { onError })}
-          disabled={!requestId || busy}
-          accessibilityRole="button"
-          hitSlop={6}
-          style={styles.textButton}
-        >
-          <Text style={styles.cancelText}>Cancel request</Text>
-        </Pressable>
-      </View>
-    );
-  } else {
-    action = (
-      <GlossyButton
-        label="Send request"
-        loading={busy}
-        onPress={() => send.mutate(user.id, { onError })}
-        style={styles.stretch}
-      />
-    );
-  }
-
-  return (
-    <Profile
-      user={user}
-      mutualCount={target.mutualCount}
-      onClose={onClose}
-      onReport={onReport}
-    >
-      {action}
-    </Profile>
-  );
-}
-
-/**
- * Where you stand with someone right now, from the request and friend lists
- * (search results and suggestions go stale as soon as you tap a button).
- */
-function useLiveRelationship(
-  userId: string,
-  fallback: FriendRelationship | undefined,
-): { relationship: FriendRelationship; requestId?: string; ready: boolean } {
-  const incoming = useFriendRequestsQuery("incoming");
-  const outgoing = useFriendRequestsQuery("outgoing");
-  const friends = useFriendsQuery();
-
-  return useMemo(() => {
-    const ready = !incoming.isLoading && !outgoing.isLoading && !friends.isLoading;
-    const received = incoming.data?.pages
-      .flatMap((p) => p.items)
-      .find((r) => r.user.id === userId);
-    if (received) return { relationship: "request_received", requestId: received.id, ready };
-    const sent = outgoing.data?.pages
-      .flatMap((p) => p.items)
-      .find((r) => r.user.id === userId);
-    if (sent) return { relationship: "request_sent", requestId: sent.id, ready };
-    const isFriend = friends.data?.pages
-      .flatMap((p) => p.items)
-      .some((f) => f.user.id === userId);
-    // The friends list is paged, so trust an opener that already knew.
-    if (isFriend || fallback === "friend") return { relationship: "friend", ready };
-    return { relationship: "none", ready };
-  }, [incoming.data, outgoing.data, friends.data, incoming.isLoading, outgoing.isLoading, friends.isLoading, userId, fallback]);
-}
-
 /** Avatar, name, handle, chips, the main action, Not now, and ⋯. */
 function Profile({
   user,
@@ -321,25 +198,15 @@ function Profile({
         text: `Block ${name}`,
         style: "destructive",
         onPress: () =>
-          Alert.alert(
-            `Block ${name}?`,
-            "They won't be able to send you requests or see your memories. Any friendship is removed.",
-            [
-              { text: "Cancel", style: "cancel" },
-              {
-                text: "Block",
-                style: "destructive",
-                onPress: () =>
-                  block.mutate(user.id, {
-                    onSuccess: () => {
-                      showToast(`Blocked ${name}`);
-                      onClose();
-                    },
-                    onError: (error) =>
-                      showToast(getApiErrorMessage(error, "Couldn't block them.")),
-                  }),
+          confirmBlock(name, () =>
+            block.mutate(user.id, {
+              onSuccess: () => {
+                showToast(`Blocked ${name}`);
+                onClose();
               },
-            ],
+              onError: (error) =>
+                showToast(getApiErrorMessage(error, "Couldn't block them.")),
+            }),
           ),
       },
     ]);
@@ -449,9 +316,6 @@ const styles = StyleSheet.create({
   handle: { fontFamily: AddyFonts.tech, fontSize: 19, color: AddyColors.inkMuted },
   chips: { flexDirection: "row", flexWrap: "wrap", justifyContent: "center", gap: 8, marginTop: 8 },
   actions: { alignSelf: "stretch", alignItems: "center", gap: 4, marginTop: 18 },
-  actionLoading: { height: 56 },
-  sentBlock: { alignSelf: "stretch", alignItems: "center" },
   textButton: { minHeight: 44, justifyContent: "center", paddingHorizontal: 12 },
   notNow: { fontFamily: AddyFonts.body, fontSize: 16, color: AddyColors.inkMuted },
-  cancelText: { fontFamily: AddyFonts.bodyMedium, fontSize: 15, color: AddyColors.pink },
 });

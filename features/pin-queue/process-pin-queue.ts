@@ -166,6 +166,7 @@ async function uploadEntry(entry: QueuedPin): Promise<"ok" | "stop"> {
     queryClient.invalidateQueries({ queryKey: ["memories", "map"] });
     queryClient.invalidateQueries({ queryKey: queryKeys.memoriesFeed });
     queryClient.invalidateQueries({ queryKey: queryKeys.stats });
+    queryClient.invalidateQueries({ queryKey: ["users", "profile"] });
     return "ok";
   } catch (rawError) {
     if (rawError instanceof AccountChangedError) return "stop";

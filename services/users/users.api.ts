@@ -1,10 +1,18 @@
 import type { AuthTokens } from "@/services/auth";
-import { apiDelete, apiGet, apiPatch, apiPost } from "../api/client";
+import {
+  apiDelete,
+  apiGet,
+  apiGetPaginated,
+  apiPatch,
+  apiPost,
+} from "../api/client";
 import type {
   ChangePasswordInput,
+  ProfileMemoryItem,
   UpdateProfileInput,
   UsernameAvailableResult,
   UserProfile,
+  UserProfilePage,
   UserStats,
 } from "./users.type";
 
@@ -38,7 +46,22 @@ async function checkUsernameAvailable(username: string) {
   });
 }
 
+async function getUserProfile(username: string) {
+  return apiGet<UserProfilePage>(
+    `/users/${encodeURIComponent(username)}/profile`,
+  );
+}
+
+async function listUserMemories(username: string, cursor?: string) {
+  return apiGetPaginated<ProfileMemoryItem>(
+    `/users/${encodeURIComponent(username)}/memories`,
+    { cursor },
+  );
+}
+
 export const userApi = {
+  getUserProfile,
+  listUserMemories,
   deleteAccount,
   changePassword,
   checkUsernameAvailable,

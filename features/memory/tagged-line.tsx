@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text } from "react-native";
 
 import { ADDY_BORDER_WIDTH, AddyColors, AddyFonts, AddyRadius } from "@/constants/theme";
 import type { PublicUser } from "@/services/users";
@@ -34,18 +34,30 @@ export function TaggedLine({
   author,
   tagged,
   viewerId,
+  onPress,
 }: {
   author: PublicUser;
   tagged: readonly PublicUser[];
   viewerId: string | undefined;
+  /** Opens the "with" sheet. */
+  onPress?: () => void;
 }) {
   if (tagged.length === 0) return null;
+  const sentence = taggedSentence(author, tagged, viewerId);
   return (
-    <View style={styles.pill}>
+    <Pressable
+      onPress={onPress}
+      disabled={!onPress}
+      accessibilityRole={onPress ? "button" : undefined}
+      accessibilityLabel={sentence}
+      accessibilityHint={onPress ? "Shows who's tagged" : undefined}
+      style={({ pressed }) => [styles.pill, pressed && styles.pressed]}
+    >
       <Text style={styles.text} numberOfLines={2}>
-        ✦ {taggedSentence(author, tagged, viewerId)}
+        ✦ {sentence}
+        {onPress ? " ›" : ""}
       </Text>
-    </View>
+    </Pressable>
   );
 }
 
@@ -60,6 +72,7 @@ const styles = StyleSheet.create({
     borderColor: AddyColors.line,
     backgroundColor: AddyColors.white,
   },
+  pressed: { opacity: 0.7 },
   text: {
     fontFamily: AddyFonts.tech,
     fontSize: 16,

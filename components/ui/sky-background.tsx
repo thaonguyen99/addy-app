@@ -8,15 +8,22 @@ import { AddyColors, AddyGradients } from "@/constants/theme";
 type SkyBackgroundProps = {
   children?: ReactNode;
   style?: StyleProp<ViewStyle>;
+  /** "grey" is the same sky and clouds, drained of color. */
+  tone?: "sky" | "grey";
 };
 
 /** Screen wallpaper: pale sky fading to paper, with soft clouds near the top. */
-export function SkyBackground({ children, style }: SkyBackgroundProps) {
+export function SkyBackground({
+  children,
+  style,
+  tone = "sky",
+}: SkyBackgroundProps) {
+  const gradient = tone === "grey" ? AddyGradients.skyGrey : AddyGradients.sky;
   return (
     <View style={[styles.root, style]}>
       <LinearGradient
-        colors={AddyGradients.sky.colors}
-        locations={AddyGradients.sky.locations}
+        colors={gradient.colors}
+        locations={gradient.locations}
         style={StyleSheet.absoluteFill}
       />
       <Svg

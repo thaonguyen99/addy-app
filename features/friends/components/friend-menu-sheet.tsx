@@ -6,7 +6,7 @@ import {
 } from "@gorhom/bottom-sheet";
 import { router } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { UserAvatar, userDisplayName } from "@/components/ui/user-row";
@@ -20,6 +20,7 @@ import {
   ReportSheet,
   type ReportSheetRef,
 } from "@/features/reports/components/report-sheet";
+import { confirmBlock } from "@/features/social/confirm-block";
 import { getApiErrorMessage } from "@/services/api/errors";
 import { useUnfriendMutation } from "@/services/friends";
 import { useBlockUserMutation } from "@/services/social";
@@ -110,27 +111,17 @@ export function FriendMenuSheet() {
     reportSheet.current?.present({ type: "USER", id: user.id });
   };
 
-  const confirmBlock = () =>
+  const onBlock = () =>
     user &&
-    Alert.alert(
-      `Block ${name}?`,
-      "They won't be able to send you requests or see your memories. Any friendship is removed.",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Block",
-          style: "destructive",
-          onPress: () =>
-            block.mutate(user.id, {
-              onSuccess: () => {
-                close();
-                showToast(`Blocked ${name}`);
-              },
-              onError: (error) =>
-                showToast(getApiErrorMessage(error, "Couldn't block them.")),
-            }),
+    confirmBlock(name, () =>
+      block.mutate(user.id, {
+        onSuccess: () => {
+          close();
+          showToast(`Blocked ${name}`);
         },
-      ],
+        onError: (error) =>
+          showToast(getApiErrorMessage(error, "Couldn't block them.")),
+      }),
     );
 
   return (
@@ -212,7 +203,7 @@ export function FriendMenuSheet() {
                 label="Block"
                 danger
                 last
-                onPress={confirmBlock}
+                onPress={onBlock}
               />
             </>
           )}

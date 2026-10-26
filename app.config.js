@@ -18,7 +18,7 @@ function toIosUrlScheme(clientId) {
 
 const iosUrlScheme = toIosUrlScheme(iosClientId);
 
-/** Host of the invite share links (https://<host>/i/<token>); matches the API's INVITE_WEB_BASE_URL. */
+/** Host of the share links (https://<host>/i/<token>, /u/<username>); matches the API's INVITE_WEB_BASE_URL. */
 const inviteLinkHost = process.env.INVITE_LINK_HOST ?? "addy.app";
 
 /** @type {import('expo/config').ExpoConfig} */
@@ -61,12 +61,15 @@ module.exports = ({ config }) => ({
       foregroundImage: "./assets/images/android-icon-foreground.png",
     },
     edgeToEdgeEnabled: true,
-    // Opens /i/<token> links in the app (verified via the API's assetlinks.json).
+    // Opens /i/<token> and /u/<username> links in the app (verified via the API's assetlinks.json).
     intentFilters: [
       {
         action: "VIEW",
         autoVerify: true,
-        data: [{ scheme: "https", host: inviteLinkHost, pathPrefix: "/i/" }],
+        data: [
+          { scheme: "https", host: inviteLinkHost, pathPrefix: "/i/" },
+          { scheme: "https", host: inviteLinkHost, pathPrefix: "/u/" },
+        ],
         category: ["BROWSABLE", "DEFAULT"],
       },
     ],
@@ -156,6 +159,7 @@ module.exports = ({ config }) => ({
     googleIosClientId: iosClientId,
     googleWebClientId: webClientId,
     goongMapApiKey: process.env.GOONG_MAP_API_KEY ?? "",
+    linkHost: inviteLinkHost,
     router: {},
     eas: {
       projectId: "eb53cb10-598d-456c-b2c3-15af9d2d3fee",

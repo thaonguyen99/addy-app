@@ -37,6 +37,7 @@ import { PillButton } from "@/features/friends/components/pill-button";
 import { SectionHeader } from "@/features/friends/components/section-header";
 import { SkeletonRow } from "@/features/friends/components/skeleton-row";
 import { SuggestionsRow } from "@/features/friends/components/suggestions-row";
+import { openProfile } from "@/features/profile/open-profile";
 import { getApiErrorMessage } from "@/services/api/errors";
 import type { Friend, FriendRequest } from "@/services/friends";
 import {
@@ -134,7 +135,6 @@ export function FriendsScreen() {
   }, [friendsQuery, incomingQuery, suggestionsQuery, inviteQuery]);
 
   const openQr = () => useFriendSheetsStore.getState().openQr("code");
-  const openAdd = useFriendSheetsStore.getState().openAdd;
 
   const openFriendMap = (user: PublicUser) =>
     router.navigate({
@@ -166,16 +166,7 @@ export function FriendsScreen() {
     <FriendSearchResults
       term={term}
       link={link}
-      onOpenUser={(result) =>
-        openAdd({
-          kind: "user",
-          user: result,
-          relationship: result.relationship,
-          ...(result.mutualCount !== undefined
-            ? { mutualCount: result.mutualCount }
-            : {}),
-        })
-      }
+      onOpenUser={(result) => openProfile(result.username)}
     />
   ) : loading ? (
     <View>
@@ -212,11 +203,7 @@ export function FriendsScreen() {
         )}
       </View>
 
-      <SuggestionsRow
-        onOpenUser={({ user, mutualCount }) =>
-          openAdd({ kind: "user", user, relationship: "none", mutualCount })
-        }
-      />
+      <SuggestionsRow onOpenUser={({ user }) => openProfile(user.username)} />
 
       {friends.length > 0 ? (
         <SectionHeader title="Your friends" count={friends.length} />
@@ -281,9 +268,9 @@ export function FriendsScreen() {
             <PersonRow
               user={item.user}
               subtitle={friendSubtitle(item)}
-              onPress={() => openFriendMap(item.user)}
+              onPress={() => openProfile(item.user.username)}
               onLongPress={() => openFriendMenu(item)}
-              accessibilityHint="Opens their map. Long press for more options."
+              accessibilityHint="Opens their profile. Long press for more options."
               right={
                 <TechChip
                   label="map"
