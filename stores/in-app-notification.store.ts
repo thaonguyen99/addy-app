@@ -1,12 +1,18 @@
 import { create } from "zustand";
 
+import type { NotificationTarget } from "@/features/notifications/notification-target";
+
 const BANNER_VISIBLE_MS = 4000;
 
 export type InAppNotification = {
   title: string;
-  body: string;
-  /** In-app route to open on tap; null when the push has nowhere to go. */
-  path: string | null;
+  body?: string;
+  /** Bolded at the start of `title` when it begins with it. */
+  lead?: string;
+  actor?: { username: string; avatarUrl: string | null } | null;
+  thumbUrl?: string;
+  /** Where a tap goes; null when there's nowhere to go. */
+  target: NotificationTarget | null;
 };
 
 type InAppNotificationState = {
@@ -18,7 +24,7 @@ type InAppNotificationState = {
 
 let hideTimer: ReturnType<typeof setTimeout> | null = null;
 
-/** The push that arrived while the app was open. Rendered by `InAppNotificationBanner`. */
+/** A notification that arrived while the app was open. Rendered by `InAppNotificationBanner`. */
 export const useInAppNotificationStore = create<InAppNotificationState>(
   (set) => ({
     notification: null,

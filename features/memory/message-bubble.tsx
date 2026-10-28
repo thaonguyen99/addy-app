@@ -1,5 +1,12 @@
-import { memo, useCallback } from "react";
+import { memo, useCallback, useEffect } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
+import Animated, {
+  FadeInDown,
+  useAnimatedStyle,
+  useSharedValue,
+  withDelay,
+  withTiming,
+} from "react-native-reanimated";
 
 import { ADDY_BORDER_WIDTH, AddyColors, AddyFonts } from "@/constants/theme";
 import { ChatAvatar } from "@/features/memory/chat-avatar";
@@ -13,6 +20,10 @@ import { formatRelativeTime } from "@/utils/format-relative-time";
 import { splitMentions } from "@/utils/mentions";
 
 const AVATAR_SIZE = 30;
+/** Pale pink wash behind a message opened from a notification. */
+const HIGHLIGHT_COLOR = "rgba(255, 92, 174, 0.14)";
+const HIGHLIGHT_HOLD_MS = 900;
+const HIGHLIGHT_FADE_MS = 600;
 
 /** Mine = right, lime. Other = left, white, with avatar — like any chat. */
 export type MessageBubbleVariant = "mine" | "other";
@@ -36,6 +47,10 @@ type MessageBubbleProps = {
   onRetry?: (clientId: string) => void;
   /** Tap the author's avatar or name, or an @mention, to open that profile. */
   onOpenProfile?: (username: string) => void;
+  /** Opened from a notification: briefly wash the row pink. */
+  highlighted?: boolean;
+  /** Arrived live: a soft slide-up on mount. */
+  animateIn?: boolean;
 };
 
 function variantFor(
@@ -53,8 +68,22 @@ export const MessageBubble = memo(function MessageBubble({
   onLongPress,
   onRetry,
   onOpenProfile,
+  highlighted = false,
+  animateIn = false,
 }: MessageBubbleProps) {
   const variant = variantFor(item, viewerId);
+  const highlight = useSharedValue(0);
+  useEffect(() => {
+    if (!highlighted) return;
+    highlight.value = 1;
+    highlight.value = withDelay(
+      HIGHLIGHT_HOLD_MS,
+      withTiming(0, { duration: HIGHLIGHT_FADE_MS }),
+    );
+  }, [highlighted, highlight]);
+  const highlightStyle = useAnimatedStyle(() => ({
+    opacity: highlight.value,
+  }));
   const mine = variant === "mine";
   const message = item.kind === "message" ? item.message : null;
   const createdAt =
@@ -103,13 +132,18 @@ export const MessageBubble = memo(function MessageBubble({
       : null;
 
   return (
-    <View
+    <Animated.View
+      entering={animateIn ? FadeInDown.duration(220) : undefined}
       style={[
         styles.row,
         mine ? styles.rowRight : styles.rowLeft,
         likeCount > 0 && styles.rowWithChip,
       ]}
     >
+      <Animated.View
+        pointerEvents="none"
+        style={[styles.highlight, highlightStyle]}
+      />
       {mine ? null : (
         <Pressable
           onPress={openAuthor}
@@ -175,7 +209,7 @@ export const MessageBubble = memo(function MessageBubble({
           </Pressable>
         ) : null}
       </View>
-    </View>
+    </Animated.View>
   );
 });
 
@@ -188,6 +222,12 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   rowWithChip: { marginBottom: 10 + HEART_CHIP_OVERHANG },
+  highlight: {
+    ...StyleSheet.absoluteFillObject,
+    top: -5,
+    bottom: -5,
+    backgroundColor: HIGHLIGHT_COLOR,
+  },
   rowLeft: { justifyContent: "flex-start" },
   rowRight: { justifyContent: "flex-end" },
   avatarSlot: { paddingBottom: 2 },

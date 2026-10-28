@@ -4,7 +4,7 @@ import * as FileSystem from "expo-file-system/legacy";
 import type { QueuedPin } from "@/features/pin-queue/pin-queue-types";
 import { ApiClientError, toApiClientError } from "@/services/api/errors";
 import { MediaApi } from "@/services/media";
-import { MemoryApi } from "@/services/memories";
+import { insertOwnMemory, MemoryApi } from "@/services/memories";
 import type { PlaceInput } from "@/services/places";
 import { PlaceApi } from "@/services/places";
 import { queryClient } from "@/services/query/client";
@@ -163,6 +163,8 @@ async function uploadEntry(entry: QueuedPin): Promise<"ok" | "stop"> {
     });
 
     uploadedMemoryIds.set(entry.clientId, memory.id);
+    // Hand the queued pin over to the real memory before it leaves the queue.
+    insertOwnMemory(queryClient, memory);
     await remove(entry.clientId);
     queryClient.invalidateQueries({ queryKey: ["memories", "map"] });
     queryClient.invalidateQueries({ queryKey: ["memories", "by-places"] });

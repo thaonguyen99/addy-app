@@ -31,8 +31,13 @@ async function listMentionable(memoryId: string) {
   });
 }
 
-async function postMessage(memoryId: string, text: string) {
-  return apiPost<MemoryMessage>(`/memories/${memoryId}/messages`, { text });
+/** `clientTempId` comes back on the socket's `comment:created`, so the
+ * optimistic bubble can be swapped for the real one. */
+async function postMessage(memoryId: string, text: string, clientTempId?: string) {
+  return apiPost<MemoryMessage>(`/memories/${memoryId}/messages`, {
+    text,
+    ...(clientTempId ? { clientTempId } : {}),
+  });
 }
 
 async function editMessage(messageId: string, text: string) {

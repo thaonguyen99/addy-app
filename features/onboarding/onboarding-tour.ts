@@ -10,6 +10,7 @@ import { useAuthStore } from "@/stores/auth.store";
 import { renderClippedTooltip } from "@/features/onboarding/components/clipped-tooltip";
 import { needsOnboarding } from "@/features/onboarding/needs-onboarding";
 import { onboardingTourTheme } from "@/features/onboarding/onboarding-theme";
+import { requestPushPermission } from "@/services/notifications/notifications.push";
 import { useOnboardingCaptureStore } from "@/stores/onboarding-capture.store";
 import { useCompleteOnboardingMutation } from "@/services/users";
 
@@ -142,6 +143,8 @@ export function useOnboardingTour() {
         onTourEnd: () => {
           useOnboardingCaptureStore.getState().setActive(false);
           completeOnboarding.mutate();
+          // A natural moment to ask for notifications: never on cold start.
+          void requestPushPermission();
         },
       },
       true,

@@ -1,41 +1,37 @@
 import * as Notifications from "expo-notifications";
-import { router } from "expo-router";
 import { useEffect } from "react";
 
 import {
-  celebrateFriendOnce,
-  newFriendIdFromPush,
-} from "@/features/friends/celebrated-friends";
+  openNotificationTarget,
+  targetFromPushData,
+} from "@/features/notifications/notification-target";
 
-/** Turn an addyapp:// notification URL into an in-app route. */
-export function toAppPath(raw: unknown): string | null {
-  if (typeof raw !== "string") return null;
-  const path = raw.replace(/^addyapp:\/\//, "/");
-  if (path.startsWith("/memory/")) return path;
-  if (path.startsWith("/friends")) return path;
-  return null;
-}
+/** Taps already routed, so a cold-start response isn't replayed on remount. */
+const handled = new Set<string>();
 
 function handleResponse(response: Notifications.NotificationResponse) {
-  const { data } = response.notification.request.content;
-  const friendId = newFriendIdFromPush(data);
-  if (friendId) void celebrateFriendOnce(friendId);
-  const path = toAppPath(data?.url);
-  if (path) {
-    router.push(path as never);
-  }
+  const id = response.notification.request.identifier;
+  if (handled.has(id)) return;
+  handled.add(id);
+  const target = targetFromPushData(response.notification.request.content.data);
+  if (target) void openNotificationTarget(target);
 }
 
 /**
- * Routes notification taps to the right screen — both while the app is running
- * and when a tap cold-starts it.
+ * Routes notification taps (server pushes and the local On this day) to the
+ * right screen: from a cold start, from the background, and while open.
+ * Mounted inside the signed-in stack so the navigator and session exist.
  */
-export function useNotificationRouter(): void {
+export function useNotificationRouter(enabled: boolean): void {
   useEffect(() => {
+    if (!enabled) return;
     let cancelled = false;
 
     void Notifications.getLastNotificationResponseAsync().then((response) => {
-      if (!cancelled && response) handleResponse(response);
+      if (cancelled || !response) return;
+      handleResponse(response);
+      // Otherwise the same tap is replayed on the next launch.
+      void Notifications.clearLastNotificationResponseAsync();
     });
 
     const sub =
@@ -45,5 +41,5 @@ export function useNotificationRouter(): void {
       cancelled = true;
       sub.remove();
     };
-  }, []);
+  }, [enabled]);
 }

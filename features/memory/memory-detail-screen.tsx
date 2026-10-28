@@ -1,7 +1,7 @@
 import { TourTarget } from "@wrack/react-native-tour-guide";
 import * as Haptics from "expo-haptics";
 import { router } from "expo-router";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -16,6 +16,7 @@ import {
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { GlossyButton } from "@/components/ui/glossy-button";
 import { IconCircleButton } from "@/components/ui/icon-circle-button";
 import { SkyBackground } from "@/components/ui/sky-background";
 import { TechChip } from "@/components/ui/tech-chip";
@@ -45,6 +46,8 @@ import { ReactorsSheet } from "@/features/reactions/components/reactors-sheet";
 import type { ReportSheetRef } from "@/features/reports/components/report-sheet";
 import { ReportSheet } from "@/features/reports/components/report-sheet";
 import { useFirstTimeHint } from "@/hooks/use-first-time-hint";
+import { useFocusedQueryKeys } from "@/hooks/use-focused-query-keys";
+import { useMemoryRealtime } from "@/hooks/use-memory-realtime";
 import { useMessageThread } from "@/hooks/use-message-thread";
 import { safeBack } from "@/lib/safe-router";
 import { getApiErrorMessage } from "@/services/api/errors";
@@ -62,12 +65,20 @@ import {
   useEditMessageMutation,
   useMentionableQuery,
 } from "@/services/messages";
+import { queryKeys } from "@/services/query/keys";
 import { useAuthStore } from "@/stores/auth.store";
 import { showToast } from "@/stores/toast.store";
-import { formatRelativeTime } from "@/utils/format-relative-time";
+import {
+  formatDayMonthYear,
+  formatRelativeTime,
+} from "@/utils/format-relative-time";
 
 /** Start loading older messages when scrolling up within this many px of the thread top. */
 const LOAD_OLDER_THRESHOLD = 160;
+/** Within this many px of the bottom, new messages scroll into view on their own. */
+const NEAR_BOTTOM = 120;
+/** Older pages to load while looking for a message opened from a notification. */
+const MAX_PAGES_TO_FIND_MESSAGE = 5;
 
 /** Arrival modes for the memory chat. Open with `?reveal=on-this-day`. */
 export type MemoryReveal = "on-this-day";
@@ -76,19 +87,16 @@ type MemoryDetailScreenProps = {
   id: string;
   /** Plays the arrival animation once and shows the matching pill. */
   reveal?: MemoryReveal;
+  /** Scroll to this message and briefly highlight it (from a notification). */
+  messageId?: string;
 };
 
-/** "22 Oct 2025" for the on-this-day pill. */
-function formatRevealDate(iso: string): string {
-  const date = new Date(iso);
-  if (Number.isNaN(date.getTime())) return "";
-  const day = String(date.getDate()).padStart(2, "0");
-  const month = date.toLocaleDateString("en-US", { month: "short" });
-  return `${day} ${month} ${date.getFullYear()}`;
-}
-
 /** A memory is a chat: the post is the first message, friends reply below. */
-export function MemoryDetailScreen({ id, reveal }: MemoryDetailScreenProps) {
+export function MemoryDetailScreen({
+  id,
+  reveal,
+  messageId,
+}: MemoryDetailScreenProps) {
   const { data, isLoading, isError } = useMemoryQuery(id);
   const updateMemory = useUpdateMemoryMutation(id);
   const deleteMemory = useDeleteMemoryMutation(id);
@@ -115,11 +123,86 @@ export function MemoryDetailScreen({ id, reveal }: MemoryDetailScreenProps) {
   // Thread top in list coordinates = height of the list header (the post).
   const threadTopRef = useRef(0);
   const lastScrollYRef = useRef(0);
+  const nearBottomRef = useRef(true);
+  const [newMessages, setNewMessages] = useState(0);
+  // Bubbles that arrived live get a soft entrance; the initial load doesn't.
+  const [liveIds, setLiveIds] = useState<ReadonlySet<string>>(new Set());
+
+  const scrollToBottom = useCallback(() => {
+    requestAnimationFrame(() => listRef.current?.scrollToEnd({ animated: true }));
+  }, []);
+
+  const live = useMemoryRealtime(id, {
+    onOwnMessageEchoed: thread.resolvePending,
+    onIncomingMessage: (message) => {
+      setLiveIds((ids) => new Set(ids).add(message.id));
+      if (nearBottomRef.current) scrollToBottom();
+      else setNewMessages((n) => n + 1);
+    },
+  });
+  useFocusedQueryKeys([queryKeys.memory(id), queryKeys.memoryMessages(id)]);
+
+  // Opened from a notification: find the message (loading a few older pages
+  // if needed), scroll to it, and wash it pink for a moment.
+  const [highlightId, setHighlightId] = useState<string | null>(null);
+  const targetRef = useRef({ id: messageId, pagesLoaded: 0, done: !messageId });
+  useEffect(() => {
+    const target = targetRef.current;
+    if (target.done || thread.isLoading || !showThread) return;
+    const index = thread.items.findIndex(
+      (item) => item.kind === "message" && item.message.id === target.id,
+    );
+    if (index >= 0) {
+      target.done = true;
+      setHighlightId(target.id ?? null);
+      // Let the list lay out the rows before jumping.
+      setTimeout(
+        () =>
+          listRef.current?.scrollToIndex({ index, viewPosition: 0.4, animated: true }),
+        250,
+      );
+      return;
+    }
+    if (
+      thread.hasOlder &&
+      !thread.isLoadingOlder &&
+      target.pagesLoaded < MAX_PAGES_TO_FIND_MESSAGE
+    ) {
+      target.pagesLoaded += 1;
+      thread.loadOlder();
+    } else if (!thread.hasOlder || target.pagesLoaded >= MAX_PAGES_TO_FIND_MESSAGE) {
+      // Deleted, or too far back: the chat opens as usual.
+      target.done = true;
+    }
+  }, [thread, showThread]);
+
+  const onScrollToIndexFailed = useCallback(
+    (info: { index: number; averageItemLength: number }) => {
+      listRef.current?.scrollToOffset({
+        offset: threadTopRef.current + info.averageItemLength * info.index,
+        animated: false,
+      });
+      setTimeout(
+        () =>
+          listRef.current?.scrollToIndex({
+            index: info.index,
+            viewPosition: 0.4,
+            animated: true,
+          }),
+        120,
+      );
+    },
+    [],
+  );
 
   const onListScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
-    const y = e.nativeEvent.contentOffset.y;
+    const { contentOffset, contentSize, layoutMeasurement } = e.nativeEvent;
+    const y = contentOffset.y;
     const scrollingUp = y < lastScrollYRef.current;
     lastScrollYRef.current = y;
+    nearBottomRef.current =
+      contentSize.height - (y + layoutMeasurement.height) < NEAR_BOTTOM;
+    if (nearBottomRef.current && newMessages > 0) setNewMessages(0);
     if (
       scrollingUp &&
       thread.hasOlder &&
@@ -150,9 +233,8 @@ export function MemoryDetailScreen({ id, reveal }: MemoryDetailScreenProps) {
     }
     thread.send(text);
     setDraft("");
-    requestAnimationFrame(() =>
-      listRef.current?.scrollToEnd({ animated: true }),
-    );
+    setNewMessages(0);
+    scrollToBottom();
   };
 
   const onMessageLongPress = useCallback((message: MemoryMessage) => {
@@ -193,9 +275,18 @@ export function MemoryDetailScreen({ id, reveal }: MemoryDetailScreenProps) {
         onRetry={thread.retry}
         onLongPress={onMessageLongPress}
         onOpenProfile={openProfile}
+        highlighted={item.kind === "message" && item.message.id === highlightId}
+        animateIn={item.kind === "message" && liveIds.has(item.message.id)}
       />
     ),
-    [viewerId, onToggleMessageLike, thread.retry, onMessageLongPress],
+    [
+      viewerId,
+      onToggleMessageLike,
+      thread.retry,
+      onMessageLongPress,
+      highlightId,
+      liveIds,
+    ],
   );
 
   const onChangeVisibility = (visibility: MemoryVisibility) => {
@@ -284,7 +375,20 @@ export function MemoryDetailScreen({ id, reveal }: MemoryDetailScreenProps) {
           )}
         </View>
 
-        {isLoading ? (
+        {live.unavailable ? (
+          <View style={styles.center}>
+            <Text style={styles.errorEmoji}>🫥</Text>
+            <Text style={styles.errorText}>
+              This memory is no longer available
+            </Text>
+            <GlossyButton
+              label="Back"
+              variant="ghost"
+              style={styles.unavailableBack}
+              onPress={() => safeBack("/(app)/(tabs)")}
+            />
+          </View>
+        ) : isLoading ? (
           <View style={styles.center}>
             <ActivityIndicator color={AddyColors.ink} size="large" />
           </View>
@@ -303,6 +407,7 @@ export function MemoryDetailScreen({ id, reveal }: MemoryDetailScreenProps) {
               }
               renderItem={renderThreadItem}
               onScroll={onListScroll}
+              onScrollToIndexFailed={onScrollToIndexFailed}
               scrollEventThrottle={32}
               // Keep the visible bubbles still when an older page is prepended.
               maintainVisibleContentPosition={{ minIndexForVisible: 1 }}
@@ -318,7 +423,7 @@ export function MemoryDetailScreen({ id, reveal }: MemoryDetailScreenProps) {
                 >
                   {reveal === "on-this-day" ? (
                     <TechChip
-                      label={`on this day · ${formatRevealDate(data.capturedAt)}`}
+                      label={`on this day · ${formatDayMonthYear(data.capturedAt)}`}
                       leading="✦"
                       tone="lime"
                       size="sm"
@@ -382,6 +487,18 @@ export function MemoryDetailScreen({ id, reveal }: MemoryDetailScreenProps) {
                 </View>
               }
             />
+            {newMessages > 0 ? (
+              <View style={styles.newPillSlot} pointerEvents="box-none">
+                <TechChip
+                  label="New messages ↓"
+                  onPress={() => {
+                    setNewMessages(0);
+                    scrollToBottom();
+                  }}
+                  accessibilityLabel={`${newMessages} new messages. Scroll down`}
+                />
+              </View>
+            ) : null}
             {showThread && !thread.isUnavailable ? (
               <MessageComposer
                 value={draft}
@@ -463,4 +580,6 @@ const styles = StyleSheet.create({
   revealPill: { alignSelf: "center", marginBottom: 8 },
   privateNote: { alignSelf: "center", marginTop: 4 },
   tagged: { paddingHorizontal: 16, marginTop: 10 },
+  unavailableBack: { marginTop: 8, paddingHorizontal: 28 },
+  newPillSlot: { alignItems: "center", marginTop: -44, height: 44 },
 });

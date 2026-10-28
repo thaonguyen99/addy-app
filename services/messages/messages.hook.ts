@@ -95,20 +95,85 @@ function bumpMessageCount(
   );
 }
 
+/**
+ * Add a message to the newest page unless it's already there: the REST
+ * response and the socket's `comment:created` can land in either order.
+ * Returns whether it was added.
+ */
+export function appendMessage(
+  queryClient: QueryClient,
+  memoryId: string,
+  message: MemoryMessage,
+): boolean {
+  const key = queryKeys.memoryMessages(memoryId);
+  const data = queryClient.getQueryData<MessagePages>(key);
+  if (!data) {
+    queryClient.invalidateQueries({ queryKey: key });
+    return false;
+  }
+  if (flattenMessagePages(data).some((m) => m.id === message.id)) return false;
+  updateMessagePages(queryClient, memoryId, (items, i) =>
+    i === 0 ? [...items, message] : items,
+  );
+  bumpMessageCount(queryClient, memoryId, 1);
+  return true;
+}
+
+/** Remove a message; returns whether it was loaded. */
+export function removeMessage(
+  queryClient: QueryClient,
+  memoryId: string,
+  messageId: string,
+): boolean {
+  const data = queryClient.getQueryData<MessagePages>(
+    queryKeys.memoryMessages(memoryId),
+  );
+  if (!flattenMessagePages(data).some((m) => m.id === messageId)) return false;
+  updateMessagePages(queryClient, memoryId, (items) =>
+    items.filter((m) => m.id !== messageId),
+  );
+  bumpMessageCount(queryClient, memoryId, -1);
+  return true;
+}
+
+/** Replace a message, unless what's cached is already newer. */
+export function replaceMessageIfNewer(
+  queryClient: QueryClient,
+  memoryId: string,
+  message: MemoryMessage,
+) {
+  updateMessagePages(queryClient, memoryId, (items) =>
+    items.map((m) =>
+      m.id === message.id && !isOlder(message.updatedAt, m.updatedAt)
+        ? message
+        : m,
+    ),
+  );
+}
+
+/** Patch one message's like count, leaving the viewer's own ♥ alone. */
+export function setMessageLikeCount(
+  queryClient: QueryClient,
+  memoryId: string,
+  messageId: string,
+  count: number,
+) {
+  patchMessageInPages(queryClient, memoryId, messageId, { likeCount: count });
+}
+
+/** `incoming` is older than `current` (missing stamps never count as older). */
+export function isOlder(incoming?: string, current?: string): boolean {
+  if (!incoming || !current) return false;
+  return new Date(incoming).getTime() < new Date(current).getTime();
+}
+
 export function usePostMessageMutation(memoryId: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (text: string) => messageApi.postMessage(memoryId, text),
+    mutationFn: ({ text, clientTempId }: { text: string; clientTempId?: string }) =>
+      messageApi.postMessage(memoryId, text, clientTempId),
     onSuccess: (message) => {
-      const key = queryKeys.memoryMessages(memoryId);
-      if (queryClient.getQueryData<MessagePages>(key)) {
-        updateMessagePages(queryClient, memoryId, (items, i) =>
-          i === 0 ? [...items, message] : items,
-        );
-      } else {
-        queryClient.invalidateQueries({ queryKey: key });
-      }
-      bumpMessageCount(queryClient, memoryId, 1);
+      appendMessage(queryClient, memoryId, message);
     },
   });
 }

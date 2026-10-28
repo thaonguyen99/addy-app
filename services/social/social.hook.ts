@@ -6,6 +6,7 @@ import {
 } from "@tanstack/react-query";
 
 import { invalidateSocialLists } from "@/services/friends";
+import { requestPushPermission } from "@/services/notifications/notifications.push";
 import { queryKeys } from "@/services/query/keys";
 import { socialApi } from "./social.api";
 
@@ -57,6 +58,8 @@ export function useAcceptInviteMutation() {
     onSuccess: () => {
       invalidateSocialLists(queryClient);
       queryClient.invalidateQueries({ queryKey: ["invites", "preview"] });
+      // First friend action: a natural moment to ask for notifications.
+      void requestPushPermission();
     },
   });
 }

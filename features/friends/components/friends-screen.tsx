@@ -1,4 +1,5 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
+import { useFocusEffect } from "@react-navigation/native";
 import { router, useLocalSearchParams } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
@@ -66,6 +67,14 @@ const SEARCH_DEBOUNCE_MS = 400;
  */
 export function FriendsScreen() {
   const params = useLocalSearchParams<{ tab?: string }>();
+  // A live "you're now friends" moment shows while the invite is on screen.
+  useFocusEffect(
+    useCallback(() => {
+      const { setFriendsTabFocused } = useFriendSheetsStore.getState();
+      setFriendsTabFocused(true);
+      return () => setFriendsTabFocused(false);
+    }, []),
+  );
   const tabBarInset = useFloatingTabBarInset();
   const listRef = useRef<FlatList<Friend>>(null);
   const searchRef = useRef<TextInput>(null);

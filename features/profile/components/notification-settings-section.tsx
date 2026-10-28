@@ -17,6 +17,7 @@ import {
   displayTime,
 } from "@/features/profile/components/on-this-day-time-sheet";
 import { SettingsSectionTitle } from "@/features/profile/components/settings-row";
+import { rescheduleOnThisDay } from "@/features/notifications/on-this-day-scheduler";
 import { useNotificationPermission } from "@/features/profile/use-notification-permission";
 import {
   deviceTimezone,
@@ -34,15 +35,18 @@ type SwitchKey = {
 type Row = { key: SwitchKey; label: string; description: string };
 
 const FROM_FRIENDS: Row[] = [
+  // One switch for both server prefs: friendRequests and friendAccepted.
   { key: "friendRequests", label: "Friend requests", description: "requests and accepts" },
   { key: "tags", label: "Tags", description: "when someone tags you" },
-  {
-    key: "messages",
-    label: "Messages",
-    description: "in your memories and ones you're tagged in",
-  },
+  // Only the memory's owner hears about messages on it.
+  { key: "messages", label: "Messages", description: "Messages in your memories" },
   { key: "likes", label: "Likes", description: "can get noisy" },
 ];
+
+/** Settings rows that write more than one preference. */
+const LINKED: Partial<Record<SwitchKey, SwitchKey[]>> = {
+  friendRequests: ["friendRequests", "friendAccepted"],
+};
 
 const FROM_ADDY: Row[] = [
   { key: "onThisDay", label: "On this day", description: "a memory from this date" },
@@ -68,8 +72,22 @@ export function NotificationSettingsSection() {
     // Turning On this day on (or moving it) is when the zone matters most.
     const timezone =
       patch.onThisDay || patch.onThisDayTime ? deviceTimezone() : undefined;
-    update.mutate({ ...patch, ...(timezone ? { timezone } : {}) });
+    const touchesOnThisDay =
+      patch.onThisDay !== undefined || patch.onThisDayTime !== undefined;
+    update.mutate(
+      { ...patch, ...(timezone ? { timezone } : {}) },
+      { onSuccess: () => touchesOnThisDay && void rescheduleOnThisDay() },
+    );
   };
+
+  const setSwitch = (key: SwitchKey, value: boolean) => {
+    const keys = LINKED[key] ?? [key];
+    set(Object.fromEntries(keys.map((k) => [k, value])));
+  };
+
+  // A linked row reads as on while any of its prefs is on.
+  const switchValue = (key: SwitchKey) =>
+    prefs ? (LINKED[key] ?? [key]).some((k) => prefs[k]) : false;
 
   const renderCard = (rows: Row[]) => (
     <View style={[styles.card, AddyShadow.soft]}>
@@ -79,8 +97,8 @@ export function NotificationSettingsSection() {
           <ToggleRow
             label={row.label}
             description={row.description}
-            value={prefs?.[row.key] ?? false}
-            onValueChange={(next) => set({ [row.key]: next })}
+            value={switchValue(row.key)}
+            onValueChange={(next) => setSwitch(row.key, next)}
             accessory={
               row.key === "onThisDay" && prefs ? (
                 <Pressable
@@ -109,7 +127,7 @@ export function NotificationSettingsSection() {
           <View style={styles.bannerText}>
             <Text style={styles.bannerTitle}>Notifications are off for Addy</Text>
             <Text style={styles.bannerNote}>
-              Switches below wait until you turn them on.
+              You&apos;ll still see them in the 🔔 list
             </Text>
           </View>
           <GlossyButton

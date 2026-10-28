@@ -19,6 +19,9 @@ type FriendSheetsState = {
   add: AddTarget | null;
   celebrate: CelebrateTarget | null;
   menu: FriendMenuTarget | null;
+  /** The Friends tab (with the invite card) is on screen. */
+  friendsTabFocused: boolean;
+  setFriendsTabFocused: (focused: boolean) => void;
   openQr: (side?: QrSide) => void;
   closeQr: () => void;
   openAdd: (target: AddTarget) => void;
@@ -35,6 +38,8 @@ export const useFriendSheetsStore = create<FriendSheetsState>((set) => ({
   add: null,
   celebrate: null,
   menu: null,
+  friendsTabFocused: false,
+  setFriendsTabFocused: (friendsTabFocused) => set({ friendsTabFocused }),
   openQr: (side = "code") => set({ qr: side }),
   closeQr: () => set({ qr: null }),
   openAdd: (add) => set({ add }),

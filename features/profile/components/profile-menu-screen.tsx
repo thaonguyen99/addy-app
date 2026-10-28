@@ -11,9 +11,11 @@ import {
   SettingsSectionTitle,
 } from "@/features/profile/components/settings-row";
 import { getApiErrorMessage } from "@/services/api/errors";
+import { syncPushToken } from "@/services/notifications";
+import { realtime } from "@/services/realtime/socket";
 import { useBlockedUsersQuery } from "@/services/social";
 import { useDeleteAccountMutation, useProfileQuery } from "@/services/users";
-import { useAuthStore } from "@/stores/auth.store";
+import { unregisterDevice, useAuthStore } from "@/stores/auth.store";
 import { clearPinQueue, usePinQueueStore } from "@/stores/pin-queue.store";
 
 /** "2 people", "1 person", "20+ people" — from the first page of blocks. */
@@ -78,12 +80,18 @@ export function ProfileMenuScreen() {
           style: "destructive",
           onPress: () => {
             const userId = useAuthStore.getState().user?.id;
-            void deleteAccount
-              .mutateAsync()
+            // The push token and socket go first: once the account is gone
+            // the token can't be removed.
+            void unregisterDevice()
+              .then(() => deleteAccount.mutateAsync())
               .then(() => (userId ? clearPinQueue(userId) : undefined))
               .then(() => signOut())
               .then(() => router.replace("/sign-in"))
               .catch((error) => {
+                // Still signed in: hook the device back up.
+                const token = useAuthStore.getState().accessToken;
+                if (token) realtime.connect(token);
+                void syncPushToken();
                 Alert.alert(
                   "Delete account",
                   getApiErrorMessage(error, "Could not delete your account."),

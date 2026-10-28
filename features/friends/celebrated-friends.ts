@@ -1,6 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Notifications from "expo-notifications";
 
+import type { PublicUser } from "@/services/users";
 import { useFriendSheetsStore } from "@/stores/friend-sheets.store";
 
 const KEY = "addy.celebratedFriendIds";
@@ -28,21 +29,24 @@ export async function markFriendCelebrated(userId: string): Promise<void> {
 }
 
 /**
- * From a "New friend" push: show "You're friends" unless this friend already
- * got it (on this device).
+ * Show "You're friends" unless this friend already got it (on this device):
+ * a `friend:accepted` event while the invite or QR is on screen.
  */
-export async function celebrateFriendOnce(userId: string): Promise<void> {
+export async function celebrateFriendOnce(
+  userId: string,
+  user?: PublicUser,
+): Promise<void> {
   const ids = await readIds();
   if (ids.includes(userId)) return;
-  useFriendSheetsStore.getState().openCelebrate({ userId });
+  useFriendSheetsStore.getState().openCelebrate({ userId, user });
 }
 
 /** The new friend's id from a "New friend" push payload, if it is one. */
 export function newFriendIdFromPush(data: unknown): string | null {
   if (!data || typeof data !== "object") return null;
-  const { type, actorId } = data as { type?: unknown; actorId?: unknown };
-  return type === "friend_request_accepted" && typeof actorId === "string"
-    ? actorId
+  const { type, userId } = data as { type?: unknown; userId?: unknown };
+  return type === "FRIEND_ACCEPTED" && typeof userId === "string"
+    ? userId
     : null;
 }
 

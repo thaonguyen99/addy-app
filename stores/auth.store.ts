@@ -21,11 +21,8 @@ import type {
   OtpPurpose,
 } from "@/services/auth";
 import { signOutFacebook, signOutGoogle } from "@/services/auth";
-import {
-  getCurrentPushToken,
-  NotificationApi,
-  resetPushRegistrationCache,
-} from "@/services/notifications";
+import { unregisterPushToken } from "@/services/notifications/notifications.push";
+import { realtime } from "@/services/realtime/socket";
 
 export type AuthStatus =
   | "idle"
@@ -48,6 +45,16 @@ type AuthState = {
   clearPendingVerification: () => Promise<void>;
   signOut: () => Promise<void>;
 };
+
+/**
+ * Detach this device from the account while the session is still valid:
+ * close the socket and remove the push token. Runs before sign-out and
+ * before account deletion (after it, the token can't be removed).
+ */
+export async function unregisterDevice(): Promise<void> {
+  realtime.reset();
+  await unregisterPushToken();
+}
 
 let apiConfigured = false;
 
@@ -196,18 +203,8 @@ export const useAuthStore = create<AuthState>((set, get) => {
     },
 
     signOut: async () => {
-      // Unregister this device's push token while the session is still valid
-      // (best-effort, time-boxed so it never stalls sign-out).
-      try {
-        const token = await Promise.race([
-          getCurrentPushToken(),
-          new Promise<null>((resolve) => setTimeout(() => resolve(null), 2000)),
-        ]);
-        if (token) await NotificationApi.deleteDeviceToken(token);
-      } catch {
-        // ignore — the backend also prunes dead tokens on send
-      }
-      resetPushRegistrationCache();
+      // Best-effort and time-boxed, so it never stalls sign-out.
+      await unregisterDevice();
 
       // Drop the in-memory session unconditionally, then best-effort clear
       // everything else — a failure here must never leave a half-signed-out app.

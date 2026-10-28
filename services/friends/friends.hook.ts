@@ -5,6 +5,7 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 
+import { requestPushPermission } from "@/services/notifications/notifications.push";
 import { queryKeys } from "@/services/query/keys";
 import { friendApi } from "./friends.api";
 import type { FriendRequestDirection } from "./friends.type";
@@ -68,7 +69,11 @@ export function useSendFriendRequestMutation() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (userId: string) => friendApi.sendFriendRequest(userId),
-    onSuccess: () => invalidateSocialLists(queryClient),
+    onSuccess: () => {
+      invalidateSocialLists(queryClient);
+      // First friend action: a natural moment to ask for notifications.
+      void requestPushPermission();
+    },
   });
 }
 
@@ -76,7 +81,11 @@ export function useAcceptFriendRequestMutation() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => friendApi.acceptFriendRequest(id),
-    onSuccess: () => invalidateSocialLists(queryClient),
+    onSuccess: () => {
+      invalidateSocialLists(queryClient);
+      // First friend action: a natural moment to ask for notifications.
+      void requestPushPermission();
+    },
   });
 }
 

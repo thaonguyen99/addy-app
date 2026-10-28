@@ -1,13 +1,70 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  useInfiniteQuery,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 
+import { useAuthStore } from "@/stores/auth.store";
 import { queryKeys } from "@/services/query/keys";
 import { notificationApi } from "./notifications.api";
-import { deviceTimezone } from "./notifications.push";
+import {
+  markNotificationsRead,
+  setNotificationCounts,
+} from "./notifications.cache";
 import type {
-  DevicePlatform,
   NotificationPreferences,
   NotificationPreferencesPatch,
 } from "./notifications.type";
+
+/** The 🔔 list: `pages[0]` is the newest page. */
+export function useNotificationsQuery() {
+  return useInfiniteQuery({
+    queryKey: queryKeys.notifications,
+    queryFn: ({ pageParam }) => notificationApi.listNotifications(pageParam),
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (last) => last.nextCursor,
+  });
+}
+
+/** `badge` drives the bell; the socket keeps it current while connected. */
+export function useNotificationCountsQuery() {
+  const authenticated = useAuthStore((s) => s.status === "authenticated");
+  return useQuery({
+    queryKey: queryKeys.notificationCounts,
+    queryFn: notificationApi.getCounts,
+    enabled: authenticated,
+  });
+}
+
+/** The list was opened: clears the badge on every device. */
+export function useMarkNotificationsSeenMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: notificationApi.markSeen,
+    onSuccess: (counts) => setNotificationCounts(queryClient, counts),
+  });
+}
+
+export function useMarkNotificationReadMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => notificationApi.markRead(id),
+    onMutate: (id) => markNotificationsRead(queryClient, [id]),
+    onSuccess: (counts) => setNotificationCounts(queryClient, counts),
+  });
+}
+
+export function useMarkAllNotificationsReadMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: notificationApi.markAllRead,
+    onMutate: () => markNotificationsRead(queryClient),
+    onSuccess: (counts) => setNotificationCounts(queryClient, counts),
+    onError: () =>
+      queryClient.invalidateQueries({ queryKey: queryKeys.notifications }),
+  });
+}
 
 export function useNotificationPreferencesQuery(enabled = true) {
   return useQuery({
@@ -45,16 +102,5 @@ export function useUpdateNotificationPreferencesMutation() {
     onSuccess: (prefs) => {
       queryClient.setQueryData(queryKeys.notificationPreferences, prefs);
     },
-  });
-}
-
-export function useRegisterDeviceTokenMutation() {
-  return useMutation({
-    mutationFn: (input: { token: string; platform: DevicePlatform }) =>
-      notificationApi.registerDeviceToken(
-        input.token,
-        input.platform,
-        deviceTimezone(),
-      ),
   });
 }

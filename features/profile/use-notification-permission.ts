@@ -2,7 +2,8 @@ import * as Notifications from "expo-notifications";
 import { useCallback, useEffect, useState } from "react";
 import { AppState, Linking } from "react-native";
 
-import { registerForPush } from "@/services/notifications";
+import { rescheduleOnThisDay } from "@/features/notifications/on-this-day-scheduler";
+import { syncPushToken } from "@/services/notifications";
 
 type PermissionState = { granted: boolean; canAskAgain: boolean } | null;
 
@@ -31,7 +32,10 @@ export function useNotificationPermission() {
     if (state?.canAskAgain) {
       const asked = await Notifications.requestPermissionsAsync();
       setState({ granted: asked.granted, canAskAgain: asked.canAskAgain });
-      if (asked.granted) void registerForPush();
+      if (asked.granted) {
+        void syncPushToken();
+        void rescheduleOnThisDay();
+      }
       return;
     }
     await Linking.openSettings();

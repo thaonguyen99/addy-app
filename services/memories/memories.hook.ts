@@ -20,6 +20,7 @@ import type {
   MemoryListItem,
   UpdateMemoryInput,
 } from "./memories.type";
+import { deviceTimezone } from "@/services/notifications/notifications.push";
 
 /** Every memory the user has created, newest first — feeds the map drawer. */
 export function useMemoriesFeedQuery(enabled = true) {
@@ -79,6 +80,16 @@ export function useMemoryFeed(enabled: boolean): UseMemoryFeed {
       }
     },
   };
+}
+
+/** The pinned On this day card on the 🔔 list; empty means no card. */
+export function useOnThisDayQuery() {
+  const tz = deviceTimezone() ?? "UTC";
+  return useQuery({
+    queryKey: queryKeys.onThisDay(tz),
+    queryFn: () => memoryApi.listOnThisDay(tz),
+    staleTime: 5 * 60_000,
+  });
 }
 
 export function useMemoryQuery(id: string | undefined) {

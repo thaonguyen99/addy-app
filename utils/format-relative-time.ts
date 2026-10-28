@@ -31,6 +31,15 @@ export function formatRelativeTime(
   });
 }
 
+/** "22 Oct 2025": a calendar date, for On this day labels. */
+export function formatDayMonthYear(iso: string): string {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return "";
+  const day = String(date.getDate()).padStart(2, "0");
+  const month = date.toLocaleDateString("en-US", { month: "short" });
+  return `${day} ${month} ${date.getFullYear()}`;
+}
+
 /**
  * "3h ago" / "5d ago" within the last 7 days, else an absolute "07 Sep 2026" —
  * for contexts (like the memory-reveal chat bubble) that want a real date

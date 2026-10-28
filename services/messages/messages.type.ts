@@ -22,6 +22,8 @@ export type MemoryMessage = {
   canDelete: boolean;
   /** Friends tagged in `text` (each appears there as `@username`). */
   mentions: MessageMention[];
+  /** Bumped on edit and like changes; realtime events older than this are ignored. */
+  updatedAt: string;
 };
 
 export type MessageLikeResult = {

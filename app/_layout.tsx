@@ -32,7 +32,6 @@ import { UpdateReadyBanner } from "@/features/app-update/update-ready-banner";
 import { InAppNotificationBanner } from "@/features/notifications/in-app-notification-banner";
 import { AnimatedSplashScreen } from "@/features/splash/components/animated-splash-screen";
 import { AppToastHost } from "@/features/toast/app-toast-host";
-import { useNotificationRouter } from "@/hooks/use-notification-router";
 import { configureNotificationHandler } from "@/services/notifications";
 import { queryClient } from "@/services/query/client";
 import { useAuthStore } from "@/stores/auth.store";
@@ -90,8 +89,6 @@ export default function RootLayout() {
   useEffect(() => {
     hydrate();
   }, [hydrate]);
-
-  useNotificationRouter();
 
   useEffect(() => {
     if (fontsLoaded && status !== "idle" && status !== "hydrating") {

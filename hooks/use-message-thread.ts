@@ -39,7 +39,7 @@ export function useMessageThread(memoryId: string, enabled: boolean) {
   const deliver = useCallback(
     async (clientId: string, text: string) => {
       try {
-        await postMessage.mutateAsync(text);
+        await postMessage.mutateAsync({ text, clientTempId: clientId });
         setPending((list) => list.filter((p) => p.clientId !== clientId));
       } catch (error) {
         setPending((list) =>
@@ -88,6 +88,11 @@ export function useMessageThread(memoryId: string, enabled: boolean) {
     [pending, deliver],
   );
 
+  /** The socket delivered our own send before REST answered. */
+  const resolvePending = useCallback((clientId: string) => {
+    setPending((list) => list.filter((p) => p.clientId !== clientId));
+  }, []);
+
   const toggleLike = useCallback(
     (message: MemoryMessage) => {
       likeMessage.mutate({ id: message.id, like: !message.likedByMe });
@@ -111,6 +116,7 @@ export function useMessageThread(memoryId: string, enabled: boolean) {
     isSending: pending.some((p) => p.status === "sending"),
     send,
     retry,
+    resolvePending,
     toggleLike,
   };
 }

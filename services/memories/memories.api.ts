@@ -1,12 +1,13 @@
 import {
   apiClient,
   apiDelete,
+  apiGet,
   apiGetPaginated,
   apiPatch,
   apiPost,
 } from "@/services/api/client";
 import { parseApiResponse } from "@/services/api/errors";
-import type { ClusterMemory, CreateMemoryInput, FriendMemoryPin, MapScope, MapBounds, MapPinsResult, MemoryDetail, MemoryListItem, MemoryListParams, MemoryListResult, MemoryPin, Reactor, ToggleReactionResult, UpdateMemoryInput } from "./memories.type";
+import type { ClusterMemory, CreateMemoryInput, OnThisDayMemory, FriendMemoryPin, MapScope, MapBounds, MapPinsResult, MemoryDetail, MemoryListItem, MemoryListParams, MemoryListResult, MemoryPin, Reactor, ToggleReactionResult, UpdateMemoryInput } from "./memories.type";
 import type { Paginated } from "@/types/api";
 
 const FEED_PAGE_SIZE = 20;
@@ -111,6 +112,11 @@ async function listReactors(
   return apiGetPaginated<Reactor>(`/memories/${memoryId}/reactions`, { cursor });
 }
 
+/** Your memories taken on today's month and day in earlier years, newest first. */
+async function listOnThisDay(tz: string) {
+  return apiGet<OnThisDayMemory[]>("/memories/on-this-day", { tz });
+}
+
 export const memoryApi = {
   createMemory,
   getMemory,
@@ -123,4 +129,5 @@ export const memoryApi = {
   untagSelf,
   toggleReaction,
   listReactors,
+  listOnThisDay,
 };

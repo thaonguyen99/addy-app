@@ -31,6 +31,10 @@ export const queryKeys = {
   invite: ["users", "invite"] as const,
   blockedUsers: ["blocks"] as const,
   notificationPreferences: ["notifications", "preferences"] as const,
+  notifications: ["notifications", "list"] as const,
+  notificationCounts: ["notifications", "counts"] as const,
+  /** Your memories from today's date in earlier years, in zone `tz`. */
+  onThisDay: (tz: string) => ["memories", "on-this-day", tz] as const,
 };
 
 export function mapBoundsKey(bounds: {

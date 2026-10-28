@@ -1,6 +1,7 @@
+import * as Notifications from "expo-notifications";
 import { Redirect, Stack } from "expo-router";
 import { useEffect } from "react";
-import { View } from "react-native";
+import { AppState, View } from "react-native";
 
 import { AddyColors } from "@/constants/theme";
 import { CameraSessionProvider } from "@/features/camera/camera-session-context";
@@ -12,8 +13,11 @@ import { takePendingLink } from "@/features/friends/pending-link";
 import { openProfile } from "@/features/profile/open-profile";
 import { openInvite } from "@/stores/friend-sheets.store";
 import { useOnboardingTour } from "@/features/onboarding/onboarding-tour";
-import { registerForPush } from "@/services/notifications";
+import { rescheduleOnThisDay } from "@/features/notifications/on-this-day-scheduler";
+import { useRealtimeConnection } from "@/features/realtime/use-realtime-connection";
+import { syncPushToken } from "@/services/notifications";
 import { useInAppNotifications } from "@/hooks/use-in-app-notifications";
+import { useNotificationRouter } from "@/hooks/use-notification-router";
 import { usePinQueueRunner } from "@/hooks/use-pin-queue-runner";
 
 // Deep links and the launch redirect to /capture keep the tabs underneath,
@@ -26,16 +30,32 @@ export default function AppLayout() {
   useOnboardingTour();
   usePinQueueRunner();
   useInAppNotifications();
+  useNotificationRouter(status === "authenticated");
+  useRealtimeConnection();
 
   useEffect(() => {
     if (status !== "authenticated") return;
-    void registerForPush();
+    // Never prompts: permission is asked after onboarding or a friend action.
+    void syncPushToken();
+    void rescheduleOnThisDay();
     void celebrateFromDeliveredPushes();
     // Resume an invite or profile deep link that arrived while signed out.
     void takePendingLink().then((link) => {
       if (link?.kind === "invite") openInvite(link.token);
       else if (link?.kind === "profile") openProfile(link.username);
     });
+
+    const tokenSub = Notifications.addPushTokenListener(() => {
+      void syncPushToken();
+    });
+    // A new day, or back from Settings with permission on.
+    const appStateSub = AppState.addEventListener("change", (next) => {
+      if (next === "active") void rescheduleOnThisDay();
+    });
+    return () => {
+      tokenSub.remove();
+      appStateSub.remove();
+    };
   }, [status]);
 
   if (status === "hydrating" || status === "idle") {
@@ -83,6 +103,7 @@ export default function AppLayout() {
           <Stack.Screen name="profile/index" />
           <Stack.Screen name="profile/security" />
           <Stack.Screen name="profile/notifications" />
+          <Stack.Screen name="notifications" />
           <Stack.Screen name="privacy-policy" />
           <Stack.Screen name="blocked-accounts" />
           <Stack.Screen name="dev-primitives" />

@@ -7,6 +7,7 @@ import {
   type ViewStateChangeEvent,
 } from "@maplibre/maplibre-react-native";
 import { useFocusEffect } from "@react-navigation/native";
+import { useQueryClient } from "@tanstack/react-query";
 import { TourTarget, useTourGuide } from "@wrack/react-native-tour-guide";
 import { router, useLocalSearchParams } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -73,6 +74,8 @@ import { userDisplayName } from "@/components/ui/user-row";
 import { useFriendSheetsStore } from "@/stores/friend-sheets.store";
 import { useFriendsMapQuery, useMemoriesMapQuery, useMemoryQuery } from "@/services/memories";
 import { useFriendsQuery } from "@/services/friends";
+import { useFocusedQueryKeys } from "@/hooks/use-focused-query-keys";
+import { useFeedStaleStore } from "@/stores/feed-stale.store";
 import type {
   FriendMemoryPin,
   MapBounds,
@@ -344,6 +347,29 @@ export function MemoriesMapScreen() {
   }, [friendsLayerOn, focusFriendId, friendsData?.pins]);
   const showFriendsEmptyHint =
     friendsLayerOn && !isFriendsMapLoading && friendPins.length === 0;
+
+  // A friend shared a memory (`feed:stale`). Coming back to the map picks it
+  // up; while you're looking at the map, a pill offers the refresh instead
+  // of moving pins under your finger.
+  const queryClient = useQueryClient();
+  const mapStale = useFeedStaleStore((s) => s.mapStale);
+  const refreshFriendsMap = useCallback(() => {
+    useFeedStaleStore.getState().setMapStale(false);
+    void queryClient.refetchQueries({
+      queryKey: ["memories", "friends-map"],
+      type: "active",
+    });
+  }, [queryClient]);
+  useFocusEffect(
+    useCallback(() => {
+      if (useFeedStaleStore.getState().mapStale) refreshFriendsMap();
+    }, [refreshFriendsMap]),
+  );
+  // Turning the layer on fetches it fresh (the stale queries refetch on mount).
+  useEffect(() => {
+    if (friendsLayerOn) useFeedStaleStore.getState().setMapStale(false);
+  }, [friendsLayerOn]);
+  useFocusedQueryKeys([["memories", "map"], ["memories", "friends-map"]]);
 
   // Not-yet-uploaded pins: drawn on top, never clustered.
   const allQueuedPins = usePinQueueStore((s) => s.entries);
@@ -656,6 +682,17 @@ export function MemoriesMapScreen() {
             </Pressable>
           )}
         </View>
+        {mapStale && friendsLayerOn ? (
+          <View style={styles.stalePill} pointerEvents="box-none">
+            <TechChip
+              tone="lime"
+              leading="✦"
+              label="New memories from friends"
+              onPress={refreshFriendsMap}
+              accessibilityLabel="Show new memories from friends"
+            />
+          </View>
+        ) : null}
         {showFriendsEmptyHint ? (
           <Text style={styles.friendsHintText}>
             {focusFriendId
@@ -711,6 +748,7 @@ const styles = StyleSheet.create({
   toastSparkleLeft: { top: -6, left: 18 },
   toastSparkleRight: { top: -4, right: 22 },
 
+  stalePill: { alignItems: "center", marginTop: 4 },
   friendsHintText: {
     alignSelf: "flex-start",
     marginHorizontal: 16,

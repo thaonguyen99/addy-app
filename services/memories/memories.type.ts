@@ -49,7 +49,12 @@ export type MemoryDetail = {
   isTagged: boolean;
   /** Whether the memory has a chat thread (shared with friends, or has tagged friends). */
   canComment: boolean;
+  /** Bumped on every edit; realtime events older than this are ignored. */
+  updatedAt: string;
 };
+
+/** `GET /memories/on-this-day`: a memory from this date, `yearsAgo` years back. */
+export type OnThisDayMemory = MemoryDetail & { yearsAgo: number };
 
 export type Reactor = {
   user: PublicUser;
