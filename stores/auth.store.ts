@@ -20,7 +20,7 @@ import type {
   AuthUser,
   OtpPurpose,
 } from "@/services/auth";
-import { signOutGoogle } from "@/services/auth";
+import { signOutFacebook, signOutGoogle } from "@/services/auth";
 import {
   getCurrentPushToken,
   NotificationApi,
@@ -219,7 +219,11 @@ export const useAuthStore = create<AuthState>((set, get) => {
         pendingEmail: null,
         pendingOtpPurpose: null,
       });
-      await Promise.allSettled([clearSession(), signOutGoogle()]);
+      await Promise.allSettled([
+        clearSession(),
+        signOutGoogle(),
+        signOutFacebook(),
+      ]);
     },
   };
 });

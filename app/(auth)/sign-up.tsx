@@ -7,6 +7,7 @@ import { Alert, StyleSheet, Text, View } from "react-native";
 import { AuthPrimaryButton } from "@/features/auth/components/auth-primary-button";
 import { AuthScreen } from "@/features/auth/components/auth-screen";
 import { AuthTextField } from "@/features/auth/components/auth-text-field";
+import { FacebookSignInButton } from "@/features/auth/components/facebook-sign-in-button";
 import { GoogleSignInButton } from "@/features/auth/components/google-sign-in-button";
 import { getAuthErrorMessage } from "@/hooks/use-auth-form-error";
 import {
@@ -126,6 +127,7 @@ export default function SignUpScreen() {
       }
     >
       <GoogleSignInButton />
+      <FacebookSignInButton />
       <View style={styles.dividerRow}>
         <View style={styles.divider} />
         <Text style={styles.dividerText}>or</Text>

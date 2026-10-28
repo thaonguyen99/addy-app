@@ -56,8 +56,9 @@ export function PrivacyPolicyScreen() {
           {"\n\n"}
           {"• "}Authentication data: your password is stored in
           encrypted (hashed) form and never stored or transmitted in plain
-          text; if you sign in with Google, we receive your Google account
-          identifier instead of a password.
+          text; if you sign in with Google or Facebook, we receive your
+          account identifier, name, and email from that provider instead of a
+          password.
         </Text>
 
         <Text style={styles.heading}>2. How We Use Your Information</Text>
@@ -73,8 +74,8 @@ export function PrivacyPolicyScreen() {
         <Text style={styles.paragraph}>
           We use the following service providers to operate Addy: Cloudinary
           (stores and serves your uploaded photos), Goong Maps (map tiles,
-          place search, and location lookups), Google Sign-In (optional
-          sign-in method), Expo (delivers push notifications), and Railway
+          place search, and location lookups), Google Sign-In and Facebook
+          Login (optional sign-in methods), Expo (delivers push notifications), and Railway
           (hosts our backend servers and database). Each provider only
           receives the data necessary to perform its function.
         </Text>

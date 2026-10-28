@@ -29,3 +29,7 @@ export function useResetPasswordMutation() {
 export function useGoogleSignInMutation() {
   return useMutation({ mutationFn: authApi.googleSignIn });
 }
+
+export function useFacebookSignInMutation() {
+  return useMutation({ mutationFn: authApi.facebookSignIn });
+}

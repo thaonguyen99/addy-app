@@ -56,3 +56,8 @@ export type ResetPasswordInput = {
 export type GoogleSignInInput = {
   idToken: string;
 };
+
+/** Android sends a classic `accessToken`; iOS Limited Login sends an OIDC `authenticationToken`. */
+export type FacebookSignInInput =
+  | { accessToken: string }
+  | { authenticationToken: string };

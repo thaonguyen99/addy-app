@@ -2,6 +2,7 @@ import { apiPost } from "../api/client";
 import type {
   AuthSession,
   AuthTokens,
+  FacebookSignInInput,
   ForgotPasswordInput,
   GoogleSignInInput,
   LoginInput,
@@ -39,6 +40,10 @@ async function googleSignIn(input: GoogleSignInInput) {
   return apiPost<AuthSession>("/auth/google", input);
 }
 
+async function facebookSignIn(input: FacebookSignInInput) {
+  return apiPost<AuthSession>("/auth/facebook", input);
+}
+
 async function refreshTokens(refreshToken: string) {
   return apiPost<AuthTokens>("/auth/refresh", { refreshToken });
 }
@@ -51,5 +56,6 @@ export const authApi = {
   forgotPassword,
   resetPassword,
   googleSignIn,
+  facebookSignIn,
   refreshTokens,
 };

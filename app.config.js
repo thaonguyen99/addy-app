@@ -18,6 +18,10 @@ function toIosUrlScheme(clientId) {
 
 const iosUrlScheme = toIosUrlScheme(iosClientId);
 
+/** Meta app credentials for Facebook Login (developers.facebook.com → App settings). */
+const facebookAppId = process.env.FACEBOOK_APP_ID ?? "";
+const facebookClientToken = process.env.FACEBOOK_CLIENT_TOKEN ?? "";
+
 /** Host of the share links (https://<host>/i/<token>, /u/<username>); matches the API's INVITE_WEB_BASE_URL. */
 const inviteLinkHost = process.env.INVITE_LINK_HOST ?? "addy.app";
 
@@ -139,6 +143,24 @@ module.exports = ({ config }) => ({
     iosUrlScheme
       ? ["@react-native-google-signin/google-signin", { iosUrlScheme }]
       : "@react-native-google-signin/google-signin",
+    // Skipped without an app ID: the plugin writes it into the native config,
+    // and a build with an empty ID crashes the SDK on launch.
+    ...(facebookAppId
+      ? [
+          [
+            "react-native-fbsdk-next",
+            {
+              appID: facebookAppId,
+              clientToken: facebookClientToken,
+              displayName: "Addy",
+              scheme: `fb${facebookAppId}`,
+              // Login only — no app-event or ad-ID collection.
+              autoLogAppEventsEnabled: false,
+              advertiserIDCollectionEnabled: false,
+            },
+          ],
+        ]
+      : []),
     "@maplibre/maplibre-react-native",
     [
       "expo-notifications",
@@ -158,6 +180,7 @@ module.exports = ({ config }) => ({
     apiUrl: process.env.API_URL ?? "http://localhost:5001",
     googleIosClientId: iosClientId,
     googleWebClientId: webClientId,
+    facebookAppId,
     goongMapApiKey: process.env.GOONG_MAP_API_KEY ?? "",
     linkHost: inviteLinkHost,
     router: {},
