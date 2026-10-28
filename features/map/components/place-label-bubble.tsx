@@ -41,12 +41,6 @@ export function PlaceLabelBubble({
       >
         <Svg width={TAIL_WIDTH} height={TAIL_HEIGHT} viewBox="0 0 10 6">
           <Path d="M0,0 L10,0 L5,6 Z" fill={BrandColors.white} />
-          <Path
-            d="M0,0 L5,6 L10,0"
-            fill="none"
-            stroke={MAP_LABEL_NAVY}
-            strokeWidth={1.5}
-          />
         </Svg>
       </View>
     </View>
@@ -56,8 +50,6 @@ export function PlaceLabelBubble({
 const styles = StyleSheet.create({
   bubble: {
     backgroundColor: BrandColors.white,
-    borderWidth: 1.5,
-    borderColor: MAP_LABEL_NAVY,
     paddingHorizontal: 6,
     paddingVertical: 4,
   },

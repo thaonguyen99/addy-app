@@ -192,7 +192,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontFamily: AddyFonts.title,
     fontSize: 18,
-    lineHeight: 26,
+    // lineHeight: 26,
     color: AddyColors.ink,
   },
   sectionLink: {

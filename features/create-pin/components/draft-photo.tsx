@@ -3,7 +3,9 @@ import * as Haptics from "expo-haptics";
 import { Image } from "expo-image";
 import { memo, useCallback, useEffect, useRef, useState } from "react";
 import {
+  Alert,
   FlatList,
+  Linking,
   type NativeScrollEvent,
   type NativeSyntheticEvent,
   Pressable,
@@ -23,6 +25,12 @@ import Animated, {
 
 import { TechChip } from "@/components/ui/tech-chip";
 import { AddyColors, AddyRadius } from "@/constants/theme";
+import {
+  PhotoOptionsSheet,
+  type PhotoOptionsSheetRef,
+} from "@/features/create-pin/components/photo-options-sheet";
+import { saveImageToLibrary } from "@/features/media/save-image-to-library";
+import { showToast } from "@/stores/toast.store";
 import type { AddyMemoryImage } from "@/types/addy-memory";
 
 const THUMB = 40;
@@ -236,6 +244,31 @@ export const DraftPhoto = memo(function DraftPhoto({
     if (ids.some((id, i) => id !== images[i].id)) onReorder(ids);
   }, [images, onReorder, positions]);
 
+  // The photo the options sheet was opened for, so a swipe while it's open
+  // doesn't change what gets saved.
+  const optionsSheet = useRef<PhotoOptionsSheetRef>(null);
+  const [optionsImage, setOptionsImage] = useState<AddyMemoryImage | null>(null);
+
+  const onSave = useCallback(async () => {
+    if (!optionsImage) return;
+    const result = await saveImageToLibrary(optionsImage.uri);
+    if (result === "saved") {
+      void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      showToast("Saved to Photos");
+    } else if (result === "denied") {
+      Alert.alert(
+        "Allow photo access",
+        "Addy needs permission to save photos. You can turn it on in Settings.",
+        [
+          { text: "Cancel", style: "cancel" },
+          { text: "Open Settings", onPress: () => void Linking.openSettings() },
+        ],
+      );
+    } else {
+      showToast("Couldn't save the photo");
+    }
+  }, [optionsImage]);
+
   const active = images[activeIndex];
   if (!active) return null;
 
@@ -261,19 +294,36 @@ export const DraftPhoto = memo(function DraftPhoto({
         )}
       />
 
-      <View style={styles.topRow} pointerEvents="none">
+      <View style={styles.topRow} pointerEvents="box-none">
         {active.sourceType === "quick_snap" ? (
           <TechChip label="quick snap" leading="⚡" tone="dark" size="sm" />
         ) : (
           <View />
         )}
-        {images.length > 1 ? (
-          <TechChip
-            label={`${activeIndex + 1}/${images.length}${activeIndex === 0 ? " · cover" : ""}`}
-            tone="dark"
-            size="sm"
-          />
-        ) : null}
+        <View style={styles.topRight} pointerEvents="box-none">
+          {images.length > 1 ? (
+            <TechChip
+              label={`${activeIndex + 1}/${images.length}${activeIndex === 0 ? " · cover" : ""}`}
+              tone="dark"
+              size="sm"
+            />
+          ) : null}
+          {/* Only our own captures: gallery picks are already in Photos. */}
+          {active.sourceType === "quick_snap" ? (
+            <Pressable
+              onPress={() => {
+                setOptionsImage(active);
+                optionsSheet.current?.present();
+              }}
+              hitSlop={10}
+              accessibilityRole="button"
+              accessibilityLabel="Photo options"
+              style={styles.moreButton}
+            >
+              <Ionicons name="ellipsis-horizontal" size={16} color={AddyColors.white} />
+            </Pressable>
+          ) : null}
+        </View>
       </View>
 
       <ScrollView
@@ -310,6 +360,8 @@ export const DraftPhoto = memo(function DraftPhoto({
           <Ionicons name="add" size={22} color={AddyColors.white} />
         </Pressable>
       </ScrollView>
+
+      <PhotoOptionsSheet ref={optionsSheet} onSave={() => void onSave()} />
     </View>
   );
 });
@@ -327,6 +379,15 @@ const styles = StyleSheet.create({
     right: 12,
     flexDirection: "row",
     justifyContent: "space-between",
+  },
+  topRight: { flexDirection: "row", alignItems: "center", gap: 6 },
+  moreButton: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: "rgba(22, 23, 26, 0.55)",
+    alignItems: "center",
+    justifyContent: "center",
   },
   strip: { position: "absolute", left: 0, right: 0, bottom: 6 },
   // Top padding leaves room for the remove dots poking above the thumbs.

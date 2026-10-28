@@ -76,7 +76,6 @@ module.exports = ({ config }) => ({
     predictiveBackGestureEnabled: false,
     permissions: [
       "android.permission.CAMERA",
-      "android.permission.RECORD_AUDIO",
       "android.permission.ACCESS_COARSE_LOCATION",
       "android.permission.ACCESS_FINE_LOCATION",
     ],
@@ -90,12 +89,13 @@ module.exports = ({ config }) => ({
     "expo-router",
     "expo-dev-client",
     "expo-secure-store",
-    "expo-audio",
+    ["expo-audio", { microphonePermission: false, recordAudioAndroid: false }],
     [
       "expo-camera",
       {
         cameraPermission:
           "Addy uses your camera to capture quick place memories.",
+        microphonePermission: false,
         recordAudioAndroid: false,
       },
     ],
@@ -112,7 +112,7 @@ module.exports = ({ config }) => ({
         photosPermission:
           "Addy needs photo library access to add gallery images to your pin.",
         savePhotosPermission:
-          "Addy saves your invite story image to your photos.",
+          "Addy saves your photos and invite story images to your library.",
         isAccessMediaLocationEnabled: false,
       },
     ],
