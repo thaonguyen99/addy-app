@@ -9,10 +9,3 @@ export function safeBack(fallback: Href): void {
 
   router.replace(fallback);
 }
-
-/** Dismiss modals only when the current navigator can handle it. */
-export function safeDismissAll(): void {
-  if (router.canDismiss()) {
-    router.dismissAll();
-  }
-}

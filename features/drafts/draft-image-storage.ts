@@ -115,10 +115,6 @@ export async function removeDraftImage(id: string) {
   await writeIndex(index.filter((e) => e.id !== id));
 }
 
-export async function removeDraftImages(ids: readonly string[]) {
-  await Promise.all(ids.map((id) => removeDraftImage(id)));
-}
-
 export async function clearAllDraftImages() {
   const index = await readIndex();
   await Promise.all(

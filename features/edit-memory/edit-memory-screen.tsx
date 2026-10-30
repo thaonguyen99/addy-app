@@ -1,11 +1,9 @@
 import * as Crypto from "expo-crypto";
-import * as ImagePicker from "expo-image-picker";
 import { router } from "expo-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
-  Linking,
   ScrollView,
   StyleSheet,
   Text,
@@ -26,11 +24,14 @@ import {
   AddyFonts,
   AddyRadius,
 } from "@/constants/theme";
-import { ensureMediaLibraryReadAccess } from "@/features/camera/permissions/media-library-access";
 import { AddressBar } from "@/features/create-pin/components/address-bar";
 import { VISIBILITY_OPTIONS } from "@/features/create-pin/components/create-pin-screen";
 import { DraftPhoto } from "@/features/create-pin/components/draft-photo";
 import { MoodRow } from "@/features/create-pin/components/mood-row";
+import {
+  MAX_PICKED_PHOTOS,
+  openPhotoPicker,
+} from "@/features/photo-picker/open-photo-picker";
 import {
   TagFriendsSheet,
   type TagFriendsSheetRef,
@@ -46,8 +47,7 @@ import {
 } from "@/stores/edit-memory.store";
 import type { AddyMemoryImage } from "@/types/addy-memory";
 
-/** Same cap as the server and the multi-upload endpoint. */
-const MAX_PHOTOS = 20;
+const MAX_PHOTOS = MAX_PICKED_PHOTOS;
 const SIDE_PADDING = 16;
 
 function photoUri(photo: EditPhoto) {
@@ -148,35 +148,15 @@ export function EditMemoryScreen({ id }: { id: string }) {
       );
       return;
     }
-    const access = await ensureMediaLibraryReadAccess();
-    if (access.access === "denied") {
-      Alert.alert(
-        "Photos access needed",
-        "Allow access to your photo library to add photos to this memory.",
-        access.canAskAgain
-          ? [{ text: "OK" }]
-          : [
-              { text: "Cancel", style: "cancel" },
-              {
-                text: "Open Settings",
-                onPress: () => void Linking.openSettings(),
-              },
-            ],
-      );
-      return;
-    }
     setAdding(true);
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ["images"],
-      allowsMultipleSelection: true,
-      selectionLimit: MAX_PHOTOS - photos.length,
-      quality: 0.9,
+    const picked = await openPhotoPicker({
+      limit: MAX_PHOTOS - photos.length,
     }).finally(() => setAdding(false));
-    if (result.canceled) return;
-    const added: EditPhoto[] = result.assets.map((asset) => ({
+    if (picked.length === 0) return;
+    const added: EditPhoto[] = picked.map((photo) => ({
       kind: "local",
       key: Crypto.randomUUID(),
-      uri: asset.uri,
+      uri: photo.uri,
     }));
     setPhotos(
       [...useEditMemoryStore.getState().photos, ...added].slice(0, MAX_PHOTOS),

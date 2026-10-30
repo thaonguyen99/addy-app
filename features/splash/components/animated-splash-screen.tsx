@@ -27,7 +27,7 @@ const PIN_SIZE = 150;
 /**
  * JS-rendered splash shown during the fonts/auth loading window, right
  * after the native static splash hands off. The app's other custom fonts
- * (BeVietnam/PatrickHand/Baloo2-ExtraBold) are still loading while this is on
+ * (BeVietnam/Baloo2/VT323) are still loading while this is on
  * screen, so this component loads its own tiny two-font subset (the only
  * ones it needs) independently — it does not wait on the full app font
  * batch in app/_layout.tsx, and falls back to the system font for the

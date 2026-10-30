@@ -1,52 +1,26 @@
-import * as ImagePicker from "expo-image-picker";
 import { useCallback, useState } from "react";
-import { Alert } from "react-native";
 
-import { ensureMediaLibraryReadAccess } from "@/features/camera/permissions/media-library-access";
-import { cropCenterSquare } from "@/utils/crop-square";
-import { exifTakenAt } from "@/utils/exif-taken-at";
+import { openPhotoPicker } from "@/features/photo-picker/open-photo-picker";
 import { persistImageToDrafts } from "@/features/drafts/draft-image-storage";
 import type { AddyMemoryImage } from "@/types/addy-memory";
 
 /**
- * Picks one or more photos from the library as square drafts, center-cropped
- * to 1:1 (the system crop editor doesn't work with multi-select). Returns []
- * when cancelled or denied.
+ * Picks one or more photos from the library as square drafts, each framed by
+ * the user in the in-app picker. Returns [] when cancelled or denied.
  */
 export function useGalleryPick() {
   const [picking, setPicking] = useState(false);
 
   const pick = useCallback(
-    async (): Promise<AddyMemoryImage[]> => {
-      const access = await ensureMediaLibraryReadAccess();
-      if (access.access === "denied") {
-        Alert.alert(
-          "Photo library",
-          access.canAskAgain
-            ? "Allow photo access when prompted, or enable it in Settings to pick from your gallery."
-            : "Photo access is off for Addy. You can turn it on in Settings.",
-        );
-        return [];
-      }
+    async (limit?: number): Promise<AddyMemoryImage[]> => {
+      const photos = await openPhotoPicker({ limit });
+      if (photos.length === 0) return [];
 
       setPicking(true);
       try {
-        const result = await ImagePicker.launchImageLibraryAsync({
-          mediaTypes: ["images"],
-          quality: 0.9,
-          allowsMultipleSelection: true,
-          // Only read for the capture date; the re-encode strips it.
-          exif: true,
-        });
-        if (result.canceled) return [];
-
         return await Promise.all(
-          (result.assets ?? []).map(async (asset) =>
-            persistImageToDrafts(
-              await cropCenterSquare(asset.uri),
-              "uploaded",
-              exifTakenAt(asset.exif),
-            ),
+          photos.map((photo) =>
+            persistImageToDrafts(photo.uri, "uploaded", photo.takenAt),
           ),
         );
       } finally {

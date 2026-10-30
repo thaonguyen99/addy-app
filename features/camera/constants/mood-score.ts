@@ -7,4 +7,3 @@ export const MOOD_SCORE_OPTIONS = [
   { score: 5, emoji: "🥳", label: "Highest" },
 ] as const;
 
-export type MoodScore = (typeof MOOD_SCORE_OPTIONS)[number]["score"];

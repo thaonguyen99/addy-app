@@ -6,12 +6,14 @@ export const USERNAME_PATTERN = /^[a-z0-9_.]+$/;
 
 /** Matches the API: counted by grapheme, so an emoji is 1. */
 export const BIO_MAX = 300;
+export const BIO_TOO_LONG = `Keep it under ${BIO_MAX} characters`;
 
 export const profileFormSchema = z.object({
   name: z.string().trim().max(100, "Keep it under 100 characters"),
   username: z
     .string()
     .trim()
+    .toLowerCase()
     .min(1, "Username is required")
     .max(100, "Keep it under 100 characters")
     .regex(
@@ -22,7 +24,7 @@ export const profileFormSchema = z.object({
     .string()
     .trim()
     .refine((value) => graphemeLength(value) <= BIO_MAX, {
-      message: `Keep it under ${BIO_MAX} characters`,
+      message: BIO_TOO_LONG,
     }),
 });
 

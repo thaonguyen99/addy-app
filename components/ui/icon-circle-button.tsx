@@ -1,13 +1,8 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
-import { LinearGradient } from "expo-linear-gradient";
 import { ComponentProps, ReactNode } from "react";
 import { Pressable, StyleProp, StyleSheet, ViewStyle } from "react-native";
 
-import {
-  ADDY_BORDER_WIDTH,
-  AddyColors,
-  AddyGradients,
-} from "@/constants/theme";
+import { AddyColors } from "@/constants/theme";
 
 const MIN_TOUCH = 44;
 
@@ -50,10 +45,6 @@ export function IconCircleButton({
         style,
       ]}
     >
-      <LinearGradient
-        colors={AddyGradients.chrome}
-        style={StyleSheet.absoluteFill}
-      />
       {children ??
         (icon ? (
           <Ionicons name={icon} size={size * 0.55} color={AddyColors.ink} />
@@ -67,8 +58,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     overflow: "hidden",
-    borderWidth: ADDY_BORDER_WIDTH,
-    borderColor: AddyColors.line,
   },
   pressed: { opacity: 0.7 },
   disabled: { opacity: 0.4 },

@@ -1,4 +1,4 @@
-import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import Ionicons from "@expo/vector-icons/Ionicons";
 import {
   ActivityIndicator,
   Pressable,
@@ -36,8 +36,8 @@ export function CameraPermissionGatePanel(
     return (
       <SafeAreaView style={styles.safeDark} edges={["top", "bottom"]}>
         <View style={styles.fillDark}>
-          <MaterialIcons
-            name="smartphone"
+          <Ionicons
+            name="phone-portrait-outline"
             size={56}
             color={BrandColors.primary}
           />
@@ -64,8 +64,8 @@ export function CameraPermissionGatePanel(
   return (
     <SafeAreaView style={styles.safeDark} edges={["top", "bottom"]}>
       <View style={styles.fillDark}>
-        <MaterialIcons
-          name="photo-camera"
+        <Ionicons
+          name="camera"
           size={56}
           color={BrandColors.primary}
         />

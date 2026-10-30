@@ -90,6 +90,14 @@ export default function AppLayout() {
             name="memories"
             options={{ presentation: "modal", animation: "slide_from_bottom" }}
           />
+          <Stack.Screen
+            name="photo-picker"
+            options={{
+              presentation: "fullScreenModal",
+              animation: "slide_from_bottom",
+              contentStyle: { backgroundColor: AddyColors.captureBg },
+            }}
+          />
           <Stack.Screen name="memory/[id]" />
           <Stack.Screen name="user/[username]" />
           <Stack.Screen

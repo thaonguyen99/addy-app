@@ -166,31 +166,10 @@ export function formatNotification(
 // Socket.IO
 // ---------------------------------------------------------------------------
 
-/**
- * Connect with `io(BASE_URL, { auth: { token: accessToken } })`. A bad or
- * expired token fails with `connect_error` ("UNAUTHORIZED"); the server also
- * disconnects when the token expires, so reconnect with a fresh one.
- * Each socket joins `user:{id}` automatically.
- */
-export const SOCKET_EVENTS = {
-  // client → server
-  MEMORY_JOIN: "memory:join",
-  MEMORY_LEAVE: "memory:leave",
-  // server → client: user:{id}
-  NOTIFICATION_UPSERT: "notification:upsert",
-  NOTIFICATION_REMOVED: "notification:removed",
-  NOTIFICATION_COUNTS: "notification:counts",
-  FRIEND_ACCEPTED: "friend:accepted",
-  FEED_STALE: "feed:stale",
-  // server → client: memory:{id}
-  COMMENT_CREATED: "comment:created",
-  COMMENT_UPDATED: "comment:updated",
-  COMMENT_DELETED: "comment:deleted",
-  COMMENT_LIKE_COUNT: "comment:likeCount",
-  MEMORY_LIKE_COUNT: "memory:likeCount",
-  MEMORY_UPDATED: "memory:updated",
-  MEMORY_UNAVAILABLE: "memory:unavailable",
-} as const;
+// Connect with `io(BASE_URL, { auth: { token: accessToken } })`. A bad or
+// expired token fails with `connect_error` ("UNAUTHORIZED"); the server also
+// disconnects when the token expires, so reconnect with a fresh one.
+// Each socket joins `user:{id}` automatically.
 
 export type MemoryJoinAck =
   | { ok: true }

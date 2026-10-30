@@ -37,8 +37,3 @@ export function splitGraphemes(value: string): string[] {
 export function graphemeLength(value: string): number {
   return splitGraphemes(value).length;
 }
-
-export function truncateGraphemes(value: string, max: number): string {
-  const parts = splitGraphemes(value);
-  return parts.length <= max ? value : parts.slice(0, max).join("");
-}

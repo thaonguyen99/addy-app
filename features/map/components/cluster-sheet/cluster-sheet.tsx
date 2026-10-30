@@ -137,7 +137,8 @@ export const ClusterSheet = forwardRef<ClusterSheetRef, ClusterSheetProps>(
       let cancelled = false;
       AsyncStorage.getItem(`${TAB_KEY_PREFIX}${userId}`)
         .then((saved) => {
-          if (!cancelled && (saved === "place" || saved === "time")) setTab(saved);
+          if (!cancelled && (saved === "place" || saved === "time"))
+            setTab(saved);
         })
         .catch(() => undefined);
       return () => {
@@ -188,8 +189,12 @@ export const ClusterSheet = forwardRef<ClusterSheetRef, ClusterSheetProps>(
     const effectiveTab: Tab = singlePlace ? "time" : tab;
 
     const area = useAreaName(
-      request?.kind === "cluster" && !singlePlace ? request.center.latitude : null,
-      request?.kind === "cluster" && !singlePlace ? request.center.longitude : null,
+      request?.kind === "cluster" && !singlePlace
+        ? request.center.latitude
+        : null,
+      request?.kind === "cluster" && !singlePlace
+        ? request.center.longitude
+        : null,
     );
 
     const title =
@@ -203,7 +208,12 @@ export const ClusterSheet = forwardRef<ClusterSheetRef, ClusterSheetProps>(
       if (!hasFriends) return [];
       const byKey = new Map<
         string,
-        { key: string; label: string; user: ClusterMemory["author"]; count: number }
+        {
+          key: string;
+          label: string;
+          user: ClusterMemory["author"];
+          count: number;
+        }
       >();
       for (const memory of memories) {
         const key = personKey(memory);
@@ -246,7 +256,9 @@ export const ClusterSheet = forwardRef<ClusterSheetRef, ClusterSheetProps>(
     );
     const allSections = useMemo(
       () =>
-        effectiveTab === "place" ? groupByPlace(filtered) : groupByTime(filtered),
+        effectiveTab === "place"
+          ? groupByPlace(filtered)
+          : groupByTime(filtered),
       [effectiveTab, filtered],
     );
     const sections: Section[] = useMemo(
@@ -454,7 +466,10 @@ export const ClusterSheet = forwardRef<ClusterSheetRef, ClusterSheetProps>(
                 accessibilityRole="button"
                 accessibilityState={{ selected: person === null }}
               >
-                <TechChip label="All" tone={person === null ? "dark" : "paper"} />
+                <TechChip
+                  label="All"
+                  tone={person === null ? "dark" : "paper"}
+                />
               </Pressable>
               {people.map((entry) => (
                 <Pressable
@@ -479,7 +494,9 @@ export const ClusterSheet = forwardRef<ClusterSheetRef, ClusterSheetProps>(
                     label={`${entry.label} ${entry.count}`}
                     tone={person === entry.key ? "dark" : "paper"}
                     leading={
-                      entry.user ? <ChatAvatar user={entry.user} size={18} /> : undefined
+                      entry.user ? (
+                        <ChatAvatar user={entry.user} size={18} />
+                      ) : undefined
                     }
                   />
                 </Pressable>
@@ -509,7 +526,10 @@ export const ClusterSheet = forwardRef<ClusterSheetRef, ClusterSheetProps>(
             }}
             ListFooterComponent={
               isLoading || hasMore ? (
-                <ActivityIndicator color={AddyColors.ink} style={styles.loading} />
+                <ActivityIndicator
+                  color={AddyColors.ink}
+                  style={styles.loading}
+                />
               ) : null
             }
           />
@@ -538,13 +558,11 @@ const styles = StyleSheet.create({
   title: {
     fontFamily: AddyFonts.title,
     fontSize: 24,
-    lineHeight: 32,
     color: AddyColors.ink,
   },
   subtitle: {
     fontFamily: AddyFonts.tech,
     fontSize: 18,
-    lineHeight: 20,
     color: AddyColors.inkMuted,
   },
   peopleScroll: { flexGrow: 0, marginTop: 10 },
@@ -579,12 +597,12 @@ const styles = StyleSheet.create({
   },
   sectionCount: {
     fontFamily: AddyFonts.tech,
-    fontSize: 19,
+    fontSize: 18,
     color: AddyColors.inkMuted,
   },
   mapLink: {
     fontFamily: AddyFonts.tech,
-    fontSize: 19,
+    fontSize: 18,
     color: AddyColors.navy,
   },
   row: { flexDirection: "row", gap: GAP, marginBottom: GAP },

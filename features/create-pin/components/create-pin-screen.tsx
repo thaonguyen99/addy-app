@@ -32,6 +32,7 @@ import { useGalleryPick } from "@/hooks/use-gallery-pick";
 import { AddressBar } from "@/features/create-pin/components/address-bar";
 import { DraftPhoto } from "@/features/create-pin/components/draft-photo";
 import { MoodRow } from "@/features/create-pin/components/mood-row";
+import { MAX_PICKED_PHOTOS } from "@/features/photo-picker/open-photo-picker";
 import { useAutoPlace } from "@/hooks/use-auto-place";
 import { useCreatePinSubmit } from "@/hooks/use-create-pin-submit";
 import { useCreatePinHandoffStore } from "@/stores/create-pin-handoff.store";
@@ -107,7 +108,8 @@ export function CreatePinScreen() {
   }, [clearAllDrafts, clear]);
 
   const onAddPhotos = useCallback(async () => {
-    addImages(await pick());
+    const room = MAX_PICKED_PHOTOS - useCreatePinHandoffStore.getState().images.length;
+    addImages(await pick(room));
   }, [addImages, pick]);
 
   const onRemovePhoto = useCallback(

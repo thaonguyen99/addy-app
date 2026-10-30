@@ -27,6 +27,7 @@ import {
 import { ProfileAvatar } from "@/features/profile/components/profile-header";
 import {
   BIO_MAX,
+  BIO_TOO_LONG,
   type ProfileForm,
   profileFormSchema,
 } from "@/features/profile/schema";
@@ -40,7 +41,7 @@ import { type UpdateProfileInput, useUpdateProfileMutation } from "@/services/us
 import { useAuthStore } from "@/stores/auth.store";
 import { useEditProfileStore } from "@/stores/edit-profile.store";
 import { showToast } from "@/stores/toast.store";
-import { graphemeLength, truncateGraphemes } from "@/utils/grapheme-length";
+import { graphemeLength } from "@/utils/grapheme-length";
 
 /** Name, username, avatar and bio. Opens over any signed-in screen. */
 export function EditProfileSheet() {
@@ -68,6 +69,7 @@ export function EditProfileSheet() {
   const currentUsername = user?.username ?? "";
   const usernameStatus = useUsernameStatus(watch("username"), currentUsername);
   const bioLength = graphemeLength(watch("bio"));
+  const bioTooLong = bioLength > BIO_MAX;
 
   useEffect(() => {
     if (!open || !user) return;
@@ -103,7 +105,11 @@ export function EditProfileSheet() {
     usernameStatus === "invalid" ||
     usernameStatus === "checking";
   const canSave =
-    changed && !usernameBlocked && !avatarBusy && !updateProfile.isPending;
+    changed &&
+    !usernameBlocked &&
+    !bioTooLong &&
+    !avatarBusy &&
+    !updateProfile.isPending;
 
   const changeAvatar = async () => {
     const uploaded = await pickAvatar();
@@ -238,8 +244,11 @@ export function EditProfileSheet() {
                 <Text style={styles.at}>@</Text>
                 <SheetInput
                   value={value}
+                  // Lowercased by the schema on save. Never rewrite the text
+                  // while typing: it fights the Android keyboard and garbles
+                  // the input.
                   onBlur={onBlur}
-                  onChangeText={(text) => onChange(text.toLowerCase())}
+                  onChangeText={onChange}
                   placeholder="username"
                   autoCapitalize="none"
                   autoCorrect={false}
@@ -258,18 +267,14 @@ export function EditProfileSheet() {
             <FieldCard
               label="Bio"
               counter={`${bioLength}/${BIO_MAX}`}
-              error={errors.bio?.message}
+              error={errors.bio?.message ?? (bioTooLong ? BIO_TOO_LONG : undefined)}
             >
               <SheetInput
                 value={value}
                 onBlur={onBlur}
-                onChangeText={(text) => {
-                  if (graphemeLength(text) <= BIO_MAX) onChange(text);
-                  // Typing at the limit does nothing; a long paste is cut to fit.
-                  else if (graphemeLength(value) < BIO_MAX) {
-                    onChange(truncateGraphemes(text, BIO_MAX));
-                  }
-                }}
+                // Over the limit shows an error instead of cutting the text:
+                // rewriting it while typing fights the Android keyboard.
+                onChangeText={onChange}
                 placeholder="A short line about your memories"
                 multiline
                 accessibilityLabel="Bio"

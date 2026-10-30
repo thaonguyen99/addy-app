@@ -1,19 +1,28 @@
-import { MaterialIcons } from "@expo/vector-icons";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { TourTarget } from "@wrack/react-native-tour-guide";
 import type { CameraType, CameraView, FlashMode } from "expo-camera";
 import { CameraView as ExpoCameraView } from "expo-camera";
 import { Image } from "expo-image";
 import { StatusBar } from "expo-status-bar";
-import type { ComponentProps, RefObject } from "react";
+import type { RefObject } from "react";
 import { memo, useCallback, useEffect, useMemo, useRef } from "react";
-import { Pressable, StyleSheet, useWindowDimensions, View } from "react-native";
+import {
+  Pressable,
+  StyleSheet,
+  Text,
+  useWindowDimensions,
+  View,
+} from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import { runOnJS } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { GlossyOrb } from "@/components/ui/glossy-orb";
 import { TechChip } from "@/components/ui/tech-chip";
+import {
+  VIEWFINDER_RADIUS,
+  ViewfinderOverlay,
+} from "@/features/camera/components/viewfinder-overlay";
 import { AddyColors } from "@/constants/theme";
 import {
   ANDROID_ULTRA_WIDE,
@@ -31,10 +40,8 @@ import {
 } from "./camera-shutter-flash";
 
 const SIDE_PADDING = 16;
-const VIEWFINDER_RADIUS = 18;
 const SHUTTER_SIZE = 66;
 const SHUTTER_RING = 4;
-const BRACKET = 22;
 
 export type AddyCameraViewProps = Readonly<{
   cameraRef: RefObject<CameraView | null>;
@@ -55,12 +62,17 @@ export type AddyCameraViewProps = Readonly<{
   onAvailableLensesChanged: (event: { lenses: string[] }) => void;
 }>;
 
-type MaterialIconName = ComponentProps<typeof MaterialIcons>["name"];
-
-function flashIcon(flash: FlashMode): MaterialIconName {
-  if (flash === "on") return "flash-on";
-  if (flash === "auto") return "flash-auto";
-  return "flash-off";
+/** Ionicons has no "flash auto" glyph: auto is the flash with an "A" tag. */
+function FlashIcon({ flash }: { flash: FlashMode }) {
+  const color = flash === "off" ? AddyColors.white : AddyColors.yellow;
+  return (
+    <View>
+      <Ionicons name={flash === "off" ? "flash-off" : "flash"} size={20} color={color} />
+      {flash === "auto" ? (
+        <Text style={[styles.flashAuto, { color }]}>A</Text>
+      ) : null}
+    </View>
+  );
 }
 
 /** Translucent circle control for the dark capture screen (44px touch target). */
@@ -93,26 +105,6 @@ function GhostButton({
     >
       {children}
     </Pressable>
-  );
-}
-
-function ViewfinderOverlay() {
-  return (
-    <View style={StyleSheet.absoluteFill} pointerEvents="none">
-      {/* Rule-of-thirds grid. */}
-      <View style={[styles.gridLine, styles.gridV, { left: "33.333%" }]} />
-      <View style={[styles.gridLine, styles.gridV, { left: "66.666%" }]} />
-      <View style={[styles.gridLine, styles.gridH, { top: "33.333%" }]} />
-      <View style={[styles.gridLine, styles.gridH, { top: "66.666%" }]} />
-      {/* Corner brackets. */}
-      <View style={[styles.bracket, styles.bracketTL]} />
-      <View style={[styles.bracket, styles.bracketTR]} />
-      <View style={[styles.bracket, styles.bracketBL]} />
-      <View style={[styles.bracket, styles.bracketBR]} />
-      {/* <View style={styles.ratioLabel}>
-        <TechChip label="1:1" tone="ghost" size="sm" />
-      </View> */}
-    </View>
   );
 }
 
@@ -205,11 +197,7 @@ function AddyCameraViewInner({
           </GhostButton>
           <TechChip label="quick snap" leading="⚡" tone="ghost" />
           <GhostButton onPress={onCycleFlash} accessibilityLabel={flashLabel}>
-            <MaterialIcons
-              name={flashIcon(flash)}
-              size={20}
-              color={flash === "off" ? AddyColors.white : AddyColors.yellow}
-            />
+            <FlashIcon flash={flash} />
           </GhostButton>
         </View>
 
@@ -343,53 +331,6 @@ const styles = StyleSheet.create({
     overflow: "hidden",
     backgroundColor: "#000000",
   },
-  gridLine: {
-    position: "absolute",
-    backgroundColor: "rgba(255, 255, 255, 0.22)",
-  },
-  gridV: { top: 0, bottom: 0, width: StyleSheet.hairlineWidth },
-  gridH: { left: 0, right: 0, height: StyleSheet.hairlineWidth },
-  bracket: {
-    position: "absolute",
-    width: BRACKET,
-    height: BRACKET,
-    borderColor: AddyColors.white,
-  },
-  bracketTL: {
-    top: 12,
-    left: 12,
-    borderTopWidth: 2.5,
-    borderLeftWidth: 2.5,
-    borderTopLeftRadius: 8,
-  },
-  bracketTR: {
-    top: 12,
-    right: 12,
-    borderTopWidth: 2.5,
-    borderRightWidth: 2.5,
-    borderTopRightRadius: 8,
-  },
-  bracketBL: {
-    bottom: 12,
-    left: 12,
-    borderBottomWidth: 2.5,
-    borderLeftWidth: 2.5,
-    borderBottomLeftRadius: 8,
-  },
-  bracketBR: {
-    bottom: 12,
-    right: 12,
-    borderBottomWidth: 2.5,
-    borderRightWidth: 2.5,
-    borderBottomRightRadius: 8,
-  },
-  ratioLabel: {
-    position: "absolute",
-    bottom: 12,
-    left: 0,
-    right: 0,
-    alignItems: "center",
-  },
   controls: {
     flexDirection: "row",
     alignItems: "center",
@@ -420,4 +361,11 @@ const styles = StyleSheet.create({
   shutterPressed: { transform: [{ scale: 0.95 }] },
   pressed: { opacity: 0.7 },
   disabled: { opacity: 0.45 },
+  flashAuto: {
+    position: "absolute",
+    right: -5,
+    bottom: -3,
+    fontSize: 10,
+    fontWeight: "800",
+  },
 });

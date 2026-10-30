@@ -6,19 +6,13 @@ import { StickerCard } from "@/components/ui/sticker-card";
 import { StickerBorderWidth, StickerRadius } from "@/constants/sticker-style";
 import { BrandColors } from "@/constants/theme";
 import { MoodSticker } from "@/features/feed/mood-sticker";
-import { formatRelativeTime } from "@/utils/format-relative-time";
 import { pickCover } from "@/utils/pick-cover";
 import type { MemoryListItem } from "@/services/memories";
-
-// Fixed so every card in a grid row lines up regardless of caption length.
-const CAPTION_LINE_HEIGHT = 16;
-const CAPTION_HEIGHT_COMPACT = CAPTION_LINE_HEIGHT + 10 * 2;
-const CAPTION_HEIGHT_FULL = CAPTION_LINE_HEIGHT * 2 + 10 * 2;
 
 type MemoryFeedCardProps = {
   memory: MemoryListItem;
   onPress: (id: string) => void;
-  /** Single caption line only, no timestamp — for the dense home grid. */
+  /** Smaller, inset mood sticker — for the dense home grid. */
   compact?: boolean;
 };
 
@@ -28,8 +22,6 @@ function MemoryFeedCardBase({
   compact = false,
 }: MemoryFeedCardProps) {
   const cover = useMemo(() => pickCover(memory.images), [memory.images]);
-  const timeAgo = formatRelativeTime(memory.capturedAt);
-  const caption = memory.feeling?.trim() || memory.place.name;
 
   return (
     <Pressable
@@ -64,22 +56,6 @@ function MemoryFeedCardBase({
             />
           </View>
         </View>
-
-        {/* <View
-          style={[
-            styles.caption,
-            { height: compact ? CAPTION_HEIGHT_COMPACT : CAPTION_HEIGHT_FULL },
-          ]}
-        >
-          <Text style={styles.note} numberOfLines={1}>
-            {caption}
-          </Text>
-          {compact ? null : (
-            <Text style={styles.meta} numberOfLines={1}>
-              {timeAgo || memory.place.name}
-            </Text>
-          )}
-        </View> */}
       </StickerCard>
     </Pressable>
   );
@@ -112,21 +88,5 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: 6,
     right: 6,
-  },
-  caption: {
-    padding: 10,
-    justifyContent: "center",
-    gap: 3,
-  },
-  note: {
-    fontSize: 13,
-    lineHeight: CAPTION_LINE_HEIGHT,
-    fontFamily: "Baloo2-SemiBold",
-    color: BrandColors.ink,
-  },
-  meta: {
-    fontSize: 11,
-    lineHeight: CAPTION_LINE_HEIGHT,
-    color: BrandColors.inkMuted,
   },
 });

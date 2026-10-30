@@ -21,17 +21,6 @@ function appendLocalImage(form: FormData, fieldName: string, localUri: string) {
   } as unknown as Blob);
 }
 
-async function uploadImage(localUri: string): Promise<MediaUploadResult> {
-  const form = new FormData();
-  appendLocalImage(form, "image", localUri);
-
-  const response = await apiClient.post("/media/upload", form, {
-    headers: { "Content-Type": "multipart/form-data" },
-  });
-
-  return parseApiResponse<MediaUploadResult>(response.data);
-}
-
 async function uploadAvatar(localUri: string): Promise<MediaUploadResult> {
   const form = new FormData();
   appendLocalImage(form, "image", localUri);
@@ -74,7 +63,6 @@ async function uploadImages(
 }
 
 export const mediaApi = {
-  uploadImage,
   uploadAvatar,
   uploadImages,
 };

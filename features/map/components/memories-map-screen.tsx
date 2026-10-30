@@ -38,10 +38,7 @@ import {
   AddyRadius,
   BrandColors,
 } from "@/constants/theme";
-import {
-  ClusterPhotoPin,
-  latestPin,
-} from "@/features/map/components/cluster-marker";
+import { ClusterPhotoPin } from "@/features/map/components/cluster-marker";
 import {
   CLUSTER_SHEET_HALF,
   ClusterSheet,
@@ -54,10 +51,7 @@ import {
 } from "@/features/map/components/map-photo-pin";
 import { useMapFocusStore } from "@/stores/map-focus.store";
 import { useAddyMapStyle } from "@/services/map";
-import {
-  clusterPins,
-  type ClusterGroup,
-} from "@/utils/cluster-pins";
+import { clusterPins } from "@/utils/cluster-pins";
 import {
   ONBOARDING_ADD_MEMORY_STEP_ID,
   ONBOARDING_MAP_PIN_TARGET_ID,
@@ -83,6 +77,14 @@ import type {
   MemoryPin,
   ScopedPin,
 } from "@/services/memories";
+
+/** A map marker's group across both layers; `cover` is its newest pin. */
+type ScopedCluster = {
+  latitude: number;
+  longitude: number;
+  pins: ScopedPin[];
+  cover: ScopedPin;
+};
 
 // MapPhotoPin's visual footprint (features/map/components/map-photo-pin.tsx),
 // extending UPWARD from the marker's anchor="bottom" point.
@@ -393,13 +395,32 @@ export function MemoriesMapScreen() {
   // Own-pins-only, unclustered, so the line reflects true pin-to-pin
   // chronological order rather than cluster centroids.
 
-  // Clustered separately so own vs. friend pins never merge into one bubble —
-  // keeps the bordered/unbordered visual distinction between them intact.
-  const ownClusters = useMemo(() => clusterPins(pins, zoom), [pins, zoom]);
-  const friendClusters = useMemo(
-    () => clusterPins(friendPins, zoom),
-    [friendPins, zoom],
-  );
+  // Both layers cluster together: an own pin and a friend's pin close enough
+  // to overlap merge into one bubble, so neither hides the other from taps.
+  // Each marker sits on (and shows) its group's newest pin. Friend-covered
+  // markers come first so your own still draw on top.
+  const clusters = useMemo(() => {
+    const groups = clusterPins(
+      inViewPins.map((scoped) => ({
+        ...scoped,
+        latitude: scoped.pin.latitude,
+        longitude: scoped.pin.longitude,
+      })),
+      zoom,
+    );
+    return groups
+      .map((group) => {
+        const scopedPins = group.pins.map(({ pin, scope }) => ({ pin, scope }));
+        const cover = scopedPins.reduce((latest, scoped) =>
+          scoped.pin.capturedAt > latest.pin.capturedAt ? scoped : latest,
+        );
+        return { ...group, pins: scopedPins, cover };
+      })
+      .sort(
+        (a, b) =>
+          Number(a.cover.scope === "mine") - Number(b.cover.scope === "mine"),
+      );
+  }, [inViewPins, zoom]);
 
   const openInView = useCallback(() => {
     if (inViewPins.length === 0) return;
@@ -447,9 +468,9 @@ export function MemoriesMapScreen() {
   // A grouped pin opens the cluster sheet right away, at any zoom. The map
   // only pans (never zooms) so the cluster sits above the half sheet.
   const onClusterPress = useCallback(
-    (group: ClusterGroup<MemoryPin | FriendMemoryPin>, scope: MapScope) => {
+    (group: ScopedCluster) => {
       // The marker sits on the newest pin, not the group's centroid.
-      const marker = latestPin(group.pins);
+      const marker = group.cover.pin;
       cameraRef.current?.easeTo({
         center: [marker.longitude, marker.latitude],
         padding: sheetPadding,
@@ -457,7 +478,7 @@ export function MemoriesMapScreen() {
       });
       clusterSheetRef.current?.present({
         kind: "cluster",
-        pins: group.pins.map((pin) => ({ pin, scope })),
+        pins: group.pins,
         center: { latitude: group.latitude, longitude: group.longitude },
       });
     },
@@ -469,10 +490,13 @@ export function MemoriesMapScreen() {
   const openPin = useCallback(
     (pin: MemoryPin | FriendMemoryPin, scope: MapScope) => {
       if (pin.memoryCount > 1) {
-        onClusterPress(
-          { latitude: pin.latitude, longitude: pin.longitude, pins: [pin] },
-          scope,
-        );
+        const scoped = { pin, scope };
+        onClusterPress({
+          latitude: pin.latitude,
+          longitude: pin.longitude,
+          pins: [scoped],
+          cover: scoped,
+        });
       } else {
         router.push(`/memory/${pin.id}`);
       }
@@ -512,78 +536,43 @@ export function MemoriesMapScreen() {
             ref={cameraRef}
             initialViewState={{ center: DEFAULT_CENTER, zoom: DEFAULT_ZOOM }}
           />
-          {friendClusters.map((group) =>
-            group.pins.length > 1 ? (
+          {clusters.map((group) => {
+            const { pin, scope } = group.cover;
+            const groupPins = group.pins.map((scoped) => scoped.pin);
+            const friend = "author" in pin ? pin.author : undefined;
+            return group.pins.length > 1 ? (
               <Marker
-                key={`friend-cluster-${latestPin(group.pins).id}`}
-                lngLat={[
-                  latestPin(group.pins).longitude,
-                  latestPin(group.pins).latitude,
-                ]}
+                key={`${scope}-cluster-${pin.id}`}
+                lngLat={[pin.longitude, pin.latitude]}
                 anchor="bottom"
-                onPress={() => onClusterPress(group, "friends")}
+                onPress={() => onClusterPress(group)}
               >
                 <ClusterPhotoPin
-                  pins={group.pins}
-                  highlighted={isActive(group.pins)}
-                  friend={latestPin(group.pins).author}
+                  pins={groupPins}
+                  highlighted={isActive(groupPins)}
+                  friend={friend}
                 />
               </Marker>
             ) : (
               <Marker
-                key={`friend-${group.pins[0].id}`}
-                lngLat={[group.pins[0].longitude, group.pins[0].latitude]}
+                key={`${scope}-${pin.id}`}
+                lngLat={[pin.longitude, pin.latitude]}
                 anchor="bottom"
-                onPress={() => openPin(group.pins[0], "friends")}
+                onPress={() => openPin(pin, scope)}
               >
                 <MapPhotoPin
-                  imageUrl={group.pins[0].imageUrl}
-                  placeMemoryCount={group.pins[0].memoryCount}
-                  placeName={group.pins[0].placeName}
-                  moodScore={group.pins[0].moodScore}
+                  imageUrl={pin.imageUrl}
+                  placeMemoryCount={pin.memoryCount}
+                  placeName={pin.placeName}
+                  moodScore={pin.moodScore}
                   showLabel={showLabels}
-                  flipped={isNearRightEdge(group.pins[0].longitude, bounds)}
-                  friend={group.pins[0].author}
-                  highlighted={isActive(group.pins)}
+                  flipped={isNearRightEdge(pin.longitude, bounds)}
+                  friend={friend}
+                  highlighted={isActive(groupPins)}
                 />
               </Marker>
-            ),
-          )}
-          {ownClusters.map((group) =>
-            group.pins.length > 1 ? (
-              <Marker
-                key={`cluster-${latestPin(group.pins).id}`}
-                lngLat={[
-                  latestPin(group.pins).longitude,
-                  latestPin(group.pins).latitude,
-                ]}
-                anchor="bottom"
-                onPress={() => onClusterPress(group, "mine")}
-              >
-                <ClusterPhotoPin
-                  pins={group.pins}
-                  highlighted={isActive(group.pins)}
-                />
-              </Marker>
-            ) : (
-              <Marker
-                key={group.pins[0].id}
-                lngLat={[group.pins[0].longitude, group.pins[0].latitude]}
-                anchor="bottom"
-                onPress={() => openPin(group.pins[0], "mine")}
-              >
-                <MapPhotoPin
-                  imageUrl={group.pins[0].imageUrl}
-                  placeMemoryCount={group.pins[0].memoryCount}
-                  placeName={group.pins[0].placeName}
-                  moodScore={group.pins[0].moodScore}
-                  showLabel={showLabels}
-                  flipped={isNearRightEdge(group.pins[0].longitude, bounds)}
-                  highlighted={isActive(group.pins)}
-                />
-              </Marker>
-            ),
-          )}
+            );
+          })}
           {queuedPins.map((pin) => {
             const { latitude, longitude } = queuedPinCoordinates(pin);
             return (

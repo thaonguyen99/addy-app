@@ -4,21 +4,18 @@ import { useEffect, useRef, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { Alert, StyleSheet, Text, View } from "react-native";
 
+import { BrandColors } from "@/constants/theme";
+import { signUpSchema, type SignUpForm } from "@/features/auth/auth-schemas";
 import { AuthPrimaryButton } from "@/features/auth/components/auth-primary-button";
 import { AuthScreen } from "@/features/auth/components/auth-screen";
 import { AuthTextField } from "@/features/auth/components/auth-text-field";
 import { FacebookSignInButton } from "@/features/auth/components/facebook-sign-in-button";
 import { GoogleSignInButton } from "@/features/auth/components/google-sign-in-button";
 import { getAuthErrorMessage } from "@/hooks/use-auth-form-error";
-import {
-  signUpSchema,
-  type SignUpForm,
-} from "@/features/auth/auth-schemas";
-import { useAuthStore } from "@/stores/auth.store";
 import { ApiClientError } from "@/services/api/errors";
-import { useCheckUsernameMutation } from "@/services/users";
 import { useRegisterMutation } from "@/services/auth";
-import { BrandColors } from "@/constants/theme";
+import { useCheckUsernameMutation } from "@/services/users";
+import { useAuthStore } from "@/stores/auth.store";
 
 type UsernameStatus = "idle" | "checking" | "available" | "taken" | "invalid";
 
@@ -105,7 +102,7 @@ export default function SignUpScreen() {
         Alert.alert(
           "Account exists",
           "This email is already registered. Try signing in.",
-          [{ text: "Sign in", onPress: () => router.replace("/sign-in") }]
+          [{ text: "Sign in", onPress: () => router.replace("/sign-in") }],
         );
         return;
       }
@@ -141,8 +138,10 @@ export default function SignUpScreen() {
             label="Username"
             autoCapitalize="none"
             autoCorrect={false}
+            // Lowercased by the schema on submit. Never rewrite the text while
+            // typing: it fights the Android keyboard and garbles the input.
             onBlur={onBlur}
-            onChangeText={(text) => onChange(text.toLowerCase())}
+            onChangeText={onChange}
             value={value}
             error={errors.username?.message ?? usernameHint(usernameStatus)}
           />

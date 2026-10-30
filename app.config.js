@@ -100,6 +100,21 @@ module.exports = ({ config }) => ({
   plugins: [
     "expo-router",
     "expo-dev-client",
+    [
+      "expo-build-properties",
+      {
+        android: {
+          // R8 shrinks and obfuscates release builds; Play flags apps whose
+          // DEX obfuscation is under 25%. The AAB carries the mapping file,
+          // so Play still de-obfuscates crash stack traces.
+          enableMinifyInReleaseBuilds: true,
+          enableShrinkResourcesInReleaseBuilds: true,
+          // Nitro (fast-tflite, the on-device moderation model) resolves
+          // these classes from C++ by name.
+          extraProguardRules: "-keep class com.margelo.nitro.** { *; }",
+        },
+      },
+    ],
     "expo-secure-store",
     ["expo-audio", { microphonePermission: false, recordAudioAndroid: false }],
     [
