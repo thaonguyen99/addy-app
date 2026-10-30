@@ -83,6 +83,14 @@ module.exports = ({ config }) => ({
       "android.permission.ACCESS_COARSE_LOCATION",
       "android.permission.ACCESS_FINE_LOCATION",
     ],
+    // expo-audio's manifest declares this for its lock-screen media controls
+    // service; we only play the shutter sound, so Play shouldn't see it.
+    // facebook-core declares AD_ID, but we don't use the advertising ID (no ads
+    // yet, and FB advertiser ID collection is off). Unblock it when ads ship.
+    blockedPermissions: [
+      "android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK",
+      "com.google.android.gms.permission.AD_ID",
+    ],
     package: "com.thaonguyen.addy",
   },
   web: {
