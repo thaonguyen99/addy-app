@@ -11,13 +11,14 @@ const ACTIVE_OFFSET = 24;
 const FAIL_OFFSET_Y = 14;
 const MIN_DISTANCE = 70;
 const MIN_VELOCITY = 600;
-/** On the map, only a swipe starting this close to a screen edge counts. */
+/** On edge-only tabs, only a swipe starting this close to a screen edge counts. */
 const EDGE_ZONE = 28;
 
 type TabSwipeProps = {
   /** A tab route name, or "capture" for the camera. */
   routeName: string;
-  /** The map pans sideways, so only edge swipes switch tabs there. */
+  /** For screens that scroll sideways themselves (the map, Lane's photo
+   *  pages): only edge swipes switch tabs there. */
   edgeOnly?: boolean;
   /** Pause swiping, e.g. while the camera is taking a photo. */
   disabled?: boolean;
@@ -84,7 +85,7 @@ export function TabSwipe({
   const startY = useSharedValue(0);
 
   const gesture = useMemo(() => {
-    // Android's Back gesture owns the screen edges, so the map gets none.
+    // Android's Back gesture owns the screen edges, so edge-only tabs get none.
     const enabled = !disabled && !(edgeOnly && Platform.OS === "android");
 
     // dir -1: finger moved right → the slot on the left.

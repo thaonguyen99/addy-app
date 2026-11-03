@@ -1,6 +1,7 @@
 import { ReactNode } from "react";
 import {
   Pressable,
+  PressableProps,
   StyleProp,
   StyleSheet,
   Text,
@@ -45,6 +46,8 @@ type TechChipProps = {
   accessibilityLabel?: string;
   size?: "sm" | "md";
   style?: StyleProp<ViewStyle>;
+  /** Extra touch area around a pressable chip. */
+  hitSlop?: PressableProps["hitSlop"];
 };
 
 /**
@@ -60,6 +63,7 @@ export function TechChip({
   accessibilityLabel,
   size = "md",
   style,
+  hitSlop = 10,
 }: TechChipProps) {
   const colors = TONES[tone];
   const content = (
@@ -92,7 +96,7 @@ export function TechChip({
   return (
     <Pressable
       onPress={onPress}
-      hitSlop={10}
+      hitSlop={hitSlop}
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel ?? label}
       style={({ pressed }) => (pressed ? styles.pressed : undefined)}

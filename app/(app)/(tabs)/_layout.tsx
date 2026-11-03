@@ -12,7 +12,11 @@ export default function TabLayout() {
       // Slide between tabs, whether tapped or swiped.
       screenOptions={{ headerShown: false, ...TAB_SLIDE }}
       screenLayout={({ route, children }) => (
-        <TabSwipe routeName={route.name} edgeOnly={route.name === "explore"}>
+        <TabSwipe
+          routeName={route.name}
+          // The map pans and Lane's photos page sideways: edge swipes only.
+          edgeOnly={route.name === "explore" || route.name === "lane"}
+        >
           {children}
         </TabSwipe>
       )}

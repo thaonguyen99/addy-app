@@ -99,6 +99,16 @@ export default function AppLayout() {
             }}
           />
           <Stack.Screen name="memory/[id]" />
+          <Stack.Screen
+            name="memory-zoom/[id]"
+            // MemoryZoomScreen plays its own open/close over the feed.
+            options={{
+              presentation: "transparentModal",
+              animation: "none",
+              gestureEnabled: false,
+              contentStyle: { backgroundColor: "transparent" },
+            }}
+          />
           <Stack.Screen name="user/[username]" />
           <Stack.Screen
             name="edit-memory/[id]"

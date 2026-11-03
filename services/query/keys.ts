@@ -3,6 +3,8 @@ export const queryKeys = {
   stats: ["users", "stats"] as const,
   memory: (id: string) => ["memories", "detail", id] as const,
   memoriesFeed: ["memories", "feed"] as const,
+  /** Memory Lane (`GET /feed`) — distinct from `memoriesFeed` (your own list). */
+  feed: ["feed"] as const,
   map: (boundsKey: string) => ["memories", "map", boundsKey] as const,
   friendsMap: (boundsKey: string) =>
     ["memories", "friends-map", boundsKey] as const,

@@ -14,9 +14,9 @@ export function badgeLabel(count: number): string | null {
 }
 
 /** 🔔 with the pink count badge; opens Notifications. */
-export function NotificationBell() {
+export function NotificationBell({ showBadge = true }: { showBadge?: boolean }) {
   const { data } = useNotificationCountsQuery();
-  const label = badgeLabel(data?.badge ?? 0);
+  const label = showBadge ? badgeLabel(data?.badge ?? 0) : null;
 
   return (
     <View>

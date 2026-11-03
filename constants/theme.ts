@@ -175,6 +175,9 @@ export const AddyGradients = {
   /** Icon buttons and the tab bar. */
   chrome: ["#FFFFFF", "#E9EEF4"] as const,
   tabBar: ["#FFFFFF", "#EDF2F7"] as const,
+  /** Memory Lane card header strips: a friend's memory, and your own. */
+  laneFriend: ["#EAF7FF", "#B7E2FF"] as const,
+  laneMine: ["#F6FFDC", "#D3F37A"] as const,
 };
 
 const darkPalette = {

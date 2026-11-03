@@ -8,6 +8,7 @@ import {
 } from "@tanstack/react-query";
 import { useMemo } from "react";
 
+import { invalidateFeed } from "@/services/feed/feed.cache";
 import { mapBoundsKey, queryKeys } from "@/services/query/keys";
 import { memoryApi } from "./memories.api";
 import type {
@@ -111,6 +112,7 @@ export function useDeleteMemoryMutation(id: string) {
       queryClient.invalidateQueries({ queryKey: ["memories"] });
       queryClient.invalidateQueries({ queryKey: queryKeys.stats });
       queryClient.invalidateQueries({ queryKey: ["users", "profile"] });
+      invalidateFeed(queryClient);
     },
   });
 }
@@ -230,6 +232,7 @@ export function useUpdateMemoryMutation(id: string) {
       queryClient.invalidateQueries({ queryKey: ["memories", "friends-map"] });
       // The place or cover photo may have changed.
       queryClient.invalidateQueries({ queryKey: ["memories", "place"] });
+      invalidateFeed(queryClient);
     },
   });
 }
@@ -243,6 +246,7 @@ export function useUntagSelfMutation(id: string) {
       queryClient.removeQueries({ queryKey: queryKeys.memory(id) });
       queryClient.invalidateQueries({ queryKey: ["memories", "friends-map"] });
       queryClient.invalidateQueries({ queryKey: ["memories", "place"] });
+      invalidateFeed(queryClient);
     },
   });
 }
@@ -295,6 +299,7 @@ export function useToggleReactionMutation(memoryId: string) {
       queryClient.invalidateQueries({
         queryKey: queryKeys.memoryReactions(memoryId),
       });
+      invalidateFeed(queryClient);
     },
   });
 }

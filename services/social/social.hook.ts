@@ -79,6 +79,7 @@ function invalidateAfterBlockChange(
   queryClient.invalidateQueries({ queryKey: ["memories", "detail"] });
   queryClient.invalidateQueries({ queryKey: ["memories", "reactions"] });
   queryClient.invalidateQueries({ queryKey: queryKeys.memoriesFeed });
+  queryClient.invalidateQueries({ queryKey: queryKeys.feed });
   queryClient.invalidateQueries({ queryKey: ["memories", "place"] });
 }
 

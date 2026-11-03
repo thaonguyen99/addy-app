@@ -8,6 +8,7 @@ import {
 } from "@tanstack/react-query";
 
 import { ApiClientError } from "@/services/api/errors";
+import { invalidateFeed } from "@/services/feed/feed.cache";
 import type { MemoryDetail } from "@/services/memories";
 import { queryKeys } from "@/services/query/keys";
 import type { Paginated } from "@/types/api";
@@ -174,6 +175,7 @@ export function usePostMessageMutation(memoryId: string) {
       messageApi.postMessage(memoryId, text, clientTempId),
     onSuccess: (message) => {
       appendMessage(queryClient, memoryId, message);
+      invalidateFeed(queryClient);
     },
   });
 }
@@ -219,6 +221,7 @@ export function useEditMessageMutation(memoryId: string) {
       messageApi.editMessage(id, text),
     onSuccess: (message) => {
       patchMessageInPages(queryClient, memoryId, message.id, message);
+      invalidateFeed(queryClient);
     },
   });
 }
@@ -260,6 +263,9 @@ export function useDeleteMessageMutation(memoryId: string) {
           context.previousMemory,
         );
       }
+    },
+    onSuccess: () => {
+      invalidateFeed(queryClient);
     },
   });
 }

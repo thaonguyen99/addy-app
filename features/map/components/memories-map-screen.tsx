@@ -27,7 +27,10 @@ import Animated, {
   withSequence,
   withTiming,
 } from "react-native-reanimated";
-import { SafeAreaView } from "react-native-safe-area-context";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
 
 import { ChatBubbleBanner } from "@/components/ui/chat-bubble-banner";
 import { TechChip } from "@/components/ui/tech-chip";
@@ -107,6 +110,12 @@ const TOAST_VISIBLE_MS = 3000;
 
 /** Camera moves without the cluster sheet open clear any padding it left. */
 const NO_PADDING = { top: 0, right: 0, bottom: 0, left: 0 };
+/** The chip row over the top of the map: margin, chip, margin. */
+const TOP_ROW_HEIGHT = 16 + 30 + 16;
+/** A photo pin stands about this tall above its point. */
+const PIN_HEIGHT = 70;
+/** The top-row chips reach out for touches, but not down over the pins. */
+const TOP_ROW_HIT_SLOP = { top: 10, right: 10, bottom: 0, left: 10 };
 const FOCUS_PLACE_ZOOM = 16;
 
 function boundsToMapBounds([
@@ -184,6 +193,7 @@ export function MemoriesMapScreen() {
   const cameraRef = useRef<CameraRef>(null);
   const clusterSheetRef = useRef<ClusterSheetRef>(null);
   const { height: windowHeight } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
   const [activePlaceId, setActivePlaceId] = useState<string | null>(null);
   const pendingFocus = useMapFocusStore((s) => s.pendingFocus);
   const setPendingFocus = useMapFocusStore((s) => s.setPendingFocus);
@@ -435,10 +445,15 @@ export function MemoriesMapScreen() {
   }, [inViewPins, bounds]);
 
   /** Pads the map's bottom by the half sheet so `center` lands in the
-   *  visible strip above it. */
+   *  visible strip above it, and its top by the chip row plus a pin, so the
+   *  pin standing on `center` isn't hidden (or tapped through) under the chips. */
   const sheetPadding = useMemo(
-    () => ({ ...NO_PADDING, bottom: windowHeight * CLUSTER_SHEET_HALF }),
-    [windowHeight],
+    () => ({
+      ...NO_PADDING,
+      top: insets.top + TOP_ROW_HEIGHT + PIN_HEIGHT,
+      bottom: windowHeight * CLUSTER_SHEET_HALF,
+    }),
+    [insets.top, windowHeight],
   );
 
   const onFocusSheetPlace = useCallback(
@@ -630,6 +645,7 @@ export function MemoriesMapScreen() {
             }
             trailing={isError && !data ? "· offline ›" : "›"}
             onPress={openInView}
+            hitSlop={TOP_ROW_HIT_SLOP}
             accessibilityLabel="Show the memories in view"
           />
           {focusFriendId ? (
@@ -639,6 +655,7 @@ export function MemoriesMapScreen() {
               label={`${focusFriendName}'s map`}
               trailing="×"
               onPress={clearFriendFocus}
+              hitSlop={TOP_ROW_HIT_SLOP}
               accessibilityLabel={`Close ${focusFriendName}'s map`}
             />
           ) : null}
@@ -658,7 +675,7 @@ export function MemoriesMapScreen() {
           {focusFriendId ? null : (
             <Pressable
               onPress={() => setShowFriends((v) => !v)}
-              hitSlop={10}
+              hitSlop={TOP_ROW_HIT_SLOP}
               accessibilityRole="switch"
               accessibilityState={{ checked: showFriends }}
               accessibilityLabel="Show friends' memories on the map"

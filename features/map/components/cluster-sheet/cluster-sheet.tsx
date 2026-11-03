@@ -159,19 +159,52 @@ export const ClusterSheet = forwardRef<ClusterSheetRef, ClusterSheetProps>(
       [userId],
     );
 
+    // Whether the sheet is up (or on its way). dismiss() on a sheet that never
+    // opened leaves the library stuck "dismissing", and it then ignores every
+    // later present(): leaving the map from a single pin did exactly that.
+    const openRef = useRef(false);
+    const show = useCallback((next: ClusterSheetRequest) => {
+      openRef.current = true;
+      setRequest(next);
+      setPerson(null);
+      setVisibleCount(PAGE_SIZE);
+      setActiveKey(null);
+      sheetRef.current?.present();
+    }, []);
+
+    // The library ignores present() while the sheet is still animating shut,
+    // then unmounts it: a pin tapped then would do nothing. Hold that request
+    // and show it once the close has finished.
+    const closingRef = useRef(false);
+    const pendingRef = useRef<ClusterSheetRequest | null>(null);
+    const showPending = useCallback(() => {
+      const next = pendingRef.current;
+      pendingRef.current = null;
+      if (next) show(next);
+    }, [show]);
+
+    const onAnimate = useCallback(
+      (_from: number, to: number) => {
+        closingRef.current = to === -1;
+        // Dragged back up before it closed: nothing is waiting on the close.
+        if (to !== -1) showPending();
+      },
+      [showPending],
+    );
+
     useImperativeHandle(
       ref,
       () => ({
         present: (next) => {
-          setRequest(next);
-          setPerson(null);
-          setVisibleCount(PAGE_SIZE);
-          setActiveKey(null);
-          sheetRef.current?.present();
+          if (closingRef.current) pendingRef.current = next;
+          else show(next);
         },
-        dismiss: () => sheetRef.current?.dismiss(),
+        dismiss: () => {
+          pendingRef.current = null;
+          if (openRef.current) sheetRef.current?.dismiss();
+        },
       }),
-      [],
+      [show],
     );
 
     // ── Header facts: counts come from the pins, the same numbers the map
@@ -339,12 +372,15 @@ export const ClusterSheet = forwardRef<ClusterSheetRef, ClusterSheetProps>(
     );
 
     const onDismiss = useCallback(() => {
+      openRef.current = false;
+      closingRef.current = false;
       setRequest(null);
       setPeek(null);
       setActiveKey(null);
       onActivePlaceChange(null);
       runAfterDismiss();
-    }, [onActivePlaceChange, runAfterDismiss]);
+      showPending();
+    }, [onActivePlaceChange, runAfterDismiss, showPending]);
 
     const renderRow = useCallback(
       ({ item: row }: { item: ClusterMemory[] }) => (
@@ -425,6 +461,7 @@ export const ClusterSheet = forwardRef<ClusterSheetRef, ClusterSheetProps>(
           topInset={insets.top + FULL_MAP_STRIP}
           handleIndicatorStyle={styles.handleIndicator}
           backgroundStyle={styles.background}
+          onAnimate={onAnimate}
           onDismiss={onDismiss}
         >
           <View style={styles.header}>

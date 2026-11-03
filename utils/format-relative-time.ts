@@ -40,3 +40,31 @@ export function formatDayMonthYear(iso: string): string {
   return `${day} ${month} ${date.getFullYear()}`;
 }
 
+
+function startOfLocalDay(time: number): number {
+  const date = new Date(time);
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
+}
+
+/** Local-day divider label: "today", "yesterday", then "4 Mar". */
+export function formatDayLabel(iso: string, now: number = Date.now()): string {
+  const then = new Date(iso).getTime();
+  if (Number.isNaN(then)) return "";
+  const days = Math.round(
+    (startOfLocalDay(now) - startOfLocalDay(then)) / DAY,
+  );
+  if (days === 0) return "today";
+  if (days === 1) return "yesterday";
+  const date = new Date(then);
+  const month = date.toLocaleDateString("en-US", { month: "short" });
+  return `${date.getDate()} ${month}`;
+}
+
+/** "09:41": local 24-hour clock time. */
+export function formatClockTime(iso: string): string {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return "";
+  const hours = String(date.getHours()).padStart(2, "0");
+  const minutes = String(date.getMinutes()).padStart(2, "0");
+  return `${hours}:${minutes}`;
+}

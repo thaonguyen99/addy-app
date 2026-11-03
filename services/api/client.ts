@@ -172,6 +172,11 @@ export async function apiPatch<T>(url: string, body?: unknown) {
   return parseApiResponse<T>(response.data);
 }
 
+export async function apiPut<T>(url: string, body?: unknown) {
+  const response = await apiClient.put(url, body);
+  return parseApiResponse<T>(response.data);
+}
+
 export async function apiDelete<T>(url: string, body?: unknown) {
   const response = await apiClient.delete(url, body ? { data: body } : undefined);
   return parseApiResponse<T>(response.data);

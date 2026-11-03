@@ -14,7 +14,7 @@ import {
   View,
 } from "react-native";
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { GlossyButton } from "@/components/ui/glossy-button";
 import { IconCircleButton } from "@/components/ui/icon-circle-button";
@@ -34,6 +34,7 @@ import {
 import { MessageComposer } from "@/features/memory/message-composer";
 import { MessageThreadHeader } from "@/features/memory/message-thread-header";
 import { RevealFlash } from "@/features/memory/reveal-flash";
+import { StaggerIn } from "@/features/memory/stagger-in";
 import { TaggedLine } from "@/features/memory/tagged-line";
 import {
   TaggedPeopleSheet,
@@ -267,17 +268,22 @@ export function MemoryDetailScreen({
   );
 
   const renderThreadItem = useCallback(
-    ({ item }: { item: ThreadItem }) => (
-      <MessageBubble
-        item={item}
-        viewerId={viewerId}
-        onToggleLike={onToggleMessageLike}
-        onRetry={thread.retry}
-        onLongPress={onMessageLongPress}
-        onOpenProfile={openProfile}
-        highlighted={item.kind === "message" && item.message.id === highlightId}
-        animateIn={item.kind === "message" && liveIds.has(item.message.id)}
-      />
+    ({ item, index }: { item: ThreadItem; index: number }) => (
+      // The post is row 0 of the zoom entrance.
+      <StaggerIn index={index + 1}>
+        <MessageBubble
+          item={item}
+          viewerId={viewerId}
+          onToggleLike={onToggleMessageLike}
+          onRetry={thread.retry}
+          onLongPress={onMessageLongPress}
+          onOpenProfile={openProfile}
+          highlighted={
+            item.kind === "message" && item.message.id === highlightId
+          }
+          animateIn={item.kind === "message" && liveIds.has(item.message.id)}
+        />
+      </StaggerIn>
     ),
     [
       viewerId,
@@ -332,10 +338,18 @@ export function MemoryDetailScreen({
   }, []);
 
   const ownerName = data ? (data.author.name ?? data.author.username) : "";
+  // Window insets, not SafeAreaView's: that one measures its own frame, which
+  // starts out card-sized when the chat zooms out of Memory Lane.
+  const insets = useSafeAreaInsets();
 
   return (
     <SkyBackground>
-      <SafeAreaView style={styles.flex} edges={["top", "bottom"]}>
+      <View
+        style={[
+          styles.flex,
+          { paddingTop: insets.top, paddingBottom: insets.bottom },
+        ]}
+      >
         <View style={styles.header}>
           <IconCircleButton
             icon="chevron-back"
@@ -437,16 +451,18 @@ export function MemoryDetailScreen({
                       style={styles.hint}
                     />
                   ) : null}
-                  <TourTarget id={ONBOARDING_MEMORY_DETAIL_TARGET_ID}>
-                    <MemoryPostBubble
-                      memory={data}
-                      reveal={reveal !== undefined}
-                      onToggleLike={onTogglePostLike}
-                      onOpenReactors={onOpenReactors}
-                      onLongPress={onPostLongPress}
-                      onPressAuthor={openProfile}
-                    />
-                  </TourTarget>
+                  <StaggerIn index={0}>
+                    <TourTarget id={ONBOARDING_MEMORY_DETAIL_TARGET_ID}>
+                      <MemoryPostBubble
+                        memory={data}
+                        reveal={reveal !== undefined}
+                        onToggleLike={onTogglePostLike}
+                        onOpenReactors={onOpenReactors}
+                        onLongPress={onPostLongPress}
+                        onPressAuthor={openProfile}
+                      />
+                    </TourTarget>
+                  </StaggerIn>
                   {data.taggedUsers.length > 0 ? (
                     <View style={styles.tagged}>
                       <TaggedLine
@@ -512,7 +528,7 @@ export function MemoryDetailScreen({
             ) : null}
           </KeyboardAvoidingView>
         )}
-      </SafeAreaView>
+      </View>
       {reveal && data ? <RevealFlash /> : null}
       <ReactorsSheet ref={reactorsSheet} memoryId={id} />
       <MemoryOptionsSheet
