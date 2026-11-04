@@ -21,8 +21,18 @@ export function deviceTimezone(): string | undefined {
   }
 }
 
+/**
+ * Real devices, plus the iOS Simulator in debug builds: on Apple silicon it
+ * gets a sandbox APNs token, so pushes can be tried without a phone.
+ */
+const canReceivePush = Device.isDevice || (__DEV__ && Platform.OS === "ios");
+
 /** The token the backend has for this device, this session. */
 let lastRegisteredToken: string | null = null;
+/** The sync in progress, if any. */
+let inFlightSync: Promise<void> | null = null;
+/** The last device token the OS reported. */
+let lastDeviceToken: string | null = null;
 
 /**
  * Foreground presentation: suppress the OS banner. The app shows its own
@@ -56,7 +66,7 @@ function projectId(): string | undefined {
 
 async function getExpoPushToken(): Promise<string | null> {
   const id = projectId();
-  if (!Device.isDevice || !id) return null;
+  if (!canReceivePush || !id) return null;
   const { data } = await Notifications.getExpoPushTokenAsync({ projectId: id });
   return data ?? null;
 }
@@ -66,9 +76,34 @@ async function getExpoPushToken(): Promise<string | null> {
  * already granted. Never prompts. Safe to call on every launch and whenever
  * the token changes: it de-dupes and never throws.
  */
-export async function syncPushToken(): Promise<void> {
+export function syncPushToken(): Promise<void> {
+  // Fetching the token fires the token listener, which calls back in here:
+  // join the running sync rather than starting a loop.
+  inFlightSync ??= doSyncPushToken().finally(() => {
+    inFlightSync = null;
+  });
+  return inFlightSync;
+}
+
+/**
+ * For the OS token listener. Fetching the Expo token re-reports the same
+ * device token, so only a new one is worth a sync.
+ */
+export function onDevicePushToken(token: Notifications.DevicePushToken): void {
+  const value = String(token.data);
+  if (value === lastDeviceToken) return;
+  lastDeviceToken = value;
+  void syncPushToken();
+}
+
+/** Back in the foreground: retry a launch sync that didn't get through. */
+export function retryPushTokenSync(): void {
+  if (!lastRegisteredToken) void syncPushToken();
+}
+
+async function doSyncPushToken(): Promise<void> {
   try {
-    if (!Device.isDevice) return;
+    if (!canReceivePush) return;
     const { granted } = await Notifications.getPermissionsAsync();
     if (!granted) return;
     await ensureAndroidChannel();
@@ -95,7 +130,7 @@ export async function syncPushToken(): Promise<void> {
  */
 export async function requestPushPermission(): Promise<void> {
   try {
-    if (!Device.isDevice) return;
+    if (!canReceivePush) return;
     const current = await Notifications.getPermissionsAsync();
     if (current.granted) {
       await syncPushToken();

@@ -15,7 +15,11 @@ import { openInvite } from "@/stores/friend-sheets.store";
 import { useOnboardingTour } from "@/features/onboarding/onboarding-tour";
 import { rescheduleOnThisDay } from "@/features/notifications/on-this-day-scheduler";
 import { useRealtimeConnection } from "@/features/realtime/use-realtime-connection";
-import { syncPushToken } from "@/services/notifications";
+import {
+  onDevicePushToken,
+  retryPushTokenSync,
+  syncPushToken,
+} from "@/services/notifications";
 import { useInAppNotifications } from "@/hooks/use-in-app-notifications";
 import { useNotificationRouter } from "@/hooks/use-notification-router";
 import { usePinQueueRunner } from "@/hooks/use-pin-queue-runner";
@@ -45,12 +49,12 @@ export default function AppLayout() {
       else if (link?.kind === "profile") openProfile(link.username);
     });
 
-    const tokenSub = Notifications.addPushTokenListener(() => {
-      void syncPushToken();
-    });
+    const tokenSub = Notifications.addPushTokenListener(onDevicePushToken);
     // A new day, or back from Settings with permission on.
     const appStateSub = AppState.addEventListener("change", (next) => {
-      if (next === "active") void rescheduleOnThisDay();
+      if (next !== "active") return;
+      void rescheduleOnThisDay();
+      retryPushTokenSync();
     });
     return () => {
       tokenSub.remove();

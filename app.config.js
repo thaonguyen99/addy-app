@@ -92,6 +92,8 @@ module.exports = ({ config }) => ({
       "com.google.android.gms.permission.AD_ID",
     ],
     package: "com.thaonguyen.addy",
+    // Firebase (FCM): Android push tokens come from here.
+    googleServicesFile: "./google-services.json",
   },
   web: {
     output: "static",
