@@ -26,7 +26,10 @@ type FeedCardProps = {
   item: FeedItem;
   /** Card width; the photo is a full-width square. */
   width: number;
+  /** Double tap on the photo: only ever likes. */
   onLike: (item: FeedItem) => void;
+  /** Heart tap: likes, or unlikes. */
+  onToggleLike: (item: FeedItem) => void;
   /** Opens the chat, zooming out of `rect` (the card on screen). */
   onOpen: (id: string, rect: CardRect | null) => void;
   onOpenMap: (item: FeedItem) => void;
@@ -41,6 +44,7 @@ export const FeedCard = memo(function FeedCard({
   item,
   width,
   onLike,
+  onToggleLike,
   onOpen,
   onOpenMap,
 }: FeedCardProps) {
@@ -129,10 +133,12 @@ export const FeedCard = memo(function FeedCard({
             </Text>
             {/* Icon and number side by side, centered: nested in one Text
                 they'd sit on different font baselines. */}
-            <View
+            <Pressable
+              onPress={() => onToggleLike(item)}
+              hitSlop={10}
               style={styles.countRow}
-              accessible
-              accessibilityLabel={`${item.likeCount} likes`}
+              accessibilityRole="button"
+              accessibilityLabel={`${item.likeCount} likes. ${item.likedByMe ? "Unlike" : "Like"}`}
             >
               <Ionicons
                 name="heart"
@@ -140,7 +146,7 @@ export const FeedCard = memo(function FeedCard({
                 color={item.likedByMe ? AddyColors.pink : AddyColors.inkMuted}
               />
               <Text style={styles.count}>{item.likeCount}</Text>
-            </View>
+            </Pressable>
             <View
               style={styles.countRow}
               accessible

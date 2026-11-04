@@ -24,6 +24,7 @@ import {
   type FeedItem,
   useFeed,
   useLikeFeedItemMutation,
+  useToggleFeedLikeMutation,
 } from "@/services/feed";
 import { useMapFocusStore } from "@/stores/map-focus.store";
 import { formatDayLabel } from "@/utils/format-relative-time";
@@ -49,7 +50,7 @@ function toRows(items: FeedItem[]): LaneRow[] {
   const rows: LaneRow[] = [];
   let lastLabel: string | null = null;
   for (const item of items) {
-    const label = formatDayLabel(item.activityAt, now);
+    const label = formatDayLabel(item.createdAt, now);
     if (label !== lastLabel) {
       rows.push({ kind: "day", key: `day-${item.id}`, label });
       lastLabel = label;
@@ -71,6 +72,7 @@ export function LaneScreen() {
     fetchNextPage,
   } = useFeed();
   const { mutate: likeMemory } = useLikeFeedItemMutation();
+  const { mutate: toggleLike } = useToggleFeedLikeMutation();
   const setPendingFocus = useMapFocusStore((s) => s.setPendingFocus);
   const tabBarInset = useFloatingTabBarInset();
   const { width } = useWindowDimensions();
@@ -83,6 +85,10 @@ export function LaneScreen() {
       if (!item.likedByMe) likeMemory(item.id);
     },
     [likeMemory],
+  );
+  const onToggleLike = useCallback(
+    (item: FeedItem) => toggleLike(item.id),
+    [toggleLike],
   );
 
   // One chat per burst of taps: each would push its own copy.
@@ -132,11 +138,12 @@ export function LaneScreen() {
           item={row.item}
           width={cardWidth}
           onLike={onLike}
+          onToggleLike={onToggleLike}
           onOpen={onOpen}
           onOpenMap={onOpenMap}
         />
       ),
-    [cardWidth, onLike, onOpen, onOpenMap],
+    [cardWidth, onLike, onToggleLike, onOpen, onOpenMap],
   );
 
   let body;

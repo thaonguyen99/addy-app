@@ -1,4 +1,5 @@
-import { apiGet, apiPut } from "@/services/api/client";
+import { apiGet, apiPost, apiPut } from "@/services/api/client";
+import type { ToggleReactionResult } from "@/services/memories/memories.type";
 import type { FeedPage } from "./feed.type";
 
 const FEED_PAGE_SIZE = 20;
@@ -12,4 +13,9 @@ async function likeMemory(id: string) {
   return apiPut<unknown>(`/memories/${id}/like`);
 }
 
-export const feedApi = { getFeed, likeMemory };
+/** Tapping the heart: likes, or unlikes when already liked. */
+async function toggleLike(id: string) {
+  return apiPost<ToggleReactionResult>(`/memories/${id}/reactions/toggle`);
+}
+
+export const feedApi = { getFeed, likeMemory, toggleLike };

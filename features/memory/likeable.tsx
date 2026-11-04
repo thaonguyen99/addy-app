@@ -60,9 +60,11 @@ export const Likeable = memo(function Likeable({
       }
       onToggleLike();
     };
+    // A finger's double-tap often leaves 150–300ms between taps; a tighter
+    // window drops real double-taps.
     const doubleTap = Gesture.Tap()
       .numberOfTaps(2)
-      .maxDelay(150)
+      .maxDelay(300)
       .onEnd((_e, success) => {
         if (success) runOnJS(toggle)();
       });
@@ -120,8 +122,12 @@ type HeartChipProps = {
   /** Bottom corner to sit on. Right everywhere today, so it never covers the
    *  left-aligned place tag or text start. */
   side: "left" | "right";
+  /** Like / unlike. The whole chip, unless `onPressCount` takes the number. */
   onPress: () => void;
   accessibilityLabel: string;
+  /** Tapping the number instead, e.g. to see who reacted. */
+  onPressCount?: () => void;
+  countAccessibilityLabel?: string;
 };
 
 /** Pink heart + count on a bubble's bottom corner. Hidden at 0. */
@@ -131,23 +137,53 @@ export const HeartChip = memo(function HeartChip({
   side,
   onPress,
   accessibilityLabel,
+  onPressCount,
+  countAccessibilityLabel,
 }: HeartChipProps) {
   if (count <= 0) return null;
+  const chipStyle = [
+    styles.chip,
+    AddyShadow.soft,
+    side === "left" ? styles.chipLeft : styles.chipRight,
+  ];
+  const heart = (
+    <Text style={[styles.chipHeart, !liked && styles.chipHeartOff]}>♥</Text>
+  );
+  const number = <Text style={styles.chipCount}>{count}</Text>;
+
+  if (!onPressCount) {
+    return (
+      <Pressable
+        onPress={onPress}
+        hitSlop={12}
+        accessibilityRole="button"
+        accessibilityLabel={accessibilityLabel}
+        style={chipStyle}
+      >
+        {heart}
+        {number}
+      </Pressable>
+    );
+  }
   return (
-    <Pressable
-      onPress={onPress}
-      hitSlop={12}
-      accessibilityRole="button"
-      accessibilityLabel={accessibilityLabel}
-      style={[
-        styles.chip,
-        AddyShadow.soft,
-        side === "left" ? styles.chipLeft : styles.chipRight,
-      ]}
-    >
-      <Text style={[styles.chipHeart, !liked && styles.chipHeartOff]}>♥</Text>
-      <Text style={styles.chipCount}>{count}</Text>
-    </Pressable>
+    <View style={chipStyle}>
+      <Pressable
+        onPress={onPress}
+        hitSlop={{ top: 12, bottom: 12, left: 12, right: 4 }}
+        accessibilityRole="button"
+        accessibilityLabel={accessibilityLabel}
+      >
+        {heart}
+      </Pressable>
+      <Pressable
+        onPress={onPressCount}
+        hitSlop={{ top: 12, bottom: 12, left: 4, right: 12 }}
+        accessibilityRole="button"
+        accessibilityLabel={countAccessibilityLabel}
+      >
+        {number}
+      </Pressable>
+    </View>
   );
 });
 

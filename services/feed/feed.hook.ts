@@ -46,6 +46,42 @@ export function useFeed() {
   };
 }
 
+/** Heart tap: like or unlike, optimistic, settled to the server's count. */
+export function useToggleFeedLikeMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => feedApi.toggleLike(id),
+    onMutate: async (id) => {
+      await queryClient.cancelQueries({ queryKey: queryKeys.feed });
+      const previous = queryClient.getQueryData<FeedPages>(queryKeys.feed);
+      patchFeedItem(queryClient, id, (item) => ({
+        ...item,
+        likedByMe: !item.likedByMe,
+        likeCount: item.likeCount + (item.likedByMe ? -1 : 1),
+      }));
+      return { previous };
+    },
+    onError: (_error, _id, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(queryKeys.feed, context.previous);
+      }
+    },
+    onSuccess: (result, id) => {
+      patchFeedItem(queryClient, id, (item) => ({
+        ...item,
+        likedByMe: result.reacted,
+        likeCount: result.count,
+      }));
+    },
+    onSettled: (_data, _error, id) => {
+      void queryClient.invalidateQueries({ queryKey: queryKeys.memory(id) });
+      void queryClient.invalidateQueries({
+        queryKey: queryKeys.memoryReactions(id),
+      });
+    },
+  });
+}
+
 /** Double-tap like: optimistic in the feed, rolled back if the request fails. */
 export function useLikeFeedItemMutation() {
   const queryClient = useQueryClient();

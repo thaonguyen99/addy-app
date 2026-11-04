@@ -233,8 +233,10 @@ export const MemoryPostBubble = memo(function MemoryPostBubble({
               count={memory.reactionCount}
               liked={memory.hasReacted}
               side="right"
-              onPress={onOpenReactors}
-              accessibilityLabel={`${memory.reactionCount} reactions. See who reacted`}
+              onPress={onToggleLike}
+              accessibilityLabel={memory.hasReacted ? "Unlike" : "Like"}
+              onPressCount={onOpenReactors}
+              countAccessibilityLabel={`${memory.reactionCount} reactions. See who reacted`}
             />
           </Likeable>
           <Animated.View

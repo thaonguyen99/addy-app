@@ -14,7 +14,7 @@ export type FeedItem = {
   visibility: "private" | "friends";
   place: { name: string; lat: number; lng: number };
   createdAt: string;
-  /** Newest of created / commented / liked — orders the feed and its day dividers. */
+  /** Newest of created / commented / tagged. The feed is ordered by createdAt. */
   activityAt: string;
   isMine: boolean;
   owner: { id: string; username: string; avatarUrl: string | null };
