@@ -24,6 +24,10 @@ const AVATAR_SIZE = 30;
 const HIGHLIGHT_COLOR = "rgba(255, 92, 174, 0.14)";
 const HIGHLIGHT_HOLD_MS = 900;
 const HIGHLIGHT_FADE_MS = 600;
+/** Messages from one author this close together read as one burst. */
+const GROUP_GAP_MS = 5 * 60 * 1000;
+const ROW_GAP = 10;
+const GROUPED_ROW_GAP = 3;
 
 /** Mine = right, lime. Other = left, white, with avatar — like any chat. */
 export type MessageBubbleVariant = "mine" | "other";
@@ -51,7 +55,34 @@ type MessageBubbleProps = {
   highlighted?: boolean;
   /** Arrived live: a soft slide-up on mount. */
   animateIn?: boolean;
+  /** Same burst as the row above: no name or time, tucked up close. */
+  joinsPrevious?: boolean;
+  /** Same burst as the row below: the avatar waits for the last one. */
+  joinsNext?: boolean;
 };
+
+function authorKey(item: ThreadItem, viewerId: string | undefined) {
+  if (item.kind === "pending") return viewerId ?? null;
+  return item.message.author?.id ?? null;
+}
+
+function sentAt(item: ThreadItem) {
+  return Date.parse(
+    item.kind === "pending" ? item.createdAt : item.message.createdAt,
+  );
+}
+
+/** Whether two adjacent rows are one author's burst, like a chat app groups them. */
+export function isSameBurst(
+  earlier: ThreadItem | undefined,
+  later: ThreadItem | undefined,
+  viewerId: string | undefined,
+) {
+  if (!earlier || !later) return false;
+  const author = authorKey(earlier, viewerId);
+  if (!author || author !== authorKey(later, viewerId)) return false;
+  return sentAt(later) - sentAt(earlier) <= GROUP_GAP_MS;
+}
 
 function variantFor(
   item: ThreadItem,
@@ -70,6 +101,8 @@ export const MessageBubble = memo(function MessageBubble({
   onOpenProfile,
   highlighted = false,
   animateIn = false,
+  joinsPrevious = false,
+  joinsNext = false,
 }: MessageBubbleProps) {
   const variant = variantFor(item, viewerId);
   const highlight = useSharedValue(0);
@@ -137,14 +170,20 @@ export const MessageBubble = memo(function MessageBubble({
       style={[
         styles.row,
         mine ? styles.rowRight : styles.rowLeft,
-        likeCount > 0 && styles.rowWithChip,
+        {
+          marginBottom:
+            (joinsNext ? GROUPED_ROW_GAP : ROW_GAP) +
+            (likeCount > 0 ? HEART_CHIP_OVERHANG : 0),
+        },
       ]}
     >
       <Animated.View
         pointerEvents="none"
         style={[styles.highlight, highlightStyle]}
       />
-      {mine ? null : (
+      {mine ? null : joinsNext ? (
+        <View style={styles.avatarSpacer} />
+      ) : (
         <Pressable
           onPress={openAuthor}
           disabled={!openAuthor}
@@ -158,21 +197,30 @@ export const MessageBubble = memo(function MessageBubble({
       <View
         style={[styles.column, mine ? styles.columnRight : styles.columnLeft]}
       >
-        <View style={styles.metaRow}>
-          {mine ? null : (
-            <Text style={styles.name} numberOfLines={1} onPress={openAuthor}>
-              {author?.username ?? "someone"}
+        {joinsPrevious ? (
+          // The burst's first row already says who and when.
+          sending || message?.editedAt ? (
+            <View style={styles.metaRow}>
+              <Text style={styles.meta}>{sending ? "sending…" : "edited"}</Text>
+            </View>
+          ) : null
+        ) : (
+          <View style={styles.metaRow}>
+            {mine ? null : (
+              <Text style={styles.name} numberOfLines={1} onPress={openAuthor}>
+                {author?.username ?? "someone"}
+              </Text>
+            )}
+            {!mine && message?.isOwnerOfMemory ? (
+              <Text style={styles.ownerTag}>✦ owner</Text>
+            ) : null}
+            <Text style={styles.meta}>
+              {sending
+                ? "sending…"
+                : `${createdAt ? formatRelativeTime(createdAt) : ""}${message?.editedAt ? " · edited" : ""}`}
             </Text>
-          )}
-          {!mine && message?.isOwnerOfMemory ? (
-            <Text style={styles.ownerTag}>✦ owner</Text>
-          ) : null}
-          <Text style={styles.meta}>
-            {sending
-              ? "sending…"
-              : `${createdAt ? formatRelativeTime(createdAt) : ""}${message?.editedAt ? " · edited" : ""}`}
-          </Text>
-        </View>
+          </View>
+        )}
 
         <Likeable
           liked={message?.likedByMe ?? false}
@@ -187,6 +235,8 @@ export const MessageBubble = memo(function MessageBubble({
           style={[
             styles.bubble,
             mine ? styles.bubbleMine : styles.bubbleOther,
+            joinsPrevious &&
+              (mine ? styles.bubbleMineJoined : styles.bubbleOtherJoined),
             sending && styles.bubbleSending,
             failed && styles.bubbleFailed,
           ]}
@@ -219,9 +269,7 @@ const styles = StyleSheet.create({
     alignItems: "flex-end",
     gap: 8,
     paddingHorizontal: 16,
-    marginBottom: 10,
   },
-  rowWithChip: { marginBottom: 10 + HEART_CHIP_OVERHANG },
   highlight: {
     ...StyleSheet.absoluteFillObject,
     top: -5,
@@ -231,6 +279,7 @@ const styles = StyleSheet.create({
   rowLeft: { justifyContent: "flex-start" },
   rowRight: { justifyContent: "flex-end" },
   avatarSlot: { paddingBottom: 2 },
+  avatarSpacer: { width: AVATAR_SIZE },
   column: { maxWidth: "78%", gap: 3 },
   columnLeft: { alignItems: "flex-start" },
   columnRight: { alignItems: "flex-end" },
@@ -273,6 +322,9 @@ const styles = StyleSheet.create({
     borderColor: AddyColors.line,
     borderBottomLeftRadius: 4,
   },
+  // Squared toward the bubble above, so a burst reads as one stack.
+  bubbleMineJoined: { borderTopRightRadius: 4 },
+  bubbleOtherJoined: { borderTopLeftRadius: 4 },
   bubbleSending: { opacity: 0.6 },
   bubbleFailed: { borderColor: AddyColors.danger, borderStyle: "dashed" },
   text: {

@@ -1,3 +1,4 @@
+import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 import { useLocalSearchParams } from "expo-router";
 
 import { MemoryZoomScreen } from "@/features/lane/memory-zoom-screen";
@@ -17,5 +18,10 @@ export default function MemoryZoomRoute() {
   const from: CardRect | null = rect.every(Number.isFinite)
     ? { x: rect[0], y: rect[1], width: rect[2], height: rect[3] }
     : null;
-  return <MemoryZoomScreen id={id ?? ""} from={from} />;
+  // A native modal sits above the root sheet host — give its sheets their own.
+  return (
+    <BottomSheetModalProvider>
+      <MemoryZoomScreen id={id ?? ""} from={from} />
+    </BottomSheetModalProvider>
+  );
 }

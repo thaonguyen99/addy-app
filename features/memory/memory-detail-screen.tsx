@@ -28,6 +28,7 @@ import { MemoryPostBubble } from "@/features/memory/memory-post-bubble";
 import type { MessageActionsSheetRef } from "@/features/memory/message-actions-sheet";
 import { MessageActionsSheet } from "@/features/memory/message-actions-sheet";
 import {
+  isSameBurst,
   MessageBubble,
   type ThreadItem,
 } from "@/features/memory/message-bubble";
@@ -68,6 +69,7 @@ import {
 } from "@/services/messages";
 import { queryKeys } from "@/services/query/keys";
 import { useAuthStore } from "@/stores/auth.store";
+import { useMapFocusStore } from "@/stores/map-focus.store";
 import { showToast } from "@/stores/toast.store";
 import {
   formatDayMonthYear,
@@ -99,6 +101,7 @@ export function MemoryDetailScreen({
   messageId,
 }: MemoryDetailScreenProps) {
   const { data, isLoading, isError } = useMemoryQuery(id);
+  const setPendingMapFocus = useMapFocusStore((s) => s.setPendingFocus);
   const updateMemory = useUpdateMemoryMutation(id);
   const deleteMemory = useDeleteMemoryMutation(id);
   const untagSelf = useUntagSelfMutation(id);
@@ -282,10 +285,13 @@ export function MemoryDetailScreen({
             item.kind === "message" && item.message.id === highlightId
           }
           animateIn={item.kind === "message" && liveIds.has(item.message.id)}
+          joinsPrevious={isSameBurst(thread.items[index - 1], item, viewerId)}
+          joinsNext={isSameBurst(item, thread.items[index + 1], viewerId)}
         />
       </StaggerIn>
     ),
     [
+      thread.items,
       viewerId,
       onToggleMessageLike,
       thread.retry,
@@ -294,6 +300,18 @@ export function MemoryDetailScreen({
       liveIds,
     ],
   );
+
+  // Back out of the chat to the Map tab, which flies to the memory's place.
+  const onViewOnMap = () => {
+    if (!data) return;
+    setPendingMapFocus({
+      latitude: data.place.latitude,
+      longitude: data.place.longitude,
+      withFriends: !data.isOwner,
+    });
+    // Pop back down to the tabs: navigate() would push a second copy on top.
+    router.dismissTo("/(app)/(tabs)/explore");
+  };
 
   const onChangeVisibility = (visibility: MemoryVisibility) => {
     updateMemory.mutate({ visibility });
@@ -460,6 +478,7 @@ export function MemoryDetailScreen({
                         onOpenReactors={onOpenReactors}
                         onLongPress={onPostLongPress}
                         onPressAuthor={openProfile}
+                        onPressPlace={onViewOnMap}
                       />
                     </TourTarget>
                   </StaggerIn>
@@ -541,6 +560,7 @@ export function MemoryDetailScreen({
         }
         onDelete={onDeleteMemory}
         onReport={() => reportSheet.current?.present({ type: "MEMORY", id })}
+        onViewOnMap={onViewOnMap}
         onUntagSelf={data?.isTagged && !data.isOwner ? onUntagSelf : undefined}
       />
       <MessageActionsSheet

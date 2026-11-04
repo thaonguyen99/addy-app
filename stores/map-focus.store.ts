@@ -3,6 +3,8 @@ import { create } from "zustand";
 type MapFocusCoords = {
   latitude: number;
   longitude: number;
+  /** A friend's memory: turn the friends layer on so its pin shows. */
+  withFriends?: boolean;
 };
 
 type MapFocusState = {

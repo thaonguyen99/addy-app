@@ -113,7 +113,11 @@ export function LaneScreen() {
 
   const onOpenMap = useCallback(
     (item: FeedItem) => {
-      setPendingFocus({ latitude: item.place.lat, longitude: item.place.lng });
+      setPendingFocus({
+        latitude: item.place.lat,
+        longitude: item.place.lng,
+        withFriends: !item.isMine,
+      });
       router.navigate("/(app)/(tabs)/explore");
     },
     [setPendingFocus],

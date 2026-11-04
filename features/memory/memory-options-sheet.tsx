@@ -33,6 +33,7 @@ type MemoryOptionsSheetProps = {
   onEdit: () => void;
   onDelete: () => void;
   onReport: () => void;
+  onViewOnMap: () => void;
   /** Shown to a tagged viewer: removes their tag (and access, if private). */
   onUntagSelf?: () => void;
 };
@@ -48,6 +49,7 @@ export const MemoryOptionsSheet = forwardRef<
     onEdit,
     onDelete,
     onReport,
+    onViewOnMap,
     onUntagSelf,
   },
   ref,
@@ -129,6 +131,23 @@ export const MemoryOptionsSheet = forwardRef<
     onReport();
   }, [onReport]);
 
+  const viewOnMap = useCallback(() => {
+    sheetRef.current?.dismiss();
+    onViewOnMap();
+  }, [onViewOnMap]);
+
+  const viewOnMapRow = (
+    <Pressable
+      onPress={viewOnMap}
+      style={styles.row}
+      accessibilityRole="button"
+      accessibilityLabel="View on map"
+    >
+      <Ionicons name="map-outline" size={20} color={BrandColors.ink} />
+      <Text style={styles.rowLabel}>View on map</Text>
+    </Pressable>
+  );
+
   const renderBackdrop = useCallback(
     (props: BottomSheetBackdropProps) => (
       <BottomSheetBackdrop
@@ -144,7 +163,7 @@ export const MemoryOptionsSheet = forwardRef<
   return (
     <BottomSheetModal
       ref={sheetRef}
-      snapPoints={[isOwner ? "38%" : onUntagSelf ? "30%" : "22%"]}
+      snapPoints={[isOwner ? "45%" : onUntagSelf ? "37%" : "29%"]}
       enableDynamicSizing={false}
       enablePanDownToClose
       topInset={insets.top}
@@ -174,6 +193,7 @@ export const MemoryOptionsSheet = forwardRef<
             </View>
 
             <View style={styles.divider} />
+            {viewOnMapRow}
             <Pressable
               onPress={editMemory}
               style={styles.row}
@@ -206,6 +226,7 @@ export const MemoryOptionsSheet = forwardRef<
           </>
         ) : (
           <>
+            {viewOnMapRow}
             {onUntagSelf ? (
               <Pressable
                 onPress={confirmUntag}

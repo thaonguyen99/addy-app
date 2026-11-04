@@ -59,6 +59,8 @@ type MemoryPostBubbleProps = {
   onLongPress: () => void;
   /** Tap the owner's avatar or name to open their profile. */
   onPressAuthor?: (username: string) => void;
+  /** Tap the place pill to see the memory on the map. */
+  onPressPlace?: () => void;
   /** Play the "on this day" arrival: photo reveals top-to-bottom, then the
    *  mood sticker lands. Skipped when the OS asks for reduced motion. */
   reveal?: boolean;
@@ -76,6 +78,7 @@ export const MemoryPostBubble = memo(function MemoryPostBubble({
   onOpenReactors,
   onLongPress,
   onPressAuthor,
+  onPressPlace,
   reveal = false,
 }: MemoryPostBubbleProps) {
   const { width } = useWindowDimensions();
@@ -219,7 +222,11 @@ export const MemoryPostBubble = memo(function MemoryPostBubble({
               {memory.feeling ? (
                 <Text style={styles.caption}>{memory.feeling}</Text>
               ) : null}
-              <PlaceTag name={memory.place.name} />
+              <PlaceTag
+                name={memory.place.name}
+                onPress={onPressPlace}
+                accessibilityLabel={`Show ${memory.place.name} on the map`}
+              />
             </View>
 
             <HeartChip

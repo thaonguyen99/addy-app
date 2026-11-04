@@ -287,6 +287,9 @@ export function MemoriesMapScreen() {
   );
 
   const [showFriends, setShowFriends] = useState(false);
+  useEffect(() => {
+    if (pendingFocus?.withFriends) setShowFriends(true);
+  }, [pendingFocus]);
 
   // "See {name}'s map": ?friend=<userId> shows only that friend's pins;
   // ?memory=<id> (their latest) is where the camera flies to.
