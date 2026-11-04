@@ -20,7 +20,8 @@ export function NotificationsEmpty() {
       <GlossyButton
         label="💌 Invite a friend"
         style={styles.cta}
-        onPress={() => router.navigate("/(app)/(tabs)/friends?tab=invite")}
+        // Pop back to the tabs: navigate() would push a second copy on top.
+        onPress={() => router.dismissTo("/(app)/(tabs)/friends?tab=invite")}
       />
     </View>
   );

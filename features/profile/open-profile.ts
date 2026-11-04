@@ -14,7 +14,9 @@ export function isOwnUsername(username: string): boolean {
 export function openProfile(username: string): void {
   if (!username) return;
   if (isOwnUsername(username)) {
-    router.navigate("/(app)/(tabs)");
+    // Pop back down to the tabs: from a modal (the zoomed chat), navigate()
+    // would push a second copy of them on top.
+    router.dismissTo("/(app)/(tabs)");
     return;
   }
   router.push({ pathname: "/user/[username]", params: { username } });
