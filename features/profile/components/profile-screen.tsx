@@ -57,7 +57,7 @@ import {
 import { useFriendSheetsStore } from "@/stores/friend-sheets.store";
 import { showToast } from "@/stores/toast.store";
 
-const goBack = () => safeBack("/(app)/(tabs)/friends");
+const goBack = () => safeBack("/(app)/friends");
 
 /** Someone else's profile, opened by tapping their name or avatar anywhere. */
 export function ProfileScreen({ username }: { username: string }) {

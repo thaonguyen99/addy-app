@@ -1,5 +1,8 @@
+import type { BottomTabNavigationProp } from "@react-navigation/bottom-tabs";
+import { type ParamListBase, useNavigation } from "@react-navigation/native";
+import { TourTarget } from "@wrack/react-native-tour-guide";
 import { router } from "expo-router";
-import { useCallback, useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
@@ -17,9 +20,10 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { useFloatingTabBarInset } from "@/components/navigation/floating-tab-bar";
 import { GlossyButton } from "@/components/ui/glossy-button";
+import { IconCircleButton } from "@/components/ui/icon-circle-button";
 import { SkyBackground } from "@/components/ui/sky-background";
 import { AddyColors, AddyFonts } from "@/constants/theme";
-import { NotificationBell } from "@/features/notifications/notification-bell";
+import { ONBOARDING_ADD_FRIEND_TARGET_ID } from "@/features/onboarding/onboarding-tour";
 import {
   type FeedItem,
   useFeed,
@@ -69,15 +73,66 @@ export function LaneScreen() {
     isRefetching,
     isFetchingNextPage,
     refetch,
+    reloadFirstPage,
     fetchNextPage,
   } = useFeed();
   const { mutate: likeMemory } = useLikeFeedItemMutation();
   const { mutate: toggleLike } = useToggleFeedLikeMutation();
   const setPendingFocus = useMapFocusStore((s) => s.setPendingFocus);
   const tabBarInset = useFloatingTabBarInset();
-  const { width } = useWindowDimensions();
+  const { width, height } = useWindowDimensions();
   const cardWidth = width - SIDE_PADDING * 2;
   const rows = useMemo(() => toRows(items), [items]);
+
+  // The spinner is for pull-to-refresh only: driving it from code moves the
+  // list on iOS, which cancelled the tab re-tap's scroll to the top.
+  const [pulling, setPulling] = useState(false);
+  useEffect(() => {
+    if (!isRefetching) setPulling(false);
+  }, [isRefetching]);
+  const onPullRefresh = useCallback(() => {
+    setPulling(true);
+    refetch();
+  }, [refetch]);
+
+  // Tapping the Lane tab while already on it: back to the top, then reload.
+  const listRef = useRef<FlatList<LaneRow>>(null);
+  const scrollY = useRef(0);
+  const reloadRef = useRef(reloadFirstPage);
+  reloadRef.current = reloadFirstPage;
+  const navigation = useNavigation<BottomTabNavigationProp<ParamListBase>>();
+  useEffect(() => {
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    let frame: number | undefined;
+    const unsubscribe = navigation.addListener("tabPress", () => {
+      if (!navigation.isFocused()) return;
+      clearTimeout(timer);
+      if (frame !== undefined) cancelAnimationFrame(frame);
+      const list = listRef.current;
+      if (!list) return;
+      // Animating past many photo cards stutters, so from far down jump to
+      // just over a screen away first; the glide up from there still reads
+      // as "scrolled to the top".
+      const glideFrom = height * 1.5;
+      const glide = () => list.scrollToOffset({ offset: 0, animated: true });
+      if (scrollY.current > glideFrom) {
+        list.scrollToOffset({ offset: glideFrom, animated: false });
+        // Let the rows near the new offset render before gliding.
+        frame = requestAnimationFrame(() => {
+          frame = requestAnimationFrame(glide);
+        });
+      } else {
+        glide();
+      }
+      // Reload once the list is at the top, so new rows don't fight the scroll.
+      timer = setTimeout(() => reloadRef.current(), 500);
+    });
+    return () => {
+      unsubscribe();
+      clearTimeout(timer);
+      if (frame !== undefined) cancelAnimationFrame(frame);
+    };
+  }, [navigation, height]);
 
   const onLike = useCallback(
     (item: FeedItem) => {
@@ -166,6 +221,7 @@ export function LaneScreen() {
   } else {
     body = (
       <FlatList
+        ref={listRef}
         data={rows}
         keyExtractor={(row) => row.key}
         renderItem={renderItem}
@@ -176,12 +232,16 @@ export function LaneScreen() {
         ]}
         ItemSeparatorComponent={CardGap}
         showsVerticalScrollIndicator={false}
+        onScroll={(e) => {
+          scrollY.current = e.nativeEvent.contentOffset.y;
+        }}
+        scrollEventThrottle={64}
         onEndReachedThreshold={0.5}
         onEndReached={fetchNextPage}
         refreshControl={
           <RefreshControl
-            refreshing={isRefetching}
-            onRefresh={refetch}
+            refreshing={pulling && isRefetching}
+            onRefresh={onPullRefresh}
             tintColor={AddyColors.inkMuted}
           />
         }
@@ -205,7 +265,15 @@ export function LaneScreen() {
             <Text style={styles.headerTitle} accessibilityRole="header">
               Memory Lane
             </Text>
-            <NotificationBell showBadge={false} />
+            <TourTarget id={ONBOARDING_ADD_FRIEND_TARGET_ID}>
+              <IconCircleButton
+                size={34}
+                accessibilityLabel="Friends"
+                onPress={() => router.push("/(app)/friends")}
+              >
+                <Text style={styles.friendsIcon}>👥</Text>
+              </IconCircleButton>
+            </TourTarget>
           </View>
           {body}
         </SafeAreaView>
@@ -233,7 +301,7 @@ function LaneEmpty() {
         <GlossyButton
           label="💌 Invite friends"
           variant="ghost"
-          onPress={() => router.navigate("/(app)/(tabs)/friends?tab=invite")}
+          onPress={() => router.navigate("/(app)/friends?tab=invite")}
         />
       </View>
     </View>
@@ -256,6 +324,7 @@ const styles = StyleSheet.create({
     lineHeight: 36,
     color: AddyColors.ink,
   },
+  friendsIcon: { fontSize: 15 },
   content: { paddingHorizontal: SIDE_PADDING, paddingTop: 8 },
   skeletons: { gap: CARD_GAP },
   grow: { flexGrow: 1 },

@@ -122,7 +122,7 @@ export default function YouScreen() {
           <IconCircleButton
             accessibilityLabel="Invite friends"
             size={36}
-            onPress={() => router.navigate("/(app)/(tabs)/friends?tab=invite")}
+            onPress={() => router.navigate("/(app)/friends?tab=invite")}
           >
             <Text style={styles.headerEmoji}>💌</Text>
           </IconCircleButton>
@@ -158,7 +158,7 @@ export default function YouScreen() {
 
       <ProfileStatsCard
         stats={profile.data?.stats ?? null}
-        onPressFriends={() => router.navigate("/(app)/(tabs)/friends")}
+        onPressFriends={() => router.navigate("/(app)/friends")}
       />
 
       <View style={styles.actions}>

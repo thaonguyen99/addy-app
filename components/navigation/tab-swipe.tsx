@@ -66,13 +66,13 @@ const SWIPE_HREFS: Record<string, Href> = {
   lane: "/(app)/(tabs)/lane",
   explore: "/(app)/(tabs)/explore",
   capture: "/capture",
-  friends: "/(app)/(tabs)/friends",
+  notifications: "/(app)/(tabs)/notifications",
   index: "/(app)/(tabs)",
 };
 
 /**
  * Flick sideways to move through the tab bar in order: Lane · Map · camera ·
- * Friends · You. Leaving the camera pops it back to the tabs.
+ * Notifications · You. Leaving the camera pops it back to the tabs.
  */
 export function TabSwipe({
   routeName,

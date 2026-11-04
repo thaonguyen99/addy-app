@@ -1,5 +1,4 @@
 import type { BottomTabBarProps } from "@react-navigation/bottom-tabs";
-import { TourTarget } from "@wrack/react-native-tour-guide";
 import { Image } from "expo-image";
 import * as Haptics from "expo-haptics";
 import { LinearGradient } from "expo-linear-gradient";
@@ -24,8 +23,8 @@ import {
   AddyGradients,
   AddyShadow,
 } from "@/constants/theme";
+import { NotificationBell } from "@/features/notifications/notification-bell";
 import { useAuthStore } from "@/stores/auth.store";
-import { ONBOARDING_ADD_FRIEND_TARGET_ID } from "@/features/onboarding/onboarding-tour";
 
 export const TAB_BAR_HEIGHT = 52;
 const TAB_BAR_INSET = 12;
@@ -46,7 +45,7 @@ const LEFT_SLOTS: TabSlot[] = [
   { route: "explore", emoji: "🗺️", label: "Map" },
 ];
 const RIGHT_SLOTS: TabSlot[] = [
-  { route: "friends", emoji: "👥", label: "Friends" },
+  { route: "notifications", emoji: "🔔", label: "Notifications" },
   { route: "index", emoji: "", label: "You" },
 ];
 
@@ -64,7 +63,7 @@ export function tapHaptic() {
 }
 
 /**
- * Floating pill tab bar: Memory Lane · Map · [camera orb] · Friends · You.
+ * Floating pill tab bar: Memory Lane · Map · [camera orb] · Notifications · You.
  * The orb isn't a tab — it opens the full-screen capture route.
  */
 export function FloatingTabBar({ state, navigation }: BottomTabBarProps) {
@@ -88,7 +87,7 @@ export function FloatingTabBar({ state, navigation }: BottomTabBarProps) {
       }
     };
 
-    const button = (
+    return (
       <Pressable
         key={slot.route}
         onPress={onPress}
@@ -101,6 +100,10 @@ export function FloatingTabBar({ state, navigation }: BottomTabBarProps) {
           <TabIconMotion focused={focused}>
             <AvatarIcon focused={focused} />
           </TabIconMotion>
+        ) : slot.route === "notifications" ? (
+          <TabIconMotion focused={focused} highlight>
+            <NotificationBell />
+          </TabIconMotion>
         ) : (
           <TabIconMotion focused={focused} highlight>
             <Text style={styles.emoji}>{slot.emoji}</Text>
@@ -108,19 +111,6 @@ export function FloatingTabBar({ state, navigation }: BottomTabBarProps) {
         )}
       </Pressable>
     );
-
-    if (slot.route === "friends") {
-      return (
-        <TourTarget
-          key={slot.route}
-          id={ONBOARDING_ADD_FRIEND_TARGET_ID}
-          style={styles.slot}
-        >
-          {button}
-        </TourTarget>
-      );
-    }
-    return button;
   };
 
   return (

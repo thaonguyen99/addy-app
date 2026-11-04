@@ -102,11 +102,12 @@ export function useOnboardingTour() {
         // onTourEnd) and opens it, instead of being swallowed by the overlay.
         onSpotlightPress: () => {
           nextStep();
-          router.navigate("/(app)/(tabs)/friends");
+          router.navigate("/(app)/friends");
         },
         before: async () => {
           if (router.canGoBack()) router.back();
-          router.replace("/(app)/(tabs)");
+          // The Friends button sits in the Memory Lane header.
+          router.replace("/(app)/(tabs)/lane");
           await new Promise((resolve) => setTimeout(resolve, 250));
         },
       },

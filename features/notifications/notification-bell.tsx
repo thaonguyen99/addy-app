@@ -1,11 +1,7 @@
-import { router } from "expo-router";
 import { StyleSheet, Text, View } from "react-native";
 
-import { IconCircleButton } from "@/components/ui/icon-circle-button";
 import { AddyColors, AddyFonts } from "@/constants/theme";
 import { useNotificationCountsQuery } from "@/services/notifications";
-
-const SIZE = 34;
 
 /** "9+" above nine; nothing at zero. */
 export function badgeLabel(count: number): string | null {
@@ -13,22 +9,14 @@ export function badgeLabel(count: number): string | null {
   return count > 9 ? "9+" : String(count);
 }
 
-/** 🔔 with the pink count badge; opens Notifications. */
-export function NotificationBell({ showBadge = true }: { showBadge?: boolean }) {
+/** 🔔 for the Notifications tab, with the pink count badge. */
+export function NotificationBell() {
   const { data } = useNotificationCountsQuery();
-  const label = showBadge ? badgeLabel(data?.badge ?? 0) : null;
+  const label = badgeLabel(data?.badge ?? 0);
 
   return (
     <View>
-      <IconCircleButton
-        size={SIZE}
-        accessibilityLabel={
-          label ? `Notifications, ${label} new` : "Notifications"
-        }
-        onPress={() => router.push("/notifications")}
-      >
-        <Text style={styles.bell}>🔔</Text>
-      </IconCircleButton>
+      <Text style={styles.bell}>🔔</Text>
       {label ? (
         <View style={styles.badge} pointerEvents="none">
           <Text style={styles.badgeText}>{label}</Text>
@@ -39,11 +27,11 @@ export function NotificationBell({ showBadge = true }: { showBadge?: boolean }) 
 }
 
 const styles = StyleSheet.create({
-  bell: { fontSize: 15 },
+  bell: { fontSize: 20 },
   badge: {
     position: "absolute",
-    top: -4,
-    right: -5,
+    top: -6,
+    right: -10,
     minWidth: 19,
     height: 19,
     paddingHorizontal: 4,

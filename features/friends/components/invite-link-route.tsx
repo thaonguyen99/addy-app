@@ -21,7 +21,7 @@ export function InviteLinkRoute({ token }: { token: string | undefined }) {
     if (status !== "authenticated") return;
     if (token) openInvite(token);
     if (router.canGoBack()) router.back();
-    else router.replace("/(app)/(tabs)/friends");
+    else router.replace("/(app)/friends");
   }, [status, token]);
 
   if (status === "unauthenticated") return <Redirect href="/sign-in" />;

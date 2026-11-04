@@ -12,9 +12,12 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
 
-import { useFloatingTabBarInset } from "@/components/navigation/floating-tab-bar";
+import { IconCircleButton } from "@/components/ui/icon-circle-button";
 import { SkyBackground } from "@/components/ui/sky-background";
 import { TechChip } from "@/components/ui/tech-chip";
 import { userDisplayName } from "@/components/ui/user-row";
@@ -25,6 +28,7 @@ import {
   AddyRadius,
   AddyShadow,
 } from "@/constants/theme";
+import { safeBack } from "@/lib/safe-router";
 import { formatRelativeTime } from "@/utils/format-relative-time";
 import {
   FriendSearchBar,
@@ -61,9 +65,9 @@ const SIDE_PADDING = 16;
 const SEARCH_DEBOUNCE_MS = 400;
 
 /**
- * The Friends tab: search in place, incoming requests, invite, suggestions,
- * and your friends. `?tab=invite` scrolls to the invite; `?tab=incoming` to
- * the top, where requests sit.
+ * The Friends screen, opened from the Memory Lane header: search in place,
+ * incoming requests, invite, suggestions and your friends. `?tab=invite`
+ * scrolls to the invite; `?tab=incoming` to the top, where requests sit.
  */
 export function FriendsScreen() {
   const params = useLocalSearchParams<{ tab?: string }>();
@@ -75,7 +79,7 @@ export function FriendsScreen() {
       return () => setFriendsTabFocused(false);
     }, []),
   );
-  const tabBarInset = useFloatingTabBarInset();
+  const insets = useSafeAreaInsets();
   const listRef = useRef<FlatList<Friend>>(null);
   const searchRef = useRef<TextInput>(null);
 
@@ -224,6 +228,11 @@ export function FriendsScreen() {
     <SkyBackground>
       <SafeAreaView style={styles.safe} edges={["top"]}>
         <View style={styles.header}>
+          <IconCircleButton
+            icon="chevron-back"
+            accessibilityLabel="Back"
+            onPress={() => safeBack("/(app)/(tabs)/lane")}
+          />
           <Text style={styles.title}>Friends</Text>
           <Pressable
             onPress={openQr}
@@ -259,7 +268,7 @@ export function FriendsScreen() {
           ListHeaderComponentStyle={styles.listHeader}
           contentContainerStyle={[
             styles.list,
-            { paddingBottom: tabBarInset + 16 },
+            { paddingBottom: insets.bottom + 16 },
           ]}
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="on-drag"

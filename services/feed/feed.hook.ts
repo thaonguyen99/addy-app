@@ -11,6 +11,7 @@ import { type FeedPages, patchFeedItem } from "./feed.cache";
 
 /** Memory Lane: friends' and your memories, newest activity first. */
 export function useFeed() {
+  const queryClient = useQueryClient();
   const query = useInfiniteQuery({
     queryKey: queryKeys.feed,
     queryFn: ({ pageParam }) => feedApi.getFeed(pageParam),
@@ -36,6 +37,15 @@ export function useFeed() {
     isRefetching: query.isRefetching && !query.isFetchingNextPage,
     isFetchingNextPage: query.isFetchingNextPage,
     refetch: () => {
+      void query.refetch();
+    },
+    /** Back to the newest page only: one request, not one per loaded page. */
+    reloadFirstPage: () => {
+      queryClient.setQueryData<FeedPages>(queryKeys.feed, (data) =>
+        data
+          ? { pages: data.pages.slice(0, 1), pageParams: data.pageParams.slice(0, 1) }
+          : data,
+      );
       void query.refetch();
     },
     fetchNextPage: () => {

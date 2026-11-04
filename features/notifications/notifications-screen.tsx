@@ -11,6 +11,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { useFloatingTabBarInset } from "@/components/navigation/floating-tab-bar";
 import { SkyBackground } from "@/components/ui/sky-background";
 import { AddyColors, AddyFonts } from "@/constants/theme";
 import { ScreenHeader } from "@/features/friends/components/screen-header";
@@ -53,6 +54,7 @@ export function NotificationsScreen() {
   const accept = useAcceptFriendRequestMutation();
   const [acceptStates, setAcceptStates] = useState<Record<string, AcceptState>>({});
   const [refreshing, setRefreshing] = useState(false);
+  const tabBarInset = useFloatingTabBarInset();
 
   const { mutate: seen } = markSeen;
   useFocusEffect(
@@ -127,7 +129,7 @@ export function NotificationsScreen() {
       <SafeAreaView style={styles.safe} edges={["top"]}>
         <ScreenHeader
           title="Notifications"
-          fallback="/(app)/(tabs)/lane"
+          showBack={false}
           right={
             hasUnread ? (
               <Pressable
@@ -190,7 +192,7 @@ export function NotificationsScreen() {
                 tintColor={AddyColors.inkMuted}
               />
             }
-            contentContainerStyle={styles.content}
+            contentContainerStyle={[styles.content, { paddingBottom: tabBarInset }]}
             showsVerticalScrollIndicator={false}
           />
         )}

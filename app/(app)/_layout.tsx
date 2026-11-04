@@ -125,7 +125,6 @@ export default function AppLayout() {
           <Stack.Screen name="profile/index" />
           <Stack.Screen name="profile/security" />
           <Stack.Screen name="profile/notifications" />
-          <Stack.Screen name="notifications" />
           <Stack.Screen name="privacy-policy" />
           <Stack.Screen name="blocked-accounts" />
           <Stack.Screen name="dev-primitives" />

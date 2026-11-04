@@ -19,7 +19,7 @@ type FriendSheetsState = {
   add: AddTarget | null;
   celebrate: CelebrateTarget | null;
   menu: FriendMenuTarget | null;
-  /** The Friends tab (with the invite card) is on screen. */
+  /** The Friends screen (with the invite card) is on screen. */
   friendsTabFocused: boolean;
   setFriendsTabFocused: (focused: boolean) => void;
   openQr: (side?: QrSide) => void;

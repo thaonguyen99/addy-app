@@ -90,8 +90,8 @@ export async function openNotificationTarget(
       else
         router.navigate(
           target.type === "FRIEND_REQUEST"
-            ? "/(app)/(tabs)/friends?tab=incoming"
-            : "/(app)/(tabs)/friends",
+            ? "/(app)/friends?tab=incoming"
+            : "/(app)/friends",
         );
       break;
     }

@@ -23,7 +23,7 @@ export default function TabLayout() {
     >
       <Tabs.Screen name="lane" options={{ title: "Memory Lane" }} />
       <Tabs.Screen name="explore" options={{ title: "Map" }} />
-      <Tabs.Screen name="friends" options={{ title: "Friends" }} />
+      <Tabs.Screen name="notifications" options={{ title: "Notifications" }} />
       <Tabs.Screen name="index" options={{ title: "You" }} />
     </Tabs>
   );
