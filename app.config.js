@@ -30,7 +30,7 @@ module.exports = ({ config }) => ({
   ...config,
   name: "addy-app",
   slug: "addy-app",
-  version: "1.3.0",
+  version: "1.4.0",
   orientation: "portrait",
   icon: "./assets/images/icon.png",
   scheme: "addyapp",
