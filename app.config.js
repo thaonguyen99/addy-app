@@ -142,7 +142,9 @@ module.exports = ({ config }) => ({
           "Addy needs photo library access to add gallery images to your pin.",
         savePhotosPermission:
           "Addy saves your photos and invite story images to your library.",
-        isAccessMediaLocationEnabled: false,
+        // Without it Android refuses EXIF reads on GPS-tagged photos. We only
+        // read the capture date; uploads are re-encoded, which drops GPS.
+        isAccessMediaLocationEnabled: true,
       },
     ],
     [

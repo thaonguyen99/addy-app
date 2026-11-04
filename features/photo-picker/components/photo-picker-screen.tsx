@@ -156,16 +156,23 @@ export function PhotoPickerScreen() {
       for (const id of selected) {
         const asset = known.current.get(id);
         if (!asset) continue;
-        const info = await MediaLibrary.getAssetInfoAsync(asset);
+        // On Android this throws for photos with GPS tags (we don't hold
+        // ACCESS_MEDIA_LOCATION); the plain asset uri still crops fine.
+        const info = await MediaLibrary.getAssetInfoAsync(asset).catch(
+          (error) => {
+            console.warn("[photo-picker] no asset info", error);
+            return undefined;
+          },
+        );
         const uri = await cropToSquare(
-          info.localUri ?? asset.uri,
+          info?.localUri ?? asset.uri,
           sizes[id] ?? librarySize(asset),
           transforms.current.get(id) ?? IDENTITY_CROP,
         );
         photos.push({
           uri,
           takenAt: exifTakenAt(
-            info.exif as Record<string, unknown> | undefined,
+            info?.exif as Record<string, unknown> | undefined,
           ),
         });
       }
