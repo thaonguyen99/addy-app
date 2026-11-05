@@ -1,0 +1,10 @@
+<!-- Adaptive icon background: the icon's gradient, full bleed (the launcher applies its own mask). -->
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<linearGradient id="bg" x1="512" y1="170.667" x2="512" y2="853.333" gradientUnits="userSpaceOnUse">
+<stop stop-color="#FFEC9A"/>
+<stop offset="1" stop-color="#9FE000"/>
+</linearGradient>
+</defs>
+<rect width="1024" height="1024" fill="url(#bg)"/>
+</svg>

@@ -60,9 +60,15 @@ module.exports = ({ config }) => ({
     },
   },
   android: {
+    // Separate layers, not the finished iOS icon: launchers crop the 108dp
+    // layers to their own shape, so the mark sits in the 66dp safe zone and
+    // the gradient bleeds to the edges. Rebuild with
+    // scripts/generate-android-icons.sh.
     adaptiveIcon: {
       backgroundColor: "#C7F23A",
+      backgroundImage: "./assets/images/android-icon-background.png",
       foregroundImage: "./assets/images/android-icon-foreground.png",
+      monochromeImage: "./assets/images/android-icon-monochrome.png",
     },
     edgeToEdgeEnabled: true,
     // Opens /i/<token> and /u/<username> links in the app (verified via the API's assetlinks.json).
@@ -165,6 +171,13 @@ module.exports = ({ config }) => ({
         // No `dark` variant: it makes this plugin force UIUserInterfaceStyle to
         // Automatic, overriding the light-only `userInterfaceStyle` above.
         backgroundColor: "#FBFBF6",
+        // Android 12+ crops the splash icon to a circle, which cut the
+        // corners off the iOS icon; this one is padded to survive the crop.
+        android: {
+          image: "./assets/images/android-splash-icon.png",
+          imageWidth: 288,
+          backgroundColor: "#FBFBF6",
+        },
       },
     ],
     iosUrlScheme
@@ -192,6 +205,9 @@ module.exports = ({ config }) => ({
     [
       "expo-notifications",
       {
+        // Status-bar icon: Android tints it, so it must be a white silhouette;
+        // without one it used the launcher icon, a solid white square.
+        icon: "./assets/images/android-notification-icon.png",
         color: "#C7F23A",
       },
     ],
