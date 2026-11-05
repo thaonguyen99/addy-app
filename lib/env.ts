@@ -7,6 +7,7 @@ type AppExtra = {
   facebookAppId?: string;
   goongMapApiKey?: string;
   linkHost?: string;
+  sentryDsn?: string;
 };
 
 const extra = (Constants.expoConfig?.extra ?? {}) as AppExtra;
@@ -18,6 +19,7 @@ export const FACEBOOK_APP_ID = extra.facebookAppId ?? "";
 export const GOONG_MAP_API_KEY = extra.goongMapApiKey ?? "";
 /** Host of the share links (https://<host>/i/<token>, /u/<username>). */
 export const LINK_HOST = extra.linkHost ?? "addy.app";
+export const SENTRY_DSN = extra.sentryDsn ?? "";
 
 console.log("[env] resolved config", {
   apiUrl: API_BASE_URL,

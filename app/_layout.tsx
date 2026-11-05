@@ -13,6 +13,7 @@ import {
 import { VT323_400Regular } from "@expo-google-fonts/vt323";
 import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 import { DefaultTheme, ThemeProvider } from "@react-navigation/native";
+import * as Sentry from "@sentry/react-native";
 import { QueryClientProvider } from "@tanstack/react-query";
 import {
   TourGuideOverlay,
@@ -32,10 +33,12 @@ import { UpdateReadyBanner } from "@/features/app-update/update-ready-banner";
 import { InAppNotificationBanner } from "@/features/notifications/in-app-notification-banner";
 import { AnimatedSplashScreen } from "@/features/splash/components/animated-splash-screen";
 import { AppToastHost } from "@/features/toast/app-toast-host";
+import { initSentry } from "@/lib/sentry";
 import { configureNotificationHandler } from "@/services/notifications";
 import { queryClient } from "@/services/query/client";
 import { useAuthStore } from "@/stores/auth.store";
 
+initSentry();
 configureNotificationHandler();
 
 const navigationTheme = {
@@ -61,6 +64,7 @@ export function ErrorBoundary({
   retry: () => void;
 }) {
   console.error("[app] render error caught by ErrorBoundary", error);
+  Sentry.captureException(error);
   return (
     <View style={styles.boot}>
       <Text style={styles.errorMessage}>{error.message}</Text>
@@ -71,7 +75,7 @@ export function ErrorBoundary({
   );
 }
 
-export default function RootLayout() {
+function RootLayout() {
   const status = useAuthStore((s) => s.status);
   const hydrate = useAuthStore((s) => s.hydrate);
 
@@ -167,3 +171,5 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
 });
+
+export default Sentry.wrap(RootLayout);

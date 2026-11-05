@@ -1,6 +1,6 @@
-const { getDefaultConfig } = require("expo/metro-config");
+const { getSentryExpoConfig } = require("@sentry/react-native/metro");
 
-const config = getDefaultConfig(__dirname);
+const config = getSentryExpoConfig(__dirname);
 
 // Lets Metro bundle the on-device NSFW model as a binary asset
 // (features/moderation/check-image-safety.ts loads it via require()).

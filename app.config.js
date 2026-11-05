@@ -22,6 +22,11 @@ const iosUrlScheme = toIosUrlScheme(iosClientId);
 const facebookAppId = process.env.FACEBOOK_APP_ID ?? "";
 const facebookClientToken = process.env.FACEBOOK_CLIENT_TOKEN ?? "";
 
+/** Sentry: the DSN turns reporting on; org + project let builds upload source maps. */
+const sentryDsn = process.env.SENTRY_DSN ?? "";
+const sentryOrg = process.env.SENTRY_ORG ?? "";
+const sentryProject = process.env.SENTRY_PROJECT ?? "";
+
 /** Host of the share links (https://<host>/i/<token>, /u/<username>); matches the API's INVITE_WEB_BASE_URL. */
 const inviteLinkHost = process.env.INVITE_LINK_HOST ?? "addy.app";
 
@@ -201,6 +206,15 @@ module.exports = ({ config }) => ({
           ],
         ]
       : []),
+    // Skipped without an org: its build step fails when it can't upload.
+    ...(sentryOrg
+      ? [
+          [
+            "@sentry/react-native/expo",
+            { organization: sentryOrg, project: sentryProject },
+          ],
+        ]
+      : []),
     "@maplibre/maplibre-react-native",
     [
       "expo-notifications",
@@ -226,6 +240,7 @@ module.exports = ({ config }) => ({
     facebookAppId,
     goongMapApiKey: process.env.GOONG_MAP_API_KEY ?? "",
     linkHost: inviteLinkHost,
+    sentryDsn,
     router: {},
     eas: {
       projectId: "eb53cb10-598d-456c-b2c3-15af9d2d3fee",

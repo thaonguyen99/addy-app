@@ -24,7 +24,7 @@ export function PrivacyPolicyScreen() {
         showsVerticalScrollIndicator={false}
       >
         <Text style={styles.title}>Privacy Policy for Addy</Text>
-        <Text style={styles.effectiveDate}>Effective Date: September 11, 2026</Text>
+        <Text style={styles.effectiveDate}>Effective Date: November 5, 2026</Text>
 
         <Text style={styles.paragraph}>
           Addy (&quot;we,&quot; &quot;us,&quot; or &quot;our&quot;) respects your privacy. This Privacy
@@ -54,6 +54,11 @@ export function PrivacyPolicyScreen() {
           (iOS/Android) so we can deliver notifications you&apos;ve enabled (e.g.,
           friend requests, reactions).
           {"\n\n"}
+          {"• "}Diagnostic data: crash reports and error details, such as
+          the stack trace, app version, device model, operating system, and
+          an anonymous installation identifier. We use them only to find and
+          fix bugs, and they aren&apos;t linked to your account.
+          {"\n\n"}
           {"• "}Authentication data: your password is stored in
           encrypted (hashed) form and never stored or transmitted in plain
           text; if you sign in with Google or Facebook, we receive your
@@ -65,8 +70,8 @@ export function PrivacyPolicyScreen() {
         <Text style={styles.paragraph}>
           We use your information to operate Addy&apos;s core features: showing
           your memories on a map, sharing memories with friends you choose,
-          sending notifications you&apos;ve enabled, and keeping your account
-          secure. We do not sell your personal information and do not use it
+          sending notifications you&apos;ve enabled, keeping your account
+          secure, and fixing crashes and errors. We do not sell your personal information and do not use it
           for third-party advertising.
         </Text>
 
@@ -75,8 +80,9 @@ export function PrivacyPolicyScreen() {
           We use the following service providers to operate Addy: Cloudinary
           (stores and serves your uploaded photos), Goong Maps (map tiles,
           place search, and location lookups), Google Sign-In and Facebook
-          Login (optional sign-in methods), Expo (delivers push notifications), and Railway
-          (hosts our backend servers and database). Each provider only
+          Login (optional sign-in methods), Expo (delivers push notifications), Railway
+          (hosts our backend servers), Neon (hosts our database), and Sentry
+          (receives crash and error reports). Each provider only
           receives the data necessary to perform its function.
         </Text>
 
