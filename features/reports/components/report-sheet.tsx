@@ -11,6 +11,7 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { GlossyButton } from "@/components/ui/glossy-button";
+import { OVER_MODALS_CONTAINER } from "@/components/ui/over-modals-container";
 import { StickerCard } from "@/components/ui/sticker-card";
 import { StickerRadius } from "@/constants/sticker-style";
 import { BrandColors } from "@/constants/theme";
@@ -114,6 +115,7 @@ export const ReportSheet = forwardRef<ReportSheetRef>(function ReportSheet(_prop
   return (
     <BottomSheetModal
       ref={sheetRef}
+      containerComponent={OVER_MODALS_CONTAINER}
       enablePanDownToClose
       topInset={insets.top}
       keyboardBehavior="interactive"

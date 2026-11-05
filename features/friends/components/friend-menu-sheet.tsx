@@ -9,6 +9,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { OVER_MODALS_CONTAINER } from "@/components/ui/over-modals-container";
 import { UserAvatar, userDisplayName } from "@/components/ui/user-row";
 import {
   ADDY_BORDER_WIDTH,
@@ -128,6 +129,7 @@ export function FriendMenuSheet() {
     <>
       <BottomSheetModal
         ref={sheetRef}
+        containerComponent={OVER_MODALS_CONTAINER}
         enablePanDownToClose
         topInset={insets.top}
         onDismiss={closeFriendMenu}
