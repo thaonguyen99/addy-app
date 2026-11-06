@@ -24,7 +24,7 @@ export function PrivacyPolicyScreen() {
         showsVerticalScrollIndicator={false}
       >
         <Text style={styles.title}>Privacy Policy for Addy</Text>
-        <Text style={styles.effectiveDate}>Effective Date: November 5, 2026</Text>
+        <Text style={styles.effectiveDate}>Effective Date: November 6, 2026</Text>
 
         <Text style={styles.paragraph}>
           Addy (&quot;we,&quot; &quot;us,&quot; or &quot;our&quot;) respects your privacy. This Privacy
@@ -89,11 +89,14 @@ export function PrivacyPolicyScreen() {
         <Text style={styles.heading}>4. Data Retention &amp; Deletion</Text>
         <Text style={styles.paragraph}>
           We retain your information for as long as your account is active.
-          You can delete individual memories at any time in the app. You can
-          permanently delete your account and all associated data — profile,
-          memories, photos, friend connections, and notification tokens — at
-          any time from Profile → Delete account. This action is immediate
-          and cannot be undone. You may also request deletion by emailing
+          You can delete individual memories at any time in the app; they
+          disappear right away and are permanently erased within 30 days. You
+          can permanently delete your account and all associated data —
+          profile, memories, photos, friend connections, and notification
+          tokens — at any time from Profile → Delete account. Your account
+          disappears right away, your photos are removed shortly after, and
+          everything else is permanently erased within 30 days. This cannot
+          be undone. You may also request deletion by emailing
           nhthau99@gmail.com.
         </Text>
 
