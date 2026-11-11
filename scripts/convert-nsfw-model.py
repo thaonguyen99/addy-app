@@ -1,61 +1,50 @@
 #!/usr/bin/env python3
-"""Fetches GantMan/nsfw_model's MobileNetV2 224x224 TFLite model.
+"""Builds assets/models/nsfw-model.tflite from Yahoo's open_nsfw weights.
 
-Produces assets/models/nsfw-model.tflite, which features/moderation/
-nsfw-model.ts loads at runtime via react-native-fast-tflite.
+features/moderation/nsfw-model.ts loads the result at runtime via
+react-native-fast-tflite.
 
-The 1.2.0 GitHub release already ships a converted `saved_model.tflite`
-(float32 [1, 224, 224, 3] in, [1, 5] softmax out), so no TensorFlow install
-or conversion is needed — just stdlib Python. Run once, locally (not part of
-the app build):
+Source: Yahoo's open_nsfw (https://github.com/yahoo/open_nsfw, weights under
+BSD-2-Clause), through the Keras port `opennsfw2`
+(https://github.com/bhky/opennsfw2, MIT), which downloads the weights on first
+use (~24 MB, cached in ~/.opennsfw2). The model is converted with dynamic-range
+quantization, which brings it to ~6 MB while staying within a few hundredths of
+the float model's scores.
 
-    python3 scripts/convert-nsfw-model.py
+Contract (keep features/moderation/image-tensor.ts and check-image-safety.ts
+in sync with it):
+  - Input: float32 [1, 224, 224, 3], BGR, per-channel mean [104, 117, 123]
+    subtracted from 0-255 values (no scaling), after a 256x256 resize, a JPEG
+    round trip and a 224x224 center crop.
+  - Output: float32 [1, 2] softmax, [sfw, nsfw].
 
-Before you run this: GantMan/nsfw_model's GitHub repo does not carry a
-clear OSS license (GitHub reports "Other / NOASSERTION"), even though it's
-widely used in hobby/personal projects for exactly this purpose. Read
-https://github.com/GantMan/nsfw_model yourself and decide whether that's
-acceptable for this app before bundling its weights and shipping to users.
-If not, source a differently-licensed 224x224x3 RGB, [0,1]-normalized,
-5-or-fewer-class NSFW classifier and adjust CATEGORIES in
-features/moderation/check-image-safety.ts to match its output order.
+Run once, locally (not part of the app build). TensorFlow needs a native
+arm64 Python on Apple silicon, so pin the interpreter:
+
+    uv run -p cpython-3.11-macos-aarch64-none --with opennsfw2 \\
+        --with tensorflow python scripts/convert-nsfw-model.py
 """
 
-import io
-import urllib.request
-import zipfile
+import os
 
-# The old s3.amazonaws.com/ir_public/nsfwjscdn/*.h5 URL now returns 403.
-SOURCE_ZIP_URL = (
-    "https://github.com/GantMan/nsfw_model/releases/download/1.2.0/"
-    "mobilenet_v2_140_224.1.zip"
-)
-MODEL_MEMBER = "mobilenet_v2_140_224/saved_model.tflite"
-LABELS_MEMBER = "mobilenet_v2_140_224/class_labels.txt"
+import opennsfw2
+import tensorflow as tf
+
 OUTPUT_PATH = "assets/models/nsfw-model.tflite"
-
-# Must match CATEGORIES in features/moderation/check-image-safety.ts.
-EXPECTED_LABELS = ["drawings", "hentai", "neutral", "porn", "sexy"]
 
 
 def main() -> None:
-    print(f"Downloading {SOURCE_ZIP_URL} (~100 MB)...")
-    with urllib.request.urlopen(SOURCE_ZIP_URL) as response:
-        archive = zipfile.ZipFile(io.BytesIO(response.read()))
+    model = opennsfw2.make_open_nsfw_model()
 
-    labels = archive.read(LABELS_MEMBER).decode().split()
-    if labels != EXPECTED_LABELS:
-        raise SystemExit(
-            f"Unexpected class order {labels}; update CATEGORIES in "
-            "features/moderation/check-image-safety.ts before using this model."
-        )
+    converter = tf.lite.TFLiteConverter.from_keras_model(model)
+    converter.optimizations = [tf.lite.Optimize.DEFAULT]
+    tflite_model = converter.convert()
 
-    tflite_model = archive.read(MODEL_MEMBER)
     with open(OUTPUT_PATH, "wb") as f:
         f.write(tflite_model)
 
-    print(f"Wrote {OUTPUT_PATH} ({len(tflite_model) / 1e6:.1f} MB)")
-    print(f"Output classes (fixed order): {', '.join(labels)}")
+    print(f"Wrote {OUTPUT_PATH} ({os.path.getsize(OUTPUT_PATH) / 1e6:.1f} MB)")
+    print("Output classes (fixed order): sfw, nsfw")
 
 
 if __name__ == "__main__":

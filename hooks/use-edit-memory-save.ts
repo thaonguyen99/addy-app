@@ -8,6 +8,7 @@ import {
 import { isUnresolvedPlace } from "@/features/location/fallback-places";
 import { placeSuggestionToPlaceInput } from "@/features/location/place-input";
 import { checkImagesSafety } from "@/features/moderation/check-image-safety";
+import { confirmFlaggedPhotos } from "@/features/moderation/confirm-flagged-photos";
 import { getApiErrorMessage } from "@/services/api/errors";
 import { MediaApi } from "@/services/media";
 import { useUpdateMemoryMutation } from "@/services/memories";
@@ -54,11 +55,13 @@ export function useEditMemorySave(memory: MemoryDetail | undefined) {
           photo.kind === "local" ? [photo.uri] : [],
         );
         const safety = await checkImagesSafety(localUris);
-        if (safety.some((result) => !result.safe)) {
-          Alert.alert(
+        if (
+          safety.some((result) => !result.safe) &&
+          !(await confirmFlaggedPhotos(
             "Edit memory",
-            "One of the new photos looks like it may violate our content guidelines. Remove it and try again.",
-          );
+            "One of the new photos might go against our content guidelines. Save it anyway?",
+          ))
+        ) {
           return false;
         }
 

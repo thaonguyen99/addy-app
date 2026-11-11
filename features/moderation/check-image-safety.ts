@@ -1,23 +1,20 @@
 import { imageToModelInput } from "@/features/moderation/image-tensor";
 import { getNsfwModel } from "@/features/moderation/nsfw-model";
 
-// Matches the reference nsfw_model's fixed output order.
-const CATEGORIES = ["drawings", "hentai", "neutral", "porn", "sexy"] as const;
-type Category = (typeof CATEGORIES)[number];
-type NsfwScores = Record<Category, number>;
-
-// Thresholds follow common nsfwjs usage: flag anything the model is
-// confident is porn/hentai, or fairly confident is merely "sexy"
-// (suggestive but not explicit). Tune these if you see too many
-// false positives/negatives once this is bundled with a real model.
-const PORN_HENTAI_THRESHOLD = 0.6;
-const SEXY_THRESHOLD = 0.85;
+/**
+ * open_nsfw outputs a 2-way softmax, [sfw, nsfw]. Yahoo's guidance reads
+ * scores above 0.8 as NSFW and below 0.2 as safe. A flag only triggers a
+ * warning the user can override (see confirm-flagged-photos.ts), so we use
+ * the upper bound rather than catching the uncertain middle.
+ */
+const NSFW_INDEX = 1;
+const NSFW_THRESHOLD = 0.8;
 
 export type ImageSafetyResult = {
   uri: string;
   safe: boolean;
-  /** `null` when the model couldn't run — treated as safe (fail-open). */
-  scores: NsfwScores | null;
+  /** The model's NSFW probability; `null` when it couldn't run (fail-open). */
+  nsfwScore: number | null;
 };
 
 /**
@@ -31,30 +28,21 @@ export type ImageSafetyResult = {
 export async function checkImageSafety(uri: string): Promise<ImageSafetyResult> {
   const model = await getNsfwModel();
   if (!model) {
-    return { uri, safe: true, scores: null };
+    return { uri, safe: true, nsfwScore: null };
   }
 
   try {
     const input = await imageToModelInput(uri);
     const outputs = model.runSync([input.buffer as ArrayBuffer]);
-    const probabilities = new Float32Array(outputs[0]);
+    const nsfwScore = new Float32Array(outputs[0])[NSFW_INDEX] ?? 0;
 
-    const scores = CATEGORIES.reduce((acc, category, index) => {
-      acc[category] = probabilities[index] ?? 0;
-      return acc;
-    }, {} as NsfwScores);
-
-    const unsafe =
-      scores.porn + scores.hentai > PORN_HENTAI_THRESHOLD ||
-      scores.sexy > SEXY_THRESHOLD;
-
-    return { uri, safe: !unsafe, scores };
+    return { uri, safe: nsfwScore <= NSFW_THRESHOLD, nsfwScore };
   } catch (error) {
     console.warn(
       `[moderation] Failed to classify image, allowing it through: ${uri}`,
       error,
     );
-    return { uri, safe: true, scores: null };
+    return { uri, safe: true, nsfwScore: null };
   }
 }
 

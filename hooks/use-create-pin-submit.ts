@@ -12,6 +12,7 @@ import {
 } from "@/features/location/fallback-places";
 import { placeSuggestionToPlaceInput } from "@/features/location/place-input";
 import { checkImagesSafety } from "@/features/moderation/check-image-safety";
+import { confirmFlaggedPhotos } from "@/features/moderation/confirm-flagged-photos";
 import { handleOnboardingPinSaved } from "@/features/onboarding/navigate-after-onboarding-pin";
 import { useOnboardingCaptureStore } from "@/stores/onboarding-capture.store";
 import { copyPhotosToPending } from "@/features/pin-queue/pin-queue-storage";
@@ -77,11 +78,13 @@ export function useCreatePinSubmit(images: readonly AddyMemoryImage[]) {
       const safetyResults = await checkImagesSafety(
         images.map((image) => image.uri),
       );
-      if (safetyResults.some((result) => !result.safe)) {
-        Alert.alert(
+      if (
+        safetyResults.some((result) => !result.safe) &&
+        !(await confirmFlaggedPhotos(
           "Create pin",
-          "One of these photos looks like it may violate our content guidelines. Remove it and try again.",
-        );
+          "One of these photos might go against our content guidelines. Post it anyway?",
+        ))
+      ) {
         return null;
       }
 

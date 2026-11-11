@@ -5,6 +5,7 @@ import { Alert } from "react-native";
 import { ensureMediaLibraryReadAccess } from "@/features/camera/permissions/media-library-access";
 import { prepareUploadImage } from "@/features/media/prepare-upload-image";
 import { checkImageSafety } from "@/features/moderation/check-image-safety";
+import { confirmFlaggedPhotos } from "@/features/moderation/confirm-flagged-photos";
 import { getApiErrorMessage } from "@/services/api/errors";
 import { useUploadAvatarMutation } from "@/services/media";
 import { cropCenterSquare } from "@/utils/crop-square";
@@ -53,11 +54,13 @@ export function useAvatarUpload() {
       // Re-encode first: strips EXIF/GPS before the photo leaves the device.
       const { uri: localUri } = await prepareUploadImage(square);
       const safety = await checkImageSafety(localUri);
-      if (!safety.safe) {
-        Alert.alert(
+      if (
+        !safety.safe &&
+        !(await confirmFlaggedPhotos(
           "Photo",
-          "This photo looks like it may violate our content guidelines. Please choose a different one.",
-        );
+          "This photo might go against our content guidelines. Use it anyway?",
+        ))
+      ) {
         return null;
       }
 
