@@ -1,6 +1,7 @@
 import type { InfiniteData, QueryClient } from "@tanstack/react-query";
 
 import { queryKeys } from "@/services/query/keys";
+import { useAuthStore } from "@/stores/auth.store";
 import { pickCover } from "@/utils/pick-cover";
 import type {
   MapPinsResult,
@@ -9,7 +10,7 @@ import type {
   MemoryListResult,
 } from "./memories.type";
 
-/** `mapBoundsKey` format: "north:south:east:west". */
+/** The first four fields of `mapBoundsKey` are north, south, east, west. */
 function boundsContain(boundsKey: unknown, lat: number, lng: number): boolean {
   if (typeof boundsKey !== "string") return false;
   const [north, south, east, west] = boundsKey.split(":").map(Number);
@@ -56,10 +57,11 @@ export function insertOwnMemory(queryClient: QueryClient, memory: MemoryDetail) 
   const { latitude, longitude, id: placeId, name } = memory.place;
   const imageUrl = pickCover(memory.images)?.url ?? memory.images[0]?.url;
   if (!imageUrl) return;
+  const userId = useAuthStore.getState().user?.id;
   for (const [key, data] of queryClient.getQueriesData<MapPinsResult>({
     queryKey: ["memories", "map"],
   })) {
-    if (!data || !boundsContain(key[2], latitude, longitude)) continue;
+    if (!data || key[3] !== userId || !boundsContain(key[2], latitude, longitude)) continue;
     if (data.pins.some((pin) => pin.id === memory.id)) continue;
     const atPlace = data.pins.find((pin) => pin.placeId === placeId);
     const pin = {

@@ -27,10 +27,19 @@ export function useFocusedQueryKeys(keys: readonly QueryKey[]): void {
   );
 }
 
-export function invalidateFocusedQueries(queryClient: QueryClient): void {
+export function invalidateFocusedQueries(
+  queryClient: QueryClient,
+  staleMapOnly = false,
+): void {
   for (const keys of focused.values()) {
     for (const queryKey of keys) {
-      void queryClient.invalidateQueries({ queryKey });
+      const isMap = queryKey[0] === "memories" &&
+        (queryKey[1] === "map" || queryKey[1] === "friends-map");
+      if (staleMapOnly && isMap) {
+        void queryClient.refetchQueries({ queryKey, type: "active", stale: true });
+      } else {
+        void queryClient.invalidateQueries({ queryKey });
+      }
     }
   }
 }

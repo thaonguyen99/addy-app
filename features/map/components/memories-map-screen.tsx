@@ -6,7 +6,7 @@ import {
   type LngLatBounds,
   type ViewStateChangeEvent,
 } from "@maplibre/maplibre-react-native";
-import { useFocusEffect } from "@react-navigation/native";
+import { useFocusEffect, useIsFocused } from "@react-navigation/native";
 import { useQueryClient } from "@tanstack/react-query";
 import { TourTarget, useTourGuide } from "@wrack/react-native-tour-guide";
 import { router, useLocalSearchParams } from "expo-router";
@@ -72,6 +72,7 @@ import { useFriendSheetsStore } from "@/stores/friend-sheets.store";
 import { useFriendsMapQuery, useMemoriesMapQuery, useMemoryQuery } from "@/services/memories";
 import { useFriendsQuery } from "@/services/friends";
 import { useFocusedQueryKeys } from "@/hooks/use-focused-query-keys";
+import { bufferedViewport, updateMapViewport } from "@/services/memories/map-viewport";
 import { useFeedStaleStore } from "@/stores/feed-stale.store";
 import type {
   FriendMemoryPin,
@@ -203,12 +204,19 @@ export function MemoriesMapScreen() {
   const { activeTourId, currentStep, activeSteps, nextStep, resumeTour } =
     useTourGuide();
 
-  const [debouncedBounds, setDebouncedBounds] = useState<MapBounds | null>(
-    DEFAULT_BOUNDS,
-  );
+  const [viewport, setViewport] = useState(() => ({
+    visible: DEFAULT_BOUNDS,
+    buffered: bufferedViewport(DEFAULT_BOUNDS),
+  }));
   const [zoom, setZoom] = useState(DEFAULT_ZOOM);
 
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(
+    () => () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    },
+    [],
+  );
 
   // Zoom to a newly created pin once this tab is focused and the map is ready.
   useFocusEffect(
@@ -279,7 +287,8 @@ export function MemoriesMapScreen() {
       const { bounds, zoom: nextZoom } = event.nativeEvent;
       if (debounceRef.current) clearTimeout(debounceRef.current);
       debounceRef.current = setTimeout(() => {
-        setDebouncedBounds(boundsToMapBounds(bounds));
+        const nextBounds = boundsToMapBounds(bounds);
+        setViewport((previous) => updateMapViewport(previous, nextBounds));
         setZoom(nextZoom);
       }, 400);
     },
@@ -338,11 +347,14 @@ export function MemoriesMapScreen() {
     if (friendGone) clearFriendFocus();
   }, [friendGone, clearFriendFocus]);
 
+  const focused = useIsFocused();
   const friendsLayerOn = showFriends || focusFriendId !== null;
-  const bounds = debouncedBounds ?? DEFAULT_BOUNDS;
+  const bounds = viewport.visible;
   const showLabels = zoom >= LABEL_VISIBLE_ZOOM;
 
-  const { data, isError } = useMemoriesMapQuery(debouncedBounds);
+  const { data, isError } = useMemoriesMapQuery(
+    focused && !focusFriendId ? viewport : null,
+  );
   // Stable references so clustering (now heavier, with photo pins) only
   // reruns when the data or zoom actually changes.
   // Your own pins step aside while you look at one friend's map.
@@ -352,7 +364,7 @@ export function MemoriesMapScreen() {
   );
 
   const { data: friendsData, isLoading: isFriendsMapLoading } =
-    useFriendsMapQuery(friendsLayerOn ? debouncedBounds : null);
+    useFriendsMapQuery(focused && friendsLayerOn ? viewport : null);
   const friendPins = useMemo(() => {
     if (!friendsLayerOn) return [];
     const all = friendsData?.pins ?? [];
@@ -370,20 +382,19 @@ export function MemoriesMapScreen() {
   const mapStale = useFeedStaleStore((s) => s.mapStale);
   const refreshFriendsMap = useCallback(() => {
     useFeedStaleStore.getState().setMapStale(false);
-    void queryClient.refetchQueries({
-      queryKey: ["memories", "friends-map"],
-      type: "active",
-    });
+    void queryClient.refetchQueries(
+      { queryKey: ["memories", "friends-map"], type: "active" },
+      { cancelRefetch: false },
+    );
   }, [queryClient]);
   useFocusEffect(
     useCallback(() => {
-      if (useFeedStaleStore.getState().mapStale) refreshFriendsMap();
-    }, [refreshFriendsMap]),
+      if (friendsLayerOn && useFeedStaleStore.getState().mapStale) {
+        refreshFriendsMap();
+      }
+    }, [friendsLayerOn, refreshFriendsMap]),
   );
-  // Turning the layer on fetches it fresh (the stale queries refetch on mount).
-  useEffect(() => {
-    if (friendsLayerOn) useFeedStaleStore.getState().setMapStale(false);
-  }, [friendsLayerOn]);
+
   useFocusedQueryKeys([["memories", "map"], ["memories", "friends-map"]]);
 
   // Not-yet-uploaded pins: drawn on top, never clustered.

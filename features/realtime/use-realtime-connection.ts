@@ -40,6 +40,7 @@ export function useRealtimeConnection(): void {
 
     let authRetries = 0;
     let everConnected = false;
+    let returningFromBackground = false;
 
     const connectNow = () => {
       const token = useAuthStore.getState().accessToken;
@@ -68,12 +69,16 @@ export function useRealtimeConnection(): void {
         // A reconnect may have missed events: refresh what's on screen.
         if (everConnected) {
           void queryClient.invalidateQueries({ queryKey: ["notifications"] });
-          invalidateFocusedQueries(queryClient);
-          // The friends map is mounted (it's a tab), so that refetches it.
-          void queryClient.invalidateQueries({ queryKey: ["memories", "friends-map"] });
-          useFeedStaleStore.getState().setMapStale(false);
+          invalidateFocusedQueries(queryClient, returningFromBackground);
+          if (!returningFromBackground) {
+            void queryClient.invalidateQueries(
+              { queryKey: ["memories", "friends-map"] },
+              { cancelRefetch: false },
+            );
+          }
         }
         everConnected = true;
+        returningFromBackground = false;
       },
       connectError: (error) => {
         if (error.message === "UNAUTHORIZED") reconnectWithFreshToken();
@@ -97,6 +102,7 @@ export function useRealtimeConnection(): void {
     // background and come back on foreground.
     const appStateSub = AppState.addEventListener("change", (next) => {
       if (next === "background") {
+        returningFromBackground = true;
         realtime.disconnect();
       } else if (next === "active" && !realtime.connected) {
         authRetries = 0;

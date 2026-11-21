@@ -5,12 +5,13 @@ export const queryKeys = {
   memoriesFeed: ["memories", "feed"] as const,
   /** Memory Lane (`GET /feed`) — distinct from `memoriesFeed` (your own list). */
   feed: ["feed"] as const,
-  map: (boundsKey: string) => ["memories", "map", boundsKey] as const,
-  friendsMap: (boundsKey: string) =>
-    ["memories", "friends-map", boundsKey] as const,
+  map: (boundsKey: string, userId: string | undefined) =>
+    ["memories", "map", boundsKey, userId] as const,
+  friendsMap: (boundsKey: string, userId: string | undefined) =>
+    ["memories", "friends-map", boundsKey, userId] as const,
   /** `placeIdsKey`: the sorted place ids, joined. */
-  memoriesByPlaces: (scope: string, placeIdsKey: string) =>
-    ["memories", "by-places", scope, placeIdsKey] as const,
+  memoriesByPlaces: (scope: string, placeIdsKey: string, userId: string | undefined) =>
+    ["memories", "by-places", scope, placeIdsKey, userId] as const,
   /** Coordinates rounded to ~100 m so nearby clusters share one lookup. */
   areaName: (lat: number, lng: number) =>
     ["places", "area", lat.toFixed(3), lng.toFixed(3)] as const,
@@ -44,6 +45,9 @@ export function mapBoundsKey(bounds: {
   south: number;
   east: number;
   west: number;
+  limit?: number;
+  cursor?: string;
 }) {
-  return `${bounds.north.toFixed(4)}:${bounds.south.toFixed(4)}:${bounds.east.toFixed(4)}:${bounds.west.toFixed(4)}`;
+  const { north, south, east, west, limit = 50, cursor = "" } = bounds;
+  return [north, south, east, west, limit, cursor].join(":");
 }

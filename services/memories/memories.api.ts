@@ -51,8 +51,11 @@ async function listMemories(
   };
 }
 
-async function getMapPins(bounds: MapBounds): Promise<MapPinsResult> {
-  const response = await apiClient.get("/memories/map", { params: bounds });
+async function getMapPins(
+  bounds: MapBounds,
+  signal?: AbortSignal,
+): Promise<MapPinsResult> {
+  const response = await apiClient.get("/memories/map", { params: bounds, signal });
   const body = response.data as {
     success: boolean;
     data: MemoryPin[];
@@ -72,10 +75,12 @@ async function getMapPins(bounds: MapBounds): Promise<MapPinsResult> {
 /** Friends' shared memories in a viewport — server-filtered by visibility + block. */
 async function getFriendsMapPins(
   bounds: MapBounds,
+  signal?: AbortSignal,
 ): Promise<{ pins: FriendMemoryPin[]; cursor?: string }> {
   const { items, nextCursor } = await apiGetPaginated<FriendMemoryPin>(
     "/memories/friends-map",
     { ...bounds },
+    signal,
   );
   return { pins: items, ...(nextCursor ? { cursor: nextCursor } : {}) };
 }

@@ -20,7 +20,6 @@ import {
   useAcceptFriendRequestMutation,
   useFriendRequestsQuery,
 } from "@/services/friends";
-import { useOnThisDayQuery } from "@/services/memories";
 import {
   flattenNotificationPages,
   type NotificationDto,
@@ -34,18 +33,15 @@ import { showToast } from "@/stores/toast.store";
 import { openNotificationTarget, targetFromRow } from "./notification-target";
 import { type AcceptState, NotificationRow } from "./notification-row";
 import { NotificationsEmpty } from "./notifications-empty";
-import { OnThisDayCard } from "./on-this-day-card";
 
 type Section = { key: "new" | "earlier"; title: string; data: NotificationDto[] };
 
 /**
- * The 🔔 list: On this day pinned on top, then unread ("New") and read
- * ("Earlier") rows, newest first. Opening it clears the badge; rows stay
+ * The 🔔 list groups unread ("New") and read ("Earlier") rows, newest first. Opening it clears the badge; rows stay
  * tinted until tapped or "Read all".
  */
 export function NotificationsScreen() {
   const list = useNotificationsQuery();
-  const onThisDay = useOnThisDayQuery();
   const counts = useNotificationCountsQuery();
   const incoming = useFriendRequestsQuery("incoming");
   const markSeen = useMarkNotificationsSeenMutation();
@@ -110,7 +106,6 @@ export function NotificationsScreen() {
     setRefreshing(true);
     await Promise.allSettled([
       list.refetch(),
-      onThisDay.refetch(),
       counts.refetch(),
       incoming.refetch(),
     ]);
@@ -121,7 +116,6 @@ export function NotificationsScreen() {
     if (list.hasNextPage && !list.isFetchingNextPage) void list.fetchNextPage();
   };
 
-  const pinned = onThisDay.data?.[0];
   const hasUnread = (counts.data?.unread ?? 0) > 0 || rows.some((r) => r.readAt === null);
 
   return (
@@ -176,7 +170,6 @@ export function NotificationsScreen() {
               </View>
             )}
             stickySectionHeadersEnabled={false}
-            ListHeaderComponent={pinned ? <OnThisDayCard memory={pinned} /> : null}
             ListEmptyComponent={<NotificationsEmpty />}
             ListFooterComponent={
               list.isFetchingNextPage ? (

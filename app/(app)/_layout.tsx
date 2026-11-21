@@ -13,7 +13,6 @@ import { takePendingLink } from "@/features/friends/pending-link";
 import { openProfile } from "@/features/profile/open-profile";
 import { openInvite } from "@/stores/friend-sheets.store";
 import { useOnboardingTour } from "@/features/onboarding/onboarding-tour";
-import { rescheduleOnThisDay } from "@/features/notifications/on-this-day-scheduler";
 import { useRealtimeConnection } from "@/features/realtime/use-realtime-connection";
 import {
   onDevicePushToken,
@@ -41,7 +40,6 @@ export default function AppLayout() {
     if (status !== "authenticated") return;
     // Never prompts: permission is asked after onboarding or a friend action.
     void syncPushToken();
-    void rescheduleOnThisDay();
     void celebrateFromDeliveredPushes();
     // Resume an invite or profile deep link that arrived while signed out.
     void takePendingLink().then((link) => {
@@ -50,10 +48,9 @@ export default function AppLayout() {
     });
 
     const tokenSub = Notifications.addPushTokenListener(onDevicePushToken);
-    // A new day, or back from Settings with permission on.
+    // Back from Settings with permission on.
     const appStateSub = AppState.addEventListener("change", (next) => {
       if (next !== "active") return;
-      void rescheduleOnThisDay();
       retryPushTokenSync();
     });
     return () => {

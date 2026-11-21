@@ -1,5 +1,4 @@
 import {
-  keepPreviousData,
   useInfiniteQuery,
   useMutation,
   useQueries,
@@ -10,6 +9,7 @@ import { useMemo } from "react";
 
 import { invalidateFeed } from "@/services/feed/feed.cache";
 import { mapBoundsKey, queryKeys } from "@/services/query/keys";
+import { useAuthStore } from "@/stores/auth.store";
 import { memoryApi } from "./memories.api";
 import type {
   ClusterMemory,
@@ -117,29 +117,64 @@ export function useDeleteMemoryMutation(id: string) {
   });
 }
 
-/**
- * Each pan is a new key. Keep showing the last viewport's pins until the new
- * ones arrive — otherwise every marker unmounts mid-fetch and the map blinks.
- */
-export function useMemoriesMapQuery(bounds: MapBounds | null) {
-  const key = bounds ? mapBoundsKey(bounds) : "idle";
-  return useQuery({
-    queryKey: queryKeys.map(key),
-    queryFn: () => memoryApi.getMapPins(bounds!),
-    enabled: Boolean(bounds),
-    placeholderData: keepPreviousData,
+const MAP_STALE_TIME = 2 * 60_000;
+
+type MapViewport = { visible: MapBounds; buffered: MapBounds };
+
+function useMapPinQuery<Pin extends MemoryPin>(
+  viewport: MapViewport | null,
+  layer: "map" | "friendsMap",
+  fetchPins: (
+    bounds: MapBounds,
+    signal: AbortSignal,
+  ) => Promise<{ pins: Pin[]; cursor?: string }>,
+) {
+  const userId = useAuthStore((s) => s.user?.id);
+  const visible = viewport?.visible;
+  const buffered = viewport?.buffered;
+  const visibleKey = visible ? mapBoundsKey(visible) : "idle";
+  const bufferedKey = buffered ? mapBoundsKey(buffered) : "idle";
+
+  const bufferedQuery = useQuery({
+    queryKey: queryKeys[layer](bufferedKey, userId),
+    queryFn: ({ signal }) => fetchPins(buffered!, signal),
+    enabled: Boolean(userId && buffered),
+    staleTime: MAP_STALE_TIME,
   });
+
+  // The first page of a larger viewport can omit visible pins. In that
+  // case use the original request and its pagination behavior.
+  const needsExact = Boolean(bufferedQuery.data?.cursor && visibleKey !== bufferedKey);
+  const exactQuery = useQuery({
+    queryKey: queryKeys[layer](needsExact ? visibleKey : "idle", userId),
+    queryFn: ({ signal }) => fetchPins(visible!, signal),
+    enabled: Boolean(userId && visible && needsExact),
+    staleTime: MAP_STALE_TIME,
+  });
+
+  const query = needsExact ? exactQuery : bufferedQuery;
+  const data = useMemo(() => {
+    if (!visible || !query.data) return undefined;
+    if (needsExact || visibleKey === bufferedKey) return query.data;
+    return {
+      pins: query.data.pins.filter(({ latitude, longitude }) =>
+        latitude >= visible.south &&
+        latitude <= visible.north &&
+        longitude >= visible.west &&
+        longitude <= visible.east,
+      ),
+    };
+  }, [visible, query.data, needsExact, visibleKey, bufferedKey]);
+
+  return { data, isLoading: query.isLoading, isError: query.isError };
 }
 
-export function useFriendsMapQuery(bounds: MapBounds | null) {
-  const key = bounds ? mapBoundsKey(bounds) : "idle";
-  return useQuery({
-    queryKey: queryKeys.friendsMap(key),
-    queryFn: () => memoryApi.getFriendsMapPins(bounds!),
-    enabled: Boolean(bounds),
-    // Same as above: no blink while a pan's friend pins load.
-    placeholderData: keepPreviousData,
-  });
+export function useMemoriesMapQuery(viewport: MapViewport | null) {
+  return useMapPinQuery(viewport, "map", memoryApi.getMapPins);
+}
+
+export function useFriendsMapQuery(viewport: MapViewport | null) {
+  return useMapPinQuery(viewport, "friendsMap", memoryApi.getFriendsMapPins);
 }
 
 /** A map pin tagged with the layer it came from. */
@@ -174,6 +209,7 @@ function pinToClusterMemory({ pin, scope }: ScopedPin): ClusterMemory {
  * request fails).
  */
 export function useClusterMemories(pins: readonly ScopedPin[]) {
+  const userId = useAuthStore((s) => s.user?.id);
   const placeIdsByScope = useMemo(
     () =>
       SCOPES.map((scope) =>
@@ -190,9 +226,9 @@ export function useClusterMemories(pins: readonly ScopedPin[]) {
     queries: SCOPES.map((scope, i) => {
       const placeIds = placeIdsByScope[i];
       return {
-        queryKey: queryKeys.memoriesByPlaces(scope, placeIds.join(",")),
+        queryKey: queryKeys.memoriesByPlaces(scope, placeIds.join(","), userId),
         queryFn: () => memoryApi.getMemoriesByPlaces(placeIds, scope),
-        enabled: placeIds.length > 0,
+        enabled: Boolean(userId && placeIds.length),
       };
     }),
   });

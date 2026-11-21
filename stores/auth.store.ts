@@ -21,6 +21,7 @@ import type {
   OtpPurpose,
 } from "@/services/auth";
 import { signOutFacebook, signOutGoogle } from "@/services/auth";
+import { queryClient } from "@/services/query/client";
 import { unregisterPushToken } from "@/services/notifications/notifications.push";
 import { realtime } from "@/services/realtime/socket";
 
@@ -215,6 +216,11 @@ export const useAuthStore = create<AuthState>((set, get) => {
         refreshToken: null,
         pendingEmail: null,
         pendingOtpPurpose: null,
+      });
+      queryClient.removeQueries({
+        predicate: ({ queryKey }) =>
+          queryKey[0] === "memories" &&
+          ["map", "friends-map", "by-places"].includes(String(queryKey[1])),
       });
       await Promise.allSettled([
         clearSession(),

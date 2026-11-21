@@ -189,8 +189,9 @@ export async function apiDelete<T>(url: string, body?: unknown) {
 export async function apiGetPaginated<T>(
   url: string,
   params?: Record<string, unknown>,
+  signal?: AbortSignal,
 ): Promise<{ items: T[]; nextCursor?: string }> {
-  const response = await apiClient.get(url, { params });
+  const response = await apiClient.get(url, { params, signal });
   const body = response.data as {
     success: boolean;
     data: T[];

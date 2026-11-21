@@ -1,4 +1,4 @@
-import { Fragment, useRef } from "react";
+import { Fragment } from "react";
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
 
 import { GlossyButton } from "@/components/ui/glossy-button";
@@ -11,16 +11,9 @@ import {
   AddyShadow,
   BrandColors,
 } from "@/constants/theme";
-import {
-  OnThisDayTimeSheet,
-  type OnThisDayTimeSheetRef,
-  displayTime,
-} from "@/features/profile/components/on-this-day-time-sheet";
 import { SettingsSectionTitle } from "@/features/profile/components/settings-row";
-import { rescheduleOnThisDay } from "@/features/notifications/on-this-day-scheduler";
 import { useNotificationPermission } from "@/features/profile/use-notification-permission";
 import {
-  deviceTimezone,
   useNotificationPreferencesQuery,
   useUpdateNotificationPreferencesMutation,
 } from "@/services/notifications";
@@ -49,7 +42,6 @@ const LINKED: Partial<Record<SwitchKey, SwitchKey[]>> = {
 };
 
 const FROM_ADDY: Row[] = [
-  { key: "onThisDay", label: "On this day", description: "a memory from this date" },
   {
     key: "friendsNearby",
     label: "Friends nearby",
@@ -58,31 +50,17 @@ const FROM_ADDY: Row[] = [
 ];
 
 /**
- * Settings › Notifications: per-type switches (likes off by default), the
- * On this day time, and a banner when the phone has notifications off.
+ * Notification preferences and a banner when device notifications are off.
  */
 export function NotificationSettingsSection() {
   const { data: prefs, isLoading, isError, refetch } =
     useNotificationPreferencesQuery();
   const update = useUpdateNotificationPreferencesMutation();
   const permission = useNotificationPermission();
-  const timeSheet = useRef<OnThisDayTimeSheetRef>(null);
-
-  const set = (patch: Partial<NotificationPreferences>) => {
-    // Turning On this day on (or moving it) is when the zone matters most.
-    const timezone =
-      patch.onThisDay || patch.onThisDayTime ? deviceTimezone() : undefined;
-    const touchesOnThisDay =
-      patch.onThisDay !== undefined || patch.onThisDayTime !== undefined;
-    update.mutate(
-      { ...patch, ...(timezone ? { timezone } : {}) },
-      { onSuccess: () => touchesOnThisDay && void rescheduleOnThisDay() },
-    );
-  };
 
   const setSwitch = (key: SwitchKey, value: boolean) => {
     const keys = LINKED[key] ?? [key];
-    set(Object.fromEntries(keys.map((k) => [k, value])));
+    update.mutate(Object.fromEntries(keys.map((k) => [k, value])));
   };
 
   // A linked row reads as on while any of its prefs is on.
@@ -99,21 +77,6 @@ export function NotificationSettingsSection() {
             description={row.description}
             value={switchValue(row.key)}
             onValueChange={(next) => setSwitch(row.key, next)}
-            accessory={
-              row.key === "onThisDay" && prefs ? (
-                <Pressable
-                  onPress={() => timeSheet.current?.present()}
-                  hitSlop={8}
-                  accessibilityRole="button"
-                  accessibilityLabel={`Time: ${displayTime(prefs.onThisDayTime)}. Change`}
-                  style={({ pressed }) => [styles.timeChip, pressed && styles.pressed]}
-                >
-                  <Text style={styles.timeChipText}>
-                    {displayTime(prefs.onThisDayTime)} ›
-                  </Text>
-                </Pressable>
-              ) : null
-            }
           />
         </Fragment>
       ))}
@@ -155,11 +118,6 @@ export function NotificationSettingsSection() {
           {renderCard(FROM_FRIENDS)}
           <SettingsSectionTitle>From Addy</SettingsSectionTitle>
           {renderCard(FROM_ADDY)}
-          <OnThisDayTimeSheet
-            ref={timeSheet}
-            value={prefs.onThisDayTime}
-            onChange={(time) => set({ onThisDayTime: time })}
-          />
         </>
       )}
     </View>
@@ -201,14 +159,6 @@ const styles = StyleSheet.create({
     backgroundColor: AddyColors.white,
   },
   divider: { height: StyleSheet.hairlineWidth, backgroundColor: AddyColors.line },
-  timeChip: {
-    paddingHorizontal: 10,
-    paddingVertical: 2,
-    borderRadius: AddyRadius.chip,
-    backgroundColor: AddyColors.paperDim,
-  },
-  timeChipText: { fontFamily: AddyFonts.tech, fontSize: 18, color: AddyColors.ink },
-  pressed: { opacity: 0.7 },
   center: { alignItems: "center", gap: 8, paddingVertical: 32 },
   note: { fontFamily: AddyFonts.body, fontSize: 14, color: AddyColors.inkMuted },
   retry: { fontFamily: AddyFonts.title, fontSize: 15, color: BrandColors.link },

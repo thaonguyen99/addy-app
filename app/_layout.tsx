@@ -1,3 +1,4 @@
+import * as Notifications from "expo-notifications";
 import {
   Baloo2_600SemiBold,
   Baloo2_700Bold,
@@ -89,6 +90,12 @@ function RootLayout() {
     "Baloo2-ExtraBold": Baloo2_800ExtraBold,
     "VT323-Regular": VT323_400Regular,
   });
+
+  useEffect(() => {
+    void Notifications.cancelScheduledNotificationAsync("on-this-day").catch((error) => {
+      console.warn("[notifications] Could not cancel anniversary reminder", error);
+    });
+  }, []);
 
   useEffect(() => {
     hydrate();

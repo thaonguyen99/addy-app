@@ -40,7 +40,7 @@ export function useFriendPinNearby() {
       }
     : null;
 
-  const { data } = useFriendsMapQuery(bounds);
+  const { data } = useFriendsMapQuery(bounds ? { visible: bounds, buffered: bounds } : null);
 
   const nearestPin: FriendMemoryPin | null = useMemo(() => {
     if (!coords || !data?.pins.length) return null;
