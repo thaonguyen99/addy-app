@@ -18,3 +18,17 @@ index fc56526..f4357f5 100644
      val targetZoomRatio = max(1f, min(maxZoomRatio, value.coerceIn(0f, 1f) * maxZoomRatio))
      camera?.cameraControl?.setZoomRatio(targetZoomRatio)
    }
+diff --git a/node_modules/expo-camera/ios/Common/DeviceDiscovery.swift b/node_modules/expo-camera/ios/Common/DeviceDiscovery.swift
+--- a/node_modules/expo-camera/ios/Common/DeviceDiscovery.swift
++++ b/node_modules/expo-camera/ios/Common/DeviceDiscovery.swift
+@@ -77,4 +77,10 @@
+   var defaultBackCamera: AVCaptureDevice? {
++    // Match the 1× control: a virtual or system-preferred camera can start
++    // on its ultra-wide lens when the capture session is at minimum zoom.
++    if let wide = self.backCameraLenses.first(where: { $0.deviceType == .builtInWideAngleCamera }) {
++      return wide
++    }
++
+     // iOS 17+: Check system preferred camera
+     if #available(iOS 17.0, *) {
+       if let preferred = AVCaptureDevice.systemPreferredCamera, preferred.position == .back {

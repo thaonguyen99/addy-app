@@ -35,7 +35,7 @@ module.exports = ({ config }) => ({
   ...config,
   name: "addy-app",
   slug: "addy-app",
-  version: "1.7.0",
+  version: "1.7.1",
   orientation: "portrait",
   icon: "./assets/images/icon.png",
   scheme: "addyapp",
@@ -111,6 +111,7 @@ module.exports = ({ config }) => ({
     favicon: "./assets/images/favicon.png",
   },
   plugins: [
+    "./plugins/with-optional-portrait",
     "expo-router",
     "expo-dev-client",
     [
