@@ -31,6 +31,7 @@ import "react-native-reanimated";
 
 import { BrandColors } from "@/constants/theme";
 import { UpdateReadyBanner } from "@/features/app-update/update-ready-banner";
+import { MaintenanceScreen } from "@/features/maintenance/maintenance-screen";
 import { InAppNotificationBanner } from "@/features/notifications/in-app-notification-banner";
 import { AnimatedSplashScreen } from "@/features/splash/components/animated-splash-screen";
 import { AppToastHost } from "@/features/toast/app-toast-host";
@@ -77,6 +78,14 @@ export function ErrorBoundary({
 }
 
 function RootLayout() {
+  if (process.env.EXPO_PUBLIC_MAINTENANCE_MODE === "true") {
+    return <MaintenanceScreen />;
+  }
+
+  return <AppLayout />;
+}
+
+function AppLayout() {
   const status = useAuthStore((s) => s.status);
   const hydrate = useAuthStore((s) => s.hydrate);
 
